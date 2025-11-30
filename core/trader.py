@@ -453,8 +453,57 @@ class LiveTrader(QThread):
         print("[DEBUG] Bucle principal terminado")
         self.signals.log_message.emit("⏹️ Bot detenido")
 
-    def execute_trade(self, asset, direction, current_price, df_current=None, expiration_minutes=1):
+    def execute_trade(self, asset, direction, signal_price, df_current=None, expiration_minutes=1):
+        """
+        Ejecuta una operación con Lógica de Entrada Inteligente (Smart Entry).
+        Espera hasta 10 segundos por un mejor precio (pullback) antes de entrar.
+        """
         amount = self.risk_manager.get_trade_amount()
+        self.signals.log_message.emit(f"🧠 SMART ENTRY: Buscando mejor entrada para {direction.upper()}...")
+        
+        # Lógica de espera (Smart Entry)
+        better_price_found = False
+        entry_price = signal_price
+        
+        # Esperar hasta 10 segundos
+        start_wait = time.time()
+        while time.time() - start_wait < 10:
+            try:
+                # Obtener precio actual en tiempo real
+                current_candle = self.market_data.get_candles(asset, 1, 1) # 1 segundo
+                if current_candle.empty:
+                    time.sleep(0.5)
+                    continue
+                    
+                current_price = current_candle.iloc[-1]['close']
+                
+                # Calcular mejora
+                if direction == 'call':
+                    # Para CALL, queremos precio MÁS BAJO (pullback)
+                    if current_price < signal_price:
+                        improvement = (signal_price - current_price) / signal_price * 100
+                        if improvement >= 0.01: # 0.01% mejor
+                            self.signals.log_message.emit(f"⚡ Pullback detectado (-{improvement:.3f}%) - Entrando ahora!")
+                            entry_price = current_price
+                            better_price_found = True
+                            break
+                else:
+                    # Para PUT, queremos precio MÁS ALTO (pullback)
+                    if current_price > signal_price:
+                        improvement = (current_price - signal_price) / signal_price * 100
+                        if improvement >= 0.01: # 0.01% mejor
+                            self.signals.log_message.emit(f"⚡ Pullback detectado (+{improvement:.3f}%) - Entrando ahora!")
+                            entry_price = current_price
+                            better_price_found = True
+                            break
+                            
+                time.sleep(0.5)
+            except:
+                break
+        
+        if not better_price_found:
+            self.signals.log_message.emit("⏱️ Tiempo de espera finalizado - Entrando a precio de mercado")
+            
         self.signals.log_message.emit(f"🚀 Ejecutando {direction.upper()} en {asset}")
         self.signals.log_message.emit(f"   Monto: ${amount:.2f}")
         self.signals.log_message.emit(f"   Expiración: {expiration_minutes} min")
