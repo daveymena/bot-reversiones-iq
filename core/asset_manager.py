@@ -222,8 +222,8 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró una oportunidad REAL (score >= 70)
-        if best_opportunity and best_opportunity['score'] >= 70:
+        # Solo retornar si encontró una oportunidad REAL (score >= 50) - Reducido para más operaciones
+        if best_opportunity and best_opportunity['score'] >= 50:
             return best_opportunity
         
         return None
@@ -243,18 +243,29 @@ class AssetManager:
         signals = []
         action = None
         
-        # 1. RSI (30 puntos)
+        # 1. RSI (30 puntos) - Más permisivo
         rsi = last.get('rsi', 50)
         if rsi < 30:
             score += 30
-            signals.append("RSI sobreventa")
+            signals.append("RSI sobreventa fuerte")
             action = "CALL"
+        elif rsi < 40:
+            score += 20
+            signals.append("RSI sobreventa moderada")
+            if action is None:
+                action = "CALL"
         elif rsi > 70:
             score += 30
-            signals.append("RSI sobrecompra")
+            signals.append("RSI sobrecompra fuerte")
             action = "PUT"
-        elif 40 < rsi < 60:
-            score += 10  # Neutral
+        elif rsi > 60:
+            score += 20
+            signals.append("RSI sobrecompra moderada")
+            if action is None:
+                action = "PUT"
+        else:  # 40-60 neutral
+            score += 10
+            signals.append("RSI neutral")
         
         # 2. MACD (20 puntos)
         macd = last.get('macd', 0)
@@ -309,8 +320,8 @@ class AssetManager:
             score += 10
             signals.append("Baja volatilidad")
         
-        # Solo retornar si hay una acción clara y score >= 70 (más selectivo)
-        if action and score >= 70:
+        # Solo retornar si hay una acción clara y score >= 50 (más permisivo)
+        if action and score >= 50:
             return {
                 'asset': asset,
                 'score': score,
