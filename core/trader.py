@@ -427,7 +427,14 @@ class LiveTrader(QThread):
                                 
                                 direction = "call" if validation['recommendation'] == 'CALL' else "put"
                                 self.signals.trade_signal.emit(validation['recommendation'], self.current_asset)
-                                self.execute_trade(self.current_asset, direction, last_candle['close'], df, expiration)
+                                self.execute_trade(
+                                    asset=self.current_asset, 
+                                    direction=direction, 
+                                    signal_price=last_candle['close'], 
+                                    df_current=df, 
+                                    expiration_minutes=expiration,
+                                    ai_confidence=pre_trade_analysis['confidence']
+                                )
                             else:
                                 self.signals.log_message.emit("⏸️ Operación cancelada - Esperando mejor oportunidad")
                         else:
@@ -453,21 +460,36 @@ class LiveTrader(QThread):
         print("[DEBUG] Bucle principal terminado")
         self.signals.log_message.emit("⏹️ Bot detenido")
 
-    def execute_trade(self, asset, direction, signal_price, df_current=None, expiration_minutes=1):
+    def execute_trade(self, asset, direction, signal_price, df_current=None, expiration_minutes=1, ai_confidence=0.7):
         """
         Ejecuta una operación con Lógica de Entrada Inteligente (Smart Entry).
-        Espera hasta 10 segundos por un mejor precio (pullback) antes de entrar.
+        Espera hasta 10-15 segundos por un mejor precio (pullback) antes de entrar.
+        Ajusta parámetros según confianza de la IA.
         """
         amount = self.risk_manager.get_trade_amount()
-        self.signals.log_message.emit(f"🧠 SMART ENTRY: Buscando mejor entrada para {direction.upper()}...")
         
+        # Ajustar parámetros según confianza de IA
+        wait_time = 10
+        pullback_threshold = 0.01 # 0.01%
+        
+        if ai_confidence >= 0.85:
+            wait_time = 5 # Entrar rápido si hay mucha confianza
+            pullback_threshold = 0.005 # Pullback mínimo
+            self.signals.log_message.emit(f"🧠 SMART ENTRY (Agresivo): Confianza alta ({ai_confidence*100:.0f}%)")
+        elif ai_confidence <= 0.65:
+            wait_time = 15 # Esperar más si hay dudas
+            pullback_threshold = 0.02 # Exigir mejor precio
+            self.signals.log_message.emit(f"🧠 SMART ENTRY (Conservador): Confianza moderada ({ai_confidence*100:.0f}%)")
+        else:
+            self.signals.log_message.emit(f"🧠 SMART ENTRY (Normal): Buscando mejor entrada...")
+            
         # Lógica de espera (Smart Entry)
         better_price_found = False
         entry_price = signal_price
         
-        # Esperar hasta 10 segundos
+        # Esperar
         start_wait = time.time()
-        while time.time() - start_wait < 10:
+        while time.time() - start_wait < wait_time:
             try:
                 # Obtener precio actual en tiempo real
                 current_candle = self.market_data.get_candles(asset, 1, 1) # 1 segundo
@@ -482,7 +504,7 @@ class LiveTrader(QThread):
                     # Para CALL, queremos precio MÁS BAJO (pullback)
                     if current_price < signal_price:
                         improvement = (signal_price - current_price) / signal_price * 100
-                        if improvement >= 0.01: # 0.01% mejor
+                        if improvement >= pullback_threshold:
                             self.signals.log_message.emit(f"⚡ Pullback detectado (-{improvement:.3f}%) - Entrando ahora!")
                             entry_price = current_price
                             better_price_found = True
@@ -491,7 +513,7 @@ class LiveTrader(QThread):
                     # Para PUT, queremos precio MÁS ALTO (pullback)
                     if current_price > signal_price:
                         improvement = (current_price - signal_price) / signal_price * 100
-                        if improvement >= 0.01: # 0.01% mejor
+                        if improvement >= pullback_threshold:
                             self.signals.log_message.emit(f"⚡ Pullback detectado (+{improvement:.3f}%) - Entrando ahora!")
                             entry_price = current_price
                             better_price_found = True
