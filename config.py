@@ -33,10 +33,11 @@ class Config:
 
     # --- Configuración de IA Generativa (LLM) ---
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    OLLAMA_MODEL = "llama3.2:3b" 
-    OLLAMA_MODEL_FAST = "gemma2:2b"
+    # Modelos ultra-ligeros para máxima velocidad
+    OLLAMA_MODEL = "llama3.2:1b"  # Modelo principal (muy rápido)
+    OLLAMA_MODEL_FAST = "qwen2.5:0.5b" # Modelo ultra-rápido para validaciones
     # URL base proporcionada por usuario + endpoint
-    OLLAMA_URL = "https://davey-ollama2.mapf5v.easypanel.host/api/generate"
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "https://davey-ollama2.mapf5v.easypanel.host/api/generate")
     USE_LLM = True # Activar/Desactivar consejos de IA
 
     # --- Configuración de GUI ---
