@@ -1,0 +1,16 @@
+numpy
+pandas
+ta
+torch
+gymnasium
+stable-baselines3[extra]
+python-dotenv
+requests
+websocket-client==1.8.0
+PySide6
+pyqtgraph
+groq
+ollama
+fastapi
+uvicorn[standard]
+websockets
