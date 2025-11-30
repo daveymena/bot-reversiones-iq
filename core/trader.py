@@ -542,33 +542,37 @@ class LiveTrader(QThread):
         try:
             print(f"\n[DEBUG] Iniciando process_trade_result para trade ID: {trade.get('id')}")
             self.signals.log_message.emit(f"📊 Verificando resultado de operación {trade['id']}...")
-            print("[DEBUG] Entrando al try principal")
+            
+            profit = 0
+            result_status = "unknown"
+            
             # Obtener resultado REAL del broker
             if trade.get('real_trade', False):
-                # Operación real - obtener resultado del broker
-                # Exnova usa check_win_v4
-                try:
-                    print("[DEBUG] Llamando a check_win_v4...")
-                    self.signals.log_message.emit(f"🔍 Consultando resultado a Exnova...")
-                    result_status, profit = self.market_data.api.check_win_v4(trade['id'])
-                    print(f"[DEBUG] Resultado recibido: {result_status}, Profit: {profit}")
-                    self.signals.log_message.emit(f"📊 Resultado de Exnova: {result_status}, Profit: ${profit:.2f}")
-                except AttributeError as ae:
-                    print(f"[DEBUG] AttributeError en check_win_v4: {ae}")
-                    self.signals.error_message.emit(f"⚠️ check_win_v4 no disponible: {ae}")
-                    # Fallback: calcular por precio
-                    profit = self._calculate_profit_by_price(trade)
-                    result_status = "win" if profit > 0 else "loose"
-                except Exception as e:
-                    print(f"[DEBUG] Exception en check_win_v4: {e}")
-                    self.signals.error_message.emit(f"⚠️ Error obteniendo resultado de Exnova: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    # Fallback: calcular por precio
+                # Intentar hasta 3 veces obtener el resultado
+                for attempt in range(3):
+                    try:
+                        print(f"[DEBUG] Intento {attempt+1} de verificar resultado...")
+                        result_status, profit = self.market_data.api.check_win_v4(trade['id'])
+                        
+                        if result_status: # Si retornó algo válido
+                            print(f"[DEBUG] Resultado recibido: {result_status}, Profit: {profit}")
+                            self.signals.log_message.emit(f"📊 Resultado de Exnova: {result_status}, Profit: ${profit:.2f}")
+                            break
+                        else:
+                            print("[DEBUG] check_win_v4 retornó None/False, reintentando...")
+                            time.sleep(2)
+                    except Exception as e:
+                        print(f"[DEBUG] Error en intento {attempt+1}: {e}")
+                        time.sleep(2)
+                
+                # Si después de 3 intentos no hay resultado, usar fallback
+                if not result_status or result_status == "unknown":
+                    print("⚠️ No se pudo obtener resultado del broker, usando cálculo local (Fallback)")
+                    self.signals.log_message.emit("⚠️ Usando verificación local (API no respondió)")
                     profit = self._calculate_profit_by_price(trade)
                     result_status = "win" if profit > 0 else "loose"
             else:
-                # Operación simulada (no debería llegar aquí)
+                # Operación simulada
                 profit = self._calculate_profit_by_price(trade)
                 result_status = "win" if profit > 0 else "loose"
             
@@ -849,3 +853,34 @@ Indicadores actuales:
                 return -trade['amount']
         except:
             return -trade['amount']  # Asumir pérdida en caso de error
+    def _calculate_profit_by_price(self, trade):
+        """
+        Calcula el resultado de la operación basado en el precio actual (Fallback)
+        Se usa cuando la API del broker falla al verificar el resultado.
+        """
+        try:
+            # Obtener precio actual
+            df = self.market_data.get_candles(trade['asset'], Config.TIMEFRAME, 1)
+            if df.empty:
+                return 0.0
+            
+            exit_price = df.iloc[-1]['close']
+            entry_price = trade['entry_price']
+            direction = trade['direction']
+            amount = trade['amount']
+            payout = 0.85  # Estimado conservador
+            
+            won = False
+            if direction == 'call':
+                won = exit_price > entry_price
+            else:
+                won = exit_price < entry_price
+                
+            if won:
+                return amount * payout
+            else:
+                return -amount
+                
+        except Exception as e:
+            print(f"[ERROR] Error calculando profit por precio: {e}")
+            return 0.0
