@@ -1839,17 +1839,33 @@ Entrenamiento Completado:
             print("\n[GUI] Cerrando aplicación...")
             
             # Detener el bot si está corriendo
-            if hasattr(self, 'trader') and self.trader.isRunning():
-                print("[GUI] Deteniendo bot...")
-                self.trader.running = False
-                self.trader.paused = False
-                self.trader.wait(2000)  # Esperar máximo 2 segundos
+            if hasattr(self, 'trader') and self.trader:
+                if self.trader.isRunning():
+                    print("[GUI] Deteniendo bot...")
+                    self.trader.running = False
+                    self.trader.paused = False
+                    
+                    # Intentar detener el thread de forma ordenada
+                    if not self.trader.wait(3000):  # Esperar máximo 3 segundos
+                        print("[GUI] Forzando detención del thread...")
+                        self.trader.quit()
+                        if not self.trader.wait(1000):
+                            print("[GUI] Terminando thread forzosamente...")
+                            self.trader.terminate()
+                            self.trader.wait()
             
-            # Desconectar del broker
+            # Desconectar del broker y cerrar WebSocket
             if hasattr(self, 'trader') and hasattr(self.trader, 'market_data'):
-                if self.trader.market_data.connected:
+                if self.trader.market_data and self.trader.market_data.connected:
                     print("[GUI] Desconectando del broker...")
-                    self.trader.market_data.connected = False
+                    try:
+                        # Cerrar API/WebSocket si existe
+                        if hasattr(self.trader.market_data, 'api') and self.trader.market_data.api:
+                            if hasattr(self.trader.market_data.api, 'close'):
+                                self.trader.market_data.api.close()
+                        self.trader.market_data.connected = False
+                    except Exception as e:
+                        print(f"[GUI] Error desconectando: {e}")
             
             print("[GUI] Aplicación cerrada correctamente")
             event.accept()
