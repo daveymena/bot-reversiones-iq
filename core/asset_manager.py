@@ -1,6 +1,7 @@
 import time
 from data.market_data import MarketDataHandler
 from strategies.math_models import MathModels
+from strategies.smc_analysis import SMCAnalysis
 
 class AssetManager:
     def __init__(self, market_data: MarketDataHandler):
@@ -9,6 +10,7 @@ class AssetManager:
         self.current_type = "turbo" # turbo o binary
         self.min_profit = 70 # % mínimo para operar (reducido de 75 a 70)
         self.math_models = MathModels()
+        self.smc_analysis = SMCAnalysis()
         
         # 🎯 MODO MULTI-DIVISA
         self.multi_asset_mode = True  # Monitorear múltiples activos
@@ -340,6 +342,18 @@ class AssetManager:
         if volatility > df['close'].std():
             score += 5
             signals.append("Alta Volatilidad")
+        
+        # 6. SMC Analysis (Smart Money Concepts) - 20 puntos bonus
+        try:
+            smc_setup = self.smc_analysis.analyze_smc_setup(df)
+            if smc_setup['valid_setup']:
+                score += 20
+                signals.append(f"SMC Setup: {', '.join(smc_setup['reasons'])}")
+                # Sobrescribir acción si SMC tiene dirección clara
+                if smc_setup['direction']:
+                    action = smc_setup['direction']
+        except:
+            pass  # Si falla SMC, continuar con análisis normal
         
         # Solo retornar si hay una acción clara y score >= 50 (más permisivo)
         if action and score >= 50:
