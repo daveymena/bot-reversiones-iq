@@ -15,9 +15,14 @@ import sys
 # Agregar path del proyecto
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from core.trader import LiveTrader
+# Importar versión headless del trader (sin PySide6)
+from core.trader_headless import HeadlessTrader
 from data.market_data import MarketDataHandler
-from config import Config
+from strategies.technical import FeatureEngineer
+from core.agent import RLAgent
+from core.risk import RiskManager
+from core.asset_manager import AssetManager
+import config
 
 app = FastAPI(title="Trading Bot API", version="1.0.0")
 

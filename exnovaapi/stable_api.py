@@ -838,15 +838,61 @@ class Exnova:
         # Function by kkagill ( https://github.com/Lu-Yi-Hsun/exnovaAPI/issues/196 | https://github.com/kkagill )
         # Function only work with Options!
 
-    def check_win_v4(self, id_number):
+    def check_win_v4(self, id_number, timeout=120):
+        """
+        Versión asíncrona con timeout para verificar resultado de operación
+        
+        Args:
+            id_number: ID de la operación
+            timeout: Tiempo máximo de espera en segundos (default: 120)
+            
+        Returns:
+            tuple: (resultado, ganancia/pérdida) o (None, None) si timeout
+        """
+        start_time = time.time()
+        
         while True:
+            # Verificar timeout
+            if time.time() - start_time > timeout:
+                logging.error(f'**error** check_win_v4 timeout after {timeout}s for order {id_number}')
+                return None, None
+            
             try:
-                if self.api.socket_option_closed[id_number] != None:
-                    break
-            except:
-                pass
-        x = self.api.socket_option_closed[id_number]
-        return x['msg']['win'], (0 if x['msg']['win'] == 'equal' else float(x['msg']['sum']) * -1 if x['msg']['win'] == 'loose' else float(x['msg']['win_amount']) - float(x['msg']['sum']))
+                # Verificar si hay resultado disponible
+                if id_number in self.api.socket_option_closed and self.api.socket_option_closed[id_number] is not None:
+                    x = self.api.socket_option_closed[id_number]
+                    
+                    # Validar que tenga la estructura esperada
+                    if 'msg' not in x:
+                        logging.error(f'**error** check_win_v4 invalid response structure for order {id_number}')
+                        return None, None
+                    
+                    msg = x['msg']
+                    if 'win' not in msg:
+                        logging.error(f'**error** check_win_v4 missing win field for order {id_number}')
+                        return None, None
+                    
+                    win_status = msg['win']
+                    
+                    # Calcular ganancia/pérdida
+                    if win_status == 'equal':
+                        profit = 0
+                    elif win_status == 'loose':
+                        profit = float(msg.get('sum', 0)) * -1
+                    else:  # win
+                        profit = float(msg.get('win_amount', 0)) - float(msg.get('sum', 0))
+                    
+                    logging.info(f'check_win_v4 result for order {id_number}: {win_status}, profit: {profit}')
+                    return win_status, profit
+                    
+            except KeyError as e:
+                logging.debug(f'check_win_v4 waiting for result {id_number}: {e}')
+            except Exception as e:
+                logging.error(f'**error** check_win_v4 exception for order {id_number}: {e}')
+                return None, None
+            
+            # Pequeña pausa para no saturar CPU
+            time.sleep(0.5)
 
     def check_win_v3(self, id_number):
         while True:

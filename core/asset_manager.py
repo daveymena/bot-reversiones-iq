@@ -1,7 +1,5 @@
 import time
 from data.market_data import MarketDataHandler
-from strategies.math_models import MathModels
-from strategies.smc_analysis import SMCAnalysis
 
 class AssetManager:
     def __init__(self, market_data: MarketDataHandler):
@@ -9,8 +7,6 @@ class AssetManager:
         self.current_asset = "EURUSD-OTC"
         self.current_type = "turbo" # turbo o binary
         self.min_profit = 70 # % mínimo para operar (reducido de 75 a 70)
-        self.math_models = MathModels()
-        self.smc_analysis = SMCAnalysis()
         
         # 🎯 MODO MULTI-DIVISA
         self.multi_asset_mode = True  # Monitorear múltiples activos
@@ -226,8 +222,8 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró una oportunidad REAL (score >= 50) - Reducido para más operaciones
-        if best_opportunity and best_opportunity['score'] >= 50:
+        # Solo retornar si encontró una oportunidad REAL (score >= 70)
+        if best_opportunity and best_opportunity['score'] >= 70:
             return best_opportunity
         
         return None
@@ -247,73 +243,35 @@ class AssetManager:
         signals = []
         action = None
         
-        # 1. ANÁLISIS MATEMÁTICO AVANZADO (30 puntos)
-        math_score = 0
-        
-        # A) Régimen de Mercado (Hurst)
-        regime = self.math_models.analyze_market_regime(df)
-        if regime['regime'] == 'TRENDING':
-            signals.append(f"Régimen Tendencial (H={regime['hurst']:.2f})")
-        elif regime['regime'] == 'MEAN_REVERTING':
-            signals.append(f"Régimen Rango (H={regime['hurst']:.2f})")
-            
-        # B) Z-Score (Anomalías estadísticas)
-        z_score = self.math_models.calculate_z_score(df['close'])
-        if z_score < -2:
-            math_score += 15
-            signals.append(f"Z-Score Bajo ({z_score:.2f}) -> Rebote probable")
-            if action is None: action = "CALL"
-        elif z_score > 2:
-            math_score += 15
-            signals.append(f"Z-Score Alto ({z_score:.2f}) -> Corrección probable")
-            if action is None: action = "PUT"
-            
-        # C) Fibonacci
-        fib_levels = self.math_models.calculate_fibonacci_levels(df)
-        fib_prox = self.math_models.get_fibonacci_proximity(last['close'], fib_levels)
-        if fib_prox:
-            math_score += 15
-            signals.append(f"Soporte/Resistencia Fibo ({fib_prox['level']})")
-            
-        score += math_score
-
-        # 2. RSI (20 puntos)
+        # 1. RSI (30 puntos)
         rsi = last.get('rsi', 50)
         if rsi < 30:
-            score += 20
-            signals.append("RSI sobreventa fuerte")
-            if regime['regime'] == 'MEAN_REVERTING': score += 10 # Bonificación en rango
-            if action is None: action = "CALL"
-        elif rsi < 40:
-            score += 10
-            signals.append("RSI sobreventa moderada")
-            if action is None: action = "CALL"
+            score += 30
+            signals.append("RSI sobreventa")
+            action = "CALL"
         elif rsi > 70:
-            score += 20
-            signals.append("RSI sobrecompra fuerte")
-            if regime['regime'] == 'MEAN_REVERTING': score += 10 # Bonificación en rango
-            if action is None: action = "PUT"
-        elif rsi > 60:
-            score += 10
-            signals.append("RSI sobrecompra moderada")
-            if action is None: action = "PUT"
+            score += 30
+            signals.append("RSI sobrecompra")
+            action = "PUT"
+        elif 40 < rsi < 60:
+            score += 10  # Neutral
         
-        # 3. MACD (15 puntos)
+        # 2. MACD (20 puntos)
         macd = last.get('macd', 0)
         macd_signal = last.get('macd_signal', 0)
-        if macd > macd_signal:
-            score += 15
-            signals.append("MACD Cruz Alcista")
-            if regime['regime'] == 'TRENDING': score += 10 # Bonificación en tendencia
-            if action is None: action = "CALL"
-        elif macd < macd_signal:
-            score += 15
-            signals.append("MACD Cruz Bajista")
-            if regime['regime'] == 'TRENDING': score += 10 # Bonificación en tendencia
-            if action is None: action = "PUT"
+        if macd > macd_signal and macd > 0:
+            score += 20
+            signals.append("MACD alcista")
+            if action is None:
+                action = "CALL"
+        elif macd < macd_signal and macd < 0:
+            score += 20
+            signals.append("MACD bajista")
+            if action is None:
+                action = "PUT"
         
-        # 4. Bollinger Bands (20 puntos)
-        if 'bb_low' in df.columns:
+        # 3. Bollinger Bands (20 puntos)
+        if 'bb_low' in df.columns and 'bb_high' in df.columns:
             bb_low = last.get('bb_low', 0)
             bb_high = last.get('bb_high', 0)
             price = last['close']
@@ -321,42 +279,38 @@ class AssetManager:
             if price <= bb_low:
                 score += 20
                 signals.append("Precio en BB inferior")
-                if action is None: action = "CALL"
+                if action is None:
+                    action = "CALL"
             elif price >= bb_high:
                 score += 20
                 signals.append("Precio en BB superior")
-                if action is None: action = "PUT"
+                if action is None:
+                    action = "PUT"
         
-        # 5. Tendencia y Volatilidad (15 puntos)
+        # 4. Tendencia (15 puntos)
         sma_20 = df['close'].tail(20).mean()
         sma_50 = df['close'].tail(50).mean() if len(df) >= 50 else sma_20
         
         if sma_20 > sma_50:
-            score += 10
-            signals.append("Tendencia Alcista")
+            score += 15
+            signals.append("Tendencia alcista")
         elif sma_20 < sma_50:
-            score += 10
-            signals.append("Tendencia Bajista")
-            
+            score += 15
+            signals.append("Tendencia bajista")
+        
+        # 5. Volatilidad (15 puntos)
         volatility = df['close'].tail(10).std()
-        if volatility > df['close'].std():
-            score += 5
-            signals.append("Alta Volatilidad")
+        avg_volatility = df['close'].std()
         
-        # 6. SMC Analysis (Smart Money Concepts) - 20 puntos bonus
-        try:
-            smc_setup = self.smc_analysis.analyze_smc_setup(df)
-            if smc_setup['valid_setup']:
-                score += 20
-                signals.append(f"SMC Setup: {', '.join(smc_setup['reasons'])}")
-                # Sobrescribir acción si SMC tiene dirección clara
-                if smc_setup['direction']:
-                    action = smc_setup['direction']
-        except:
-            pass  # Si falla SMC, continuar con análisis normal
+        if volatility > avg_volatility * 1.2:
+            score += 15
+            signals.append("Alta volatilidad")
+        elif volatility < avg_volatility * 0.8:
+            score += 10
+            signals.append("Baja volatilidad")
         
-        # Solo retornar si hay una acción clara y score >= 50 (más permisivo)
-        if action and score >= 50:
+        # Solo retornar si hay una acción clara y score >= 70 (más selectivo)
+        if action and score >= 70:
             return {
                 'asset': asset,
                 'score': score,

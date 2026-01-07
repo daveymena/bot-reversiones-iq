@@ -1,6 +1,26 @@
 import time
 import pandas as pd
-from PySide6.QtCore import QThread, Signal, QObject
+import os
+
+# Importar PySide6 de forma opcional para soporte Headless (Docker)
+try:
+    from PySide6.QtCore import QThread, Signal, QObject
+    GUI_AVAILABLE = True
+except Exception as e:
+    # Capturar CUALQUIER error (ImportError, RuntimeError, OSError por falta de .so, etc.)
+    print(f"⚠️ PySide6 no disponible ({type(e).__name__}: {e}). Ejecutando en modo HEADLESS (sin GUI)")
+    GUI_AVAILABLE = False
+    # Mock classes para evitar errores en modo headless
+    class QThread:
+        def __init__(self, *args, **kwargs): pass
+        def start(self): pass
+        def wait(self): pass
+    class QObject:
+        def __init__(self, *args, **kwargs): pass
+    class Signal:
+        def __init__(self, *args, **kwargs): pass
+        def emit(self, *args, **kwargs): pass
+
 from core.risk import RiskManager
 from config import Config
 
@@ -12,6 +32,7 @@ class TraderSignals(QObject):
     log_message = Signal(str)
     error_message = Signal(str)
     balance_update = Signal(float)
+    decision_analysis = Signal(object, float) # validation_result, profitability_score
     stats_update = Signal(int, int, float) # wins, losses, total_profit
 
 from core.trade_analyzer import TradeAnalyzer
@@ -19,6 +40,12 @@ from core.continuous_learner import ContinuousLearner
 from core.decision_validator import DecisionValidator
 from core.trade_intelligence import TradeIntelligence
 from core.observational_learner import ObservationalLearner
+from core.intelligent_filters import IntelligentFilters
+from core.parallel_trainer import ParallelTrainer
+from core.market_structure_analyzer import MarketStructureAnalyzer
+from database.db_manager import db
+from datetime import datetime
+import json
 
 class LiveTrader(QThread):
     def __init__(self, market_data, feature_engineer, agent, risk_manager, asset_manager, llm_client=None):
@@ -47,17 +74,44 @@ class LiveTrader(QThread):
             self.feature_engineer
         )
         
+        # 🎯 Filtros Inteligentes basados en datos históricos
+        self.intelligent_filters = IntelligentFilters()
+        
+        # 🎓 Entrenador Paralelo (aprende mientras opera)
+        self.parallel_trainer = ParallelTrainer(
+            market_data=market_data,
+            feature_engineer=feature_engineer,
+            agent=agent,
+            llm_client=llm_client
+        )
+        
+        # 📊 Analizador de Estructura de Mercado (VE TODO EL PANORAMA)
+        self.market_structure_analyzer = MarketStructureAnalyzer()
+        
         self.signals = TraderSignals()
         self.running = False
         self.paused = False
         self.active_trades = [] # Lista de dicts: {id, asset, direction, entry_time, entry_price, amount, state_before, df_before}
         
-        # Control de tiempo entre operaciones
+        # Control de tiempo entre operaciones (MÁS ESTRICTO para evitar sobre-operación)
         self.last_trade_time = 0
-        self.min_time_between_trades = 30  # Mínimo 30 segundos entre operaciones
-        self.cooldown_after_loss = 60  # 1 minuto de espera después de perder
+        self.min_time_between_trades = 300  # Mínimo 5 minutos entre operaciones
+        self.cooldown_after_loss = 900  # 15 minutos de espera después de perder
         self.consecutive_losses = 0
         self.last_trade_result = None
+        self.max_consecutive_losses = 3  # Pausar después de 3 pérdidas consecutivas
+        
+        # Control de operaciones por hora
+        self.trades_last_hour = []  # Lista de timestamps de operaciones
+        self.max_trades_per_hour = 4  # Máximo 4 operaciones por hora
+        
+        # 🆕 MEJORA 1: Cooldown por activo (evita operar múltiples veces en mismo par)
+        self.last_trade_per_asset = {}  # {asset: timestamp}
+        self.cooldown_per_asset = 300  # 5 minutos por activo
+        
+        # 🆕 MEJORA 5: Límite de operaciones por hora
+        self.trades_this_hour = []
+        self.max_trades_per_hour = 3
 
     def stop(self):
         """Detiene el bot de forma segura."""
@@ -130,23 +184,63 @@ class LiveTrader(QThread):
         print("[DEBUG] Entrando al bucle principal while...")
         iteration_count = 0
         last_heartbeat = time.time()
+        last_connection_check = time.time()
         
         while self.running:
+            # 🔌 VERIFICACIÓN DE CONEXIÓN cada 30 segundos
+            if time.time() - last_connection_check >= 30:
+                if not self.market_data.is_really_connected():
+                    self.signals.error_message.emit("⚠️ Conexión perdida detectada!")
+                    self.signals.log_message.emit("🔄 Intentando reconectar automáticamente...")
+                    
+                    # Intentar reconectar
+                    try:
+                        email = Config.EXNOVA_EMAIL if self.market_data.broker_name == "exnova" else Config.IQ_EMAIL
+                        password = Config.EXNOVA_PASSWORD if self.market_data.broker_name == "exnova" else Config.IQ_PASSWORD
+                        
+                        success = self.market_data.reconnect(email, password)
+                        
+                        if success:
+                            self.signals.log_message.emit("✅ Reconexión exitosa!")
+                            self.signals.log_message.emit("♾️ Continuando operaciones...")
+                        else:
+                            self.signals.error_message.emit("❌ No se pudo reconectar")
+                            self.signals.log_message.emit("⏸️ Deteniendo bot por seguridad...")
+                            self.running = False
+                            break
+                    except Exception as e:
+                        self.signals.error_message.emit(f"❌ Error en reconexión: {e}")
+                        self.signals.log_message.emit("⏸️ Deteniendo bot por seguridad...")
+                        self.running = False
+                        break
+                
+                last_connection_check = time.time()
+            
             # Heartbeat cada 60 segundos
             if time.time() - last_heartbeat >= 60:
-                self.signals.log_message.emit(f"💓 Bot activo - Iteración #{iteration_count}")
+                self.signals.log_message.emit(f"💓 Bot activo - Iteración #{iteration_count} - Conexión: {'✅' if self.market_data.is_really_connected() else '❌'}")
                 last_heartbeat = time.time()
             iteration_count += 1
             if iteration_count % 10 == 0:  # Log cada 10 iteraciones
-                print(f"[DEBUG] Iteración #{iteration_count}, running={self.running}, paused={self.paused}")
+                print(f"[DEBUG] Iteración #{iteration_count}, running={self.running}, paused={self.paused}, connected={self.market_data.is_really_connected()}")
             
             if self.paused:
                 time.sleep(1)
                 continue
 
             try:
+                # ⏰ VERIFICACIÓN DE HORARIO DE OPERACIÓN - DESHABILITADA (opera 24/7)
+                # El bot operará continuamente sin restricciones de horario
+                
                 # --- Monitoreo de Operaciones Activas ---
                 self.check_active_trades()
+                
+                # 🎓 ENTRENAMIENTO PARALELO: Verificar operaciones simuladas
+                if self.market_data.account_type == 'REAL':
+                    try:
+                        self.parallel_trainer.check_simulated_trades()
+                    except Exception as e:
+                        print(f"[WARNING] Error en entrenamiento paralelo: {e}")
 
                 # Actualizar balance
                 balance = self.market_data.get_balance()
@@ -194,10 +288,11 @@ class LiveTrader(QThread):
                             else:
                                 self.signals.log_message.emit("⚠️ Re-entrenamiento falló, continuando con modelo actual")
                                 self.signals.log_message.emit("⏸️ Esperando 1 minuto antes de continuar...")
-                                time.sleep(60)
-                                # Resetear para permitir operar nuevamente
-                                self.consecutive_losses = 0
-                                self.signals.log_message.emit("🔄 Contador de pérdidas reseteado para reintentar")
+                                # Esperar en intervalos cortos para no congelar la GUI
+                                for _ in range(60):
+                                    if not self.running:
+                                        break
+                                    time.sleep(1)
                         except Exception as retrain_error:
                             self.signals.error_message.emit(f"❌ Error en re-entrenamiento: {retrain_error}")
                             self.signals.log_message.emit("🔄 Continuando con modelo actual...")
@@ -279,28 +374,53 @@ class LiveTrader(QThread):
                 # REGLA 1: NO operar si hay operaciones activas
                 if self.active_trades:
                     # Hay operaciones en curso, esperar
+                    if iteration_count % 30 == 0:  # Log cada 30 iteraciones
+                        trade_info = self.active_trades[0]
+                        remaining_time = int((trade_info['entry_time'] + trade_info['duration'] + 10) - time.time())
+                        self.signals.log_message.emit(f"⏳ Operación activa en {trade_info['asset']} - Esperando resultado (~{max(0, remaining_time)}s)")
                     continue
                 
-                # REGLA 2: Verificar tiempo mínimo entre operaciones
+                # REGLA 2: Pausar después de 3 pérdidas consecutivas
+                if self.consecutive_losses >= self.max_consecutive_losses:
+                    if iteration_count % 60 == 0:  # Log cada minuto
+                        self.signals.log_message.emit(f"⏸️ PAUSADO: {self.consecutive_losses} pérdidas consecutivas. Esperando mejores condiciones del mercado...")
+                        self.signals.log_message.emit(f"💡 El bot se reactivará automáticamente después de re-entrenar o manualmente con 'Reanudar'")
+                    time.sleep(1)
+                    continue
+                
+                # REGLA 3: Verificar límite de operaciones por hora
+                current_time = time.time()
+                # Limpiar operaciones de hace más de 1 hora
+                self.trades_last_hour = [t for t in self.trades_last_hour if current_time - t < 3600]
+                
+                if len(self.trades_last_hour) >= self.max_trades_per_hour:
+                    if iteration_count % 60 == 0:  # Log cada minuto
+                        oldest_trade = min(self.trades_last_hour)
+                        wait_time = int(3600 - (current_time - oldest_trade))
+                        self.signals.log_message.emit(f"⏸️ Límite de {self.max_trades_per_hour} operaciones/hora alcanzado. Esperando {wait_time//60} minutos...")
+                    time.sleep(1)
+                    continue
+                
+                # REGLA 4: Verificar tiempo mínimo entre operaciones
                 time_since_last_trade = time.time() - self.last_trade_time
                 
                 # Si perdió la última, esperar más tiempo (cooldown)
                 if self.last_trade_result == 'loss':
                     required_wait = self.cooldown_after_loss
                     if self.consecutive_losses >= 2:
-                        required_wait = self.cooldown_after_loss * 2  # 10 minutos después de 2 pérdidas
+                        required_wait = self.cooldown_after_loss * 2  # 30 minutos después de 2 pérdidas
                     
                     if time_since_last_trade < required_wait:
                         remaining = int(required_wait - time_since_last_trade)
-                        if remaining % 30 == 0:  # Mostrar cada 30 segundos
-                            self.signals.log_message.emit(f"⏳ Cooldown después de pérdida: {remaining}s restantes")
+                        if remaining % 60 == 0:  # Mostrar cada minuto
+                            self.signals.log_message.emit(f"⏳ Cooldown después de pérdida: {remaining//60} minutos restantes")
                         continue
                 else:
                     # Tiempo normal entre operaciones
                     if time_since_last_trade < self.min_time_between_trades:
                         remaining = int(self.min_time_between_trades - time_since_last_trade)
-                        if remaining % 30 == 0:  # Mostrar cada 30 segundos
-                            self.signals.log_message.emit(f"⏳ Esperando tiempo mínimo: {remaining}s restantes")
+                        if remaining % 60 == 0:  # Mostrar cada minuto
+                            self.signals.log_message.emit(f"⏳ Esperando tiempo mínimo: {remaining//60} minutos restantes")
                         continue
                 
                 # REGLA 3: Verificar datos suficientes
@@ -335,7 +455,7 @@ class LiveTrader(QThread):
                                         
                                         # Si Groq dice que espere, evaluar confianza
                                         if not timing_analysis['is_optimal'] and timing_analysis['wait_time'] > 0:
-                                            # Si la confianza es decente (>=55%), operar de todos modos
+                                            # Si la confianza es aceptable (>=55%), operar de todos modos
                                             if timing_analysis['confidence'] >= 0.55:
                                                 self.signals.log_message.emit(f"⚡ Confianza aceptable ({timing_analysis['confidence']*100:.0f}%), operando sin esperar")
                                             else:
@@ -343,20 +463,28 @@ class LiveTrader(QThread):
                                                 self.signals.log_message.emit(f"👁️ Registrando oportunidad para aprendizaje observacional...")
                                                 
                                                 # Registrar oportunidad no ejecutada
-                                                self.observational_learner.observe_opportunity(
-                                                    opportunity_data={
-                                                        'asset': self.current_asset,
-                                                        'action': best_opportunity['action'],
-                                                        'score': best_opportunity['score'],
-                                                        'confidence': timing_analysis['confidence'],
-                                                        'entry_price': last_candle['close'],
-                                                        'state_before': df.iloc[-10:].copy() if len(df) >= 10 else None
-                                                    },
-                                                    reason_not_executed=f"Groq: {timing_analysis['reasoning']}"
-                                                )
+                                                # Solo registrar si hay suficientes datos
+                                                if len(df) >= 10:
+                                                    self.observational_learner.observe_opportunity(
+                                                        opportunity_data={
+                                                            'asset': self.current_asset,
+                                                            'action': best_opportunity['action'],
+                                                            'score': best_opportunity['score'],
+                                                            'confidence': timing_analysis['confidence'],
+                                                            'entry_price': last_candle['close'],
+                                                            'state_before': df.iloc[-10:].copy()
+                                                        },
+                                                        reason_not_executed=f"Groq: {timing_analysis['reasoning']}"
+                                                    )
                                                 
-                                                self.signals.log_message.emit(f"⏳ Esperando {timing_analysis['wait_time']}s para entrada óptima...")
-                                                time.sleep(min(timing_analysis['wait_time'], 60))  # Máximo 60s
+                                                wait_time = min(timing_analysis['wait_time'], 60)
+                                                self.signals.log_message.emit(f"⏳ Esperando {wait_time}s para entrada óptima...")
+                                                
+                                                # Esperar en intervalos cortos para no congelar la GUI
+                                                for _ in range(int(wait_time)):
+                                                    if not self.running:
+                                                        break
+                                                    time.sleep(1)
                                                 continue
                                 except Exception as e:
                                     self.signals.log_message.emit(f"⚠️ Error en análisis de timing: {e}")
@@ -370,50 +498,172 @@ class LiveTrader(QThread):
                                 llm_advice=best_opportunity['action']
                             )
                             
+                            # 🎯 EMITIR ANÁLISIS AL GRÁFICO PROFESIONAL
+                            try:
+                                # Extraer score de rentabilidad si está disponible
+                                profitability_score = 0
+                                for reason in validation.get('reasons', []):
+                                    if 'Score:' in reason and '/100' in reason:
+                                        import re
+                                        match = re.search(r'Score:\s*(\d+)/100', reason)
+                                        if match:
+                                            profitability_score = float(match.group(1))
+                                            break
+                                
+                                self.signals.decision_analysis.emit(validation, profitability_score)
+                            except Exception as emit_error:
+                                print(f"[ERROR] Error emitiendo análisis: {emit_error}")
+                            
                             # 5. MOSTRAR ANÁLISIS
                             summary = self.decision_validator.get_summary(validation)
                             for line in summary.split('\n'):
                                 self.signals.log_message.emit(line)
                             
-                            # 6. EJECUTAR SOLO SI ES VÁLIDO Y TIMING ES BUENO
+                            # 6. ANÁLISIS DE ESTRUCTURA DE MERCADO (VE TODO EL PANORAMA)
                             if validation['valid']:
-                                # 🧠 NUEVO: ANÁLISIS DE INTELIGENCIA PRE-TRADE (SUPER INTELLIGENCE)
-                                self.signals.log_message.emit("\n🧠 Ejecutando Análisis de Super Inteligencia...")
-                                pre_trade_analysis = self.trade_intelligence.evaluate_trade_opportunity(
-                                    df=df,
-                                    asset=self.current_asset,
-                                    proposed_action=validation['recommendation']
-                                )
+                                self.signals.log_message.emit("\n📊 ANALIZANDO ESTRUCTURA COMPLETA DEL MERCADO...")
                                 
-                                if not pre_trade_analysis['approved']:
-                                    self.signals.log_message.emit(f"⛔ OPERACIÓN BLOQUEADA POR IA: {pre_trade_analysis['reason']}")
+                                try:
+                                    # Analizar estructura completa
+                                    market_analysis = self.market_structure_analyzer.analyze_full_context(df)
                                     
-                                    # Mostrar detalles si existen
-                                    if pre_trade_analysis.get('knowledge_analysis'):
-                                        ka = pre_trade_analysis['knowledge_analysis']
-                                        self.signals.log_message.emit(f"   📚 Memoria: {ka['advice']}")
+                                    # Mostrar análisis legible
+                                    readable_analysis = self.market_structure_analyzer.get_human_readable_analysis(market_analysis)
+                                    for line in readable_analysis.split('\n'):
+                                        self.signals.log_message.emit(line)
                                     
-                                    if pre_trade_analysis.get('consensus_analysis'):
-                                        ca = pre_trade_analysis['consensus_analysis']
-                                        self.signals.log_message.emit(f"   🤖 Consenso: {ca['consensus']} (Confianza: {ca['confidence']*100:.0f}%)")
-                                        self.signals.log_message.emit(f"   🗣️ Razón: {ca['reasoning']}")
+                                    # Verificar señal de entrada
+                                    entry_signal = market_analysis['entry_signal']
                                     
-                                    # Registrar observación y continuar
-                                    self.observational_learner.observe_opportunity(
-                                        opportunity_data={
-                                            'asset': self.current_asset,
-                                            'action': best_opportunity['action'],
-                                            'score': best_opportunity['score'],
-                                            'confidence': pre_trade_analysis['confidence'],
-                                            'entry_price': last_candle['close'],
-                                            'state_before': df.iloc[-10:].copy() if len(df) >= 10 else None
-                                        },
-                                        reason_not_executed=f"Super IA: {pre_trade_analysis['reason']}"
+                                    if not entry_signal['should_enter']:
+                                        if entry_signal['should_wait']:
+                                            self.signals.log_message.emit("\n⏳ ESPERANDO MOMENTO ÓPTIMO - No es el despegue todavía")
+                                            for warning in entry_signal['warnings']:
+                                                self.signals.log_message.emit(f"   ⚠️ {warning}")
+                                        else:
+                                            self.signals.log_message.emit("\n❌ CONDICIONES NO FAVORABLES - Cancelando operación")
+                                        
+                                        # Registrar como oportunidad observada
+                                        self.observational_learner.record_missed_opportunity(
+                                            asset=self.current_asset,
+                                            df=df,
+                                            reason=f"Estructura de mercado: {', '.join(entry_signal['warnings'])}",
+                                            recommended_action=validation['recommendation']
+                                        )
+                                        continue
+                                    
+                                    # Verificar que la dirección coincida
+                                    if entry_signal['direction'] != validation['recommendation']:
+                                        # Calcular diferencia de confianza
+                                        structure_confidence = entry_signal['confidence']
+                                        validation_confidence = validation['confidence']
+                                        confidence_diff = abs(structure_confidence - validation_confidence)
+                                        
+                                        self.signals.log_message.emit(f"\n⚠️ CONFLICTO DE SEÑALES:")
+                                        self.signals.log_message.emit(f"   Estructura dice: {entry_signal['direction']} ({structure_confidence}%)")
+                                        self.signals.log_message.emit(f"   Validación dice: {validation['recommendation']} ({validation_confidence}%)")
+                                        
+                                        # Si la diferencia es mayor a 15%, usar la señal con mayor confianza
+                                        if confidence_diff >= 15:
+                                            if structure_confidence > validation_confidence:
+                                                self.signals.log_message.emit(f"   ✅ Usando señal de ESTRUCTURA (mayor confianza: +{confidence_diff}%)")
+                                                validation['recommendation'] = entry_signal['direction']
+                                                validation['confidence'] = structure_confidence
+                                            else:
+                                                self.signals.log_message.emit(f"   ✅ Usando señal de VALIDACIÓN (mayor confianza: +{confidence_diff}%)")
+                                        else:
+                                            self.signals.log_message.emit(f"   ❌ Confianzas similares (diff: {confidence_diff}%), cancelando por seguridad")
+                                            continue
+                                    
+                                    self.signals.log_message.emit(f"\n✅ ESTRUCTURA CONFIRMA: {entry_signal['direction']} con {entry_signal['confidence']}% confianza")
+                                    
+                                except Exception as e:
+                                    self.signals.log_message.emit(f"⚠️ Error en análisis de estructura: {e}")
+                                    self.signals.log_message.emit("   Continuando con validación estándar...")
+                                
+                                # 🎯 FILTROS INTELIGENTES: Consultar datos históricos (PROTEGIDO)
+                                self.signals.log_message.emit("\n🎯 VALIDACIÓN CON DATOS HISTÓRICOS")
+                                
+                                should_trade = True
+                                filter_reason = "Validación básica OK"
+                                
+                                try:
+                                    # Extraer condiciones actuales
+                                    current_conditions = {
+                                        'rsi': float(last_candle.get('rsi', 0)),
+                                        'macd': float(last_candle.get('macd', 0)),
+                                        'volatility': float(last_candle.get('volatility', 0)),
+                                        'trend': 'bullish' if validation['recommendation'] == 'CALL' else 'bearish'
+                                    }
+                                    
+                                    # Detectar patrón (simplificado)
+                                    pattern_type = None
+                                    rsi = current_conditions['rsi']
+                                    if rsi < 30:
+                                        pattern_type = 'rsi_oversold'
+                                    elif rsi > 70:
+                                        pattern_type = 'rsi_overbought'
+                                    
+                                    # Aplicar filtros inteligentes (con timeout)
+                                    should_trade, filter_reason = self.intelligent_filters.should_trade(
+                                        asset=self.current_asset,
+                                        pattern_type=pattern_type,
+                                        current_conditions=current_conditions
+                                    )
+                                    
+                                    self.signals.log_message.emit(f"   {filter_reason}")
+                                    
+                                except Exception as e:
+                                    # Si falla la BD, continuar sin filtros (no bloquear)
+                                    self.signals.log_message.emit(f"   ⚠️ Filtros no disponibles: {e}")
+                                    should_trade = True
+                                    filter_reason = "Filtros omitidos por error"
+                                
+                                if not should_trade:
+                                    self.signals.log_message.emit("⏸️ Operación cancelada por filtros inteligentes")
+                                    
+                                    # 👁️ Registrar como oportunidad no ejecutada para aprendizaje
+                                    self.observational_learner.record_missed_opportunity(
+                                        asset=self.current_asset,
+                                        df=df,
+                                        reason=filter_reason,
+                                        recommended_action=validation['recommendation']
                                     )
                                     continue
                                 
-                                # Si pasa la Super Inteligencia, proceder
-                                self.signals.log_message.emit(f"✅ APROBADO POR SUPER IA (Confianza: {pre_trade_analysis['confidence']*100:.0f}%)")
+                                # Ajustar confianza mínima basándose en historial
+                                recommended_confidence = self.intelligent_filters.get_recommended_confidence(
+                                    self.current_asset
+                                )
+                                self.signals.log_message.emit(f"   💡 Confianza recomendada: {recommended_confidence*100:.0f}%")
+                                
+                                # 🎓 ENTRENAMIENTO PARALELO: Analizar oportunidad (NO BLOQUEA)
+                                if self.market_data.account_type == 'REAL':
+                                    try:
+                                        # Ejecutar en background para no bloquear
+                                        import threading
+                                        def analyze_parallel():
+                                            try:
+                                                parallel_analysis = self.parallel_trainer.analyze_opportunity(
+                                                    asset=self.current_asset,
+                                                    df=df.copy(),
+                                                    real_decision=validation['recommendation']
+                                                )
+                                                
+                                                if parallel_analysis and parallel_analysis.get('comparison', {}).get('should_explore'):
+                                                    alternatives = parallel_analysis['comparison']['alternatives']
+                                                    self.signals.log_message.emit(f"\n🎓 ENTRENAMIENTO: Explorando {len(alternatives)} estrategias alternativas")
+                                                    for alt in alternatives:
+                                                        self.signals.log_message.emit(f"   • {alt['strategy'].upper()}: {alt['direction'].upper()} ({alt['confidence']*100:.0f}% confianza)")
+                                            except Exception as e:
+                                                print(f"[WARNING] Error en análisis paralelo: {e}")
+                                        
+                                        # Ejecutar en thread separado
+                                        thread = threading.Thread(target=analyze_parallel, daemon=True)
+                                        thread.start()
+                                        
+                                    except Exception as e:
+                                        print(f"[WARNING] Error iniciando análisis paralelo: {e}")
                                 
                                 # Determinar tiempo de expiración según configuración
                                 if Config.AUTO_EXPIRATION:
@@ -425,16 +675,14 @@ class LiveTrader(QThread):
                                     expiration = Config.MANUAL_EXPIRATION
                                     self.signals.log_message.emit(f"⏱️ Expiración manual: {expiration} min (configurado por usuario)")
                                 
+                                # ⚠️ VERIFICACIÓN FINAL: NO ejecutar si hay operaciones activas
+                                if self.active_trades:
+                                    self.signals.log_message.emit(f"⏸️ Operación pendiente - Esperando a que termine la operación activa (ID: {self.active_trades[0]['id']})")
+                                    continue
+                                
                                 direction = "call" if validation['recommendation'] == 'CALL' else "put"
                                 self.signals.trade_signal.emit(validation['recommendation'], self.current_asset)
-                                self.execute_trade(
-                                    asset=self.current_asset, 
-                                    direction=direction, 
-                                    signal_price=last_candle['close'], 
-                                    df_current=df, 
-                                    expiration_minutes=expiration,
-                                    ai_confidence=pre_trade_analysis['confidence']
-                                )
+                                self.execute_trade(self.current_asset, direction, last_candle['close'], df, expiration)
                             else:
                                 self.signals.log_message.emit("⏸️ Operación cancelada - Esperando mejor oportunidad")
                         else:
@@ -460,72 +708,23 @@ class LiveTrader(QThread):
         print("[DEBUG] Bucle principal terminado")
         self.signals.log_message.emit("⏹️ Bot detenido")
 
-    def execute_trade(self, asset, direction, signal_price, df_current=None, expiration_minutes=1, ai_confidence=0.7):
-        """
-        Ejecuta una operación con Lógica de Entrada Inteligente (Smart Entry).
-        Espera hasta 10-15 segundos por un mejor precio (pullback) antes de entrar.
-        Ajusta parámetros según confianza de la IA.
-        """
+    def execute_trade(self, asset, direction, current_price, df_current=None, expiration_minutes=1):
+        # 🆕 MEJORA 1: Verificar cooldown por activo
+        if asset in self.last_trade_per_asset:
+            time_since_last = time.time() - self.last_trade_per_asset[asset]
+            if time_since_last < self.cooldown_per_asset:
+                remaining = int(self.cooldown_per_asset - time_since_last)
+                self.signals.log_message.emit(f"⏳ Cooldown activo para {asset}: {remaining}s restantes")
+                return
+        
+        # 🆕 MEJORA 5: Verificar límite de operaciones por hora
+        current_time = time.time()
+        self.trades_this_hour = [t for t in self.trades_this_hour if current_time - t < 3600]
+        if len(self.trades_this_hour) >= self.max_trades_per_hour:
+            self.signals.log_message.emit(f"⏸️ Límite de {self.max_trades_per_hour} operaciones/hora alcanzado")
+            return
+        
         amount = self.risk_manager.get_trade_amount()
-        
-        # Ajustar parámetros según confianza de IA
-        wait_time = 10
-        pullback_threshold = 0.01 # 0.01%
-        
-        if ai_confidence >= 0.85:
-            wait_time = 5 # Entrar rápido si hay mucha confianza
-            pullback_threshold = 0.005 # Pullback mínimo
-            self.signals.log_message.emit(f"🧠 SMART ENTRY (Agresivo): Confianza alta ({ai_confidence*100:.0f}%)")
-        elif ai_confidence <= 0.65:
-            wait_time = 15 # Esperar más si hay dudas
-            pullback_threshold = 0.02 # Exigir mejor precio
-            self.signals.log_message.emit(f"🧠 SMART ENTRY (Conservador): Confianza moderada ({ai_confidence*100:.0f}%)")
-        else:
-            self.signals.log_message.emit(f"🧠 SMART ENTRY (Normal): Buscando mejor entrada...")
-            
-        # Lógica de espera (Smart Entry)
-        better_price_found = False
-        entry_price = signal_price
-        
-        # Esperar
-        start_wait = time.time()
-        while time.time() - start_wait < wait_time:
-            try:
-                # Obtener precio actual en tiempo real
-                current_candle = self.market_data.get_candles(asset, 1, 1) # 1 segundo
-                if current_candle.empty:
-                    time.sleep(0.5)
-                    continue
-                    
-                current_price = current_candle.iloc[-1]['close']
-                
-                # Calcular mejora
-                if direction == 'call':
-                    # Para CALL, queremos precio MÁS BAJO (pullback)
-                    if current_price < signal_price:
-                        improvement = (signal_price - current_price) / signal_price * 100
-                        if improvement >= pullback_threshold:
-                            self.signals.log_message.emit(f"⚡ Pullback detectado (-{improvement:.3f}%) - Entrando ahora!")
-                            entry_price = current_price
-                            better_price_found = True
-                            break
-                else:
-                    # Para PUT, queremos precio MÁS ALTO (pullback)
-                    if current_price > signal_price:
-                        improvement = (current_price - signal_price) / signal_price * 100
-                        if improvement >= pullback_threshold:
-                            self.signals.log_message.emit(f"⚡ Pullback detectado (+{improvement:.3f}%) - Entrando ahora!")
-                            entry_price = current_price
-                            better_price_found = True
-                            break
-                            
-                time.sleep(0.5)
-            except:
-                break
-        
-        if not better_price_found:
-            self.signals.log_message.emit("⏱️ Tiempo de espera finalizado - Entrando a precio de mercado")
-            
         self.signals.log_message.emit(f"🚀 Ejecutando {direction.upper()} en {asset}")
         self.signals.log_message.emit(f"   Monto: ${amount:.2f}")
         self.signals.log_message.emit(f"   Expiración: {expiration_minutes} min")
@@ -562,9 +761,93 @@ class LiveTrader(QThread):
             self.signals.log_message.emit(f"✅ Operación REAL ejecutada en {self.market_data.broker_name.upper()}")
             self.signals.log_message.emit(f"🆔 Order ID: {trade_id}")
             
+            # 🆕 MEJORA 1 & 5: Registrar operación
+            self.last_trade_per_asset[asset] = time.time()
+            self.trades_this_hour.append(time.time())
+            
+            # 🎯 GUARDAR EN BASE DE DATOS
+            trade_uuid = None
+            try:
+                # Extraer contexto del mercado
+                market_context = {}
+                if df_current is not None and not df_current.empty:
+                    last_row = df_current.iloc[-1]
+                    market_context = {
+                        'rsi': float(last_row.get('rsi', 0)),
+                        'macd': float(last_row.get('macd', 0)),
+                        'macd_signal': float(last_row.get('macd_signal', 0)),
+                        'sma_20': float(last_row.get('sma_20', 0)),
+                        'sma_50': float(last_row.get('sma_50', 0)),
+                        'bb_upper': float(last_row.get('bb_upper', 0)),
+                        'bb_lower': float(last_row.get('bb_lower', 0)),
+                        'volatility': float(last_row.get('volatility', 0))
+                    }
+                
+                # Datos del trade para la BD
+                trade_data = {
+                    'trade_id': str(trade_id),
+                    'asset': asset,
+                    'direction': direction,
+                    'amount': float(amount),
+                    'duration': expiration_minutes,
+                    'entry_price': float(current_price),
+                    'exit_price': None,
+                    'result': None,
+                    'profit': None,
+                    'profit_pct': None,
+                    'entry_time': datetime.now(),
+                    'exit_time': None,
+                    'market_context': json.dumps(market_context),
+                    'rl_confidence': getattr(self, 'last_rl_confidence', None),
+                    'llm_analysis': getattr(self, 'last_llm_analysis', None),
+                    'decision_score': getattr(self, 'last_decision_score', None),
+                    'broker': self.market_data.broker_name,
+                    'account_type': self.market_data.account_type,
+                    'session_id': None
+                }
+                
+                # Guardar en BD en segundo plano para no bloquear GUI
+                import threading
+                def save_trade_async():
+                    try:
+                        # Timeout de 5 segundos para guardar
+                        import signal
+                        
+                        def timeout_handler(signum, frame):
+                            raise TimeoutError("Timeout guardando en BD")
+                        
+                        # Solo en sistemas Unix (no Windows)
+                        try:
+                            signal.signal(signal.SIGALRM, timeout_handler)
+                            signal.alarm(5)
+                        except:
+                            pass  # Windows no soporta SIGALRM
+                        
+                        trade_uuid = db.save_trade(trade_data)
+                        
+                        try:
+                            signal.alarm(0)  # Cancelar alarma
+                        except:
+                            pass
+                        
+                        if trade_uuid:
+                            self.signals.log_message.emit(f"💾 Trade guardado en BD: {trade_uuid}")
+                    except TimeoutError:
+                        self.signals.log_message.emit(f"⚠️ Timeout guardando en BD (continuando sin BD)")
+                    except Exception as e:
+                        self.signals.log_message.emit(f"⚠️ Error guardando en BD: {e} (continuando sin BD)")
+                
+                thread = threading.Thread(target=save_trade_async, daemon=True)
+                thread.start()
+                # NO ESPERAR al thread - continuar inmediatamente
+                
+            except Exception as e:
+                self.signals.log_message.emit(f"⚠️ Error preparando guardado: {e}")
+            
             # Guardar operación activa
             self.active_trades.append({
                 "id": trade_id,
+                "uuid": trade_uuid,  # UUID de la BD
                 "asset": asset,
                 "direction": direction,
                 "entry_time": time.time(),
@@ -578,6 +861,7 @@ class LiveTrader(QThread):
             
             # Registrar tiempo de la operación
             self.last_trade_time = time.time()
+            self.trades_last_hour.append(time.time())  # Agregar a contador de operaciones por hora
             
         except Exception as e:
             self.signals.error_message.emit(f"❌ Error ejecutando operación: {e}")
@@ -610,40 +894,76 @@ class LiveTrader(QThread):
 
     def process_trade_result(self, trade):
         """Procesa el resultado REAL del broker."""
+        # PROTECCIÓN TOTAL: Envolver TODO en try-except para evitar que el bot se cierre
         try:
             print(f"\n[DEBUG] Iniciando process_trade_result para trade ID: {trade.get('id')}")
             self.signals.log_message.emit(f"📊 Verificando resultado de operación {trade['id']}...")
+            print("[DEBUG] Entrando al try principal")
             
-            profit = 0
-            result_status = "unknown"
+            # PROTECCIÓN: Verificar que aún estamos conectados
+            if not self.market_data.is_really_connected():
+                self.signals.error_message.emit("⚠️ Conexión perdida al verificar resultado")
+                self.signals.log_message.emit("🔄 Intentando reconectar antes de obtener resultado...")
+                
+                email = Config.EXNOVA_EMAIL if self.market_data.broker_name == "exnova" else Config.IQ_EMAIL
+                password = Config.EXNOVA_PASSWORD if self.market_data.broker_name == "exnova" else Config.IQ_PASSWORD
+                
+                if not self.market_data.reconnect(email, password):
+                    self.signals.error_message.emit("❌ No se pudo reconectar, usando cálculo por precio")
+                    profit = self._calculate_profit_by_price(trade)
+                    result_status = "win" if profit > 0 else "loose"
+                    won = profit > 0
+                    # Continuar con el procesamiento básico
+                    self._process_basic_result(trade, won, profit)
+                    # NO HACER RETURN - El bot debe continuar operando
+                    self.signals.log_message.emit("♾️ Bot continuará monitoreando oportunidades...")
+                else:
+                    # Reconexión exitosa, continuar normalmente
+                    pass
             
             # Obtener resultado REAL del broker
             if trade.get('real_trade', False):
-                # Intentar hasta 3 veces obtener el resultado
-                for attempt in range(3):
+                # Operación real - obtener resultado del broker
+                if self.market_data.broker_name == "exnova":
+                    # Exnova usa check_win_v4 con timeout integrado
                     try:
-                        print(f"[DEBUG] Intento {attempt+1} de verificar resultado...")
-                        result_status, profit = self.market_data.api.check_win_v4(trade['id'])
+                        print("[DEBUG] Llamando a check_win_v4 con timeout de 90s...")
+                        self.signals.log_message.emit(f"🔍 Consultando resultado a Exnova...")
                         
-                        if result_status: # Si retornó algo válido
+                        # check_win_v4 ahora tiene timeout integrado (90 segundos)
+                        result_status, profit = self.market_data.api.check_win_v4(trade['id'], timeout=90)
+                        
+                        # Verificar si hubo timeout (retorna None, None)
+                        if result_status is None:
+                            print("[DEBUG] Timeout en check_win_v4, usando cálculo por precio")
+                            self.signals.log_message.emit("⏱️ Timeout consultando resultado, calculando por precio...")
+                            profit = self._calculate_profit_by_price(trade)
+                            result_status = "win" if profit > 0 else "loose"
+                        else:
                             print(f"[DEBUG] Resultado recibido: {result_status}, Profit: {profit}")
                             self.signals.log_message.emit(f"📊 Resultado de Exnova: {result_status}, Profit: ${profit:.2f}")
-                            break
-                        else:
-                            print("[DEBUG] check_win_v4 retornó None/False, reintentando...")
-                            time.sleep(2)
+                            
                     except Exception as e:
-                        print(f"[DEBUG] Error en intento {attempt+1}: {e}")
-                        time.sleep(2)
-                
-                # Si después de 3 intentos no hay resultado, usar fallback
-                if not result_status or result_status == "unknown":
-                    print("⚠️ No se pudo obtener resultado del broker, usando cálculo local (Fallback)")
-                    self.signals.log_message.emit("⚠️ Usando verificación local (API no respondió)")
-                    profit = self._calculate_profit_by_price(trade)
-                    result_status = "win" if profit > 0 else "loose"
+                        print(f"[DEBUG] Exception en check_win_v4: {e}")
+                        self.signals.error_message.emit(f"⚠️ Error obteniendo resultado de Exnova: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Fallback: calcular por precio
+                        profit = self._calculate_profit_by_price(trade)
+                        result_status = "win" if profit > 0 else "loose"
+                else:
+                    # IQ Option usa check_win_v3
+                    try:
+                        profit = self.market_data.api.check_win_v3(trade['id'])
+                        result_status = "win" if profit > 0 else ("loose" if profit < 0 else "equal")
+                        self.signals.log_message.emit(f"📊 Resultado de IQ Option: Profit: ${profit:.2f}")
+                    except Exception as e:
+                        self.signals.error_message.emit(f"⚠️ Error obteniendo resultado de IQ: {e}")
+                        # Fallback: calcular por precio
+                        profit = self._calculate_profit_by_price(trade)
+                        result_status = "win" if profit > 0 else "loose"
             else:
-                # Operación simulada
+                # Operación simulada (no debería llegar aquí)
                 profit = self._calculate_profit_by_price(trade)
                 result_status = "win" if profit > 0 else "loose"
             
@@ -658,6 +978,62 @@ class LiveTrader(QThread):
             exit_candle = {'close': exit_price}
             print(f"[DEBUG] Exit price: {exit_price}")
             
+            # 🎯 ACTUALIZAR RESULTADO EN BASE DE DATOS (EN SEGUNDO PLANO)
+            try:
+                if trade.get('uuid'):
+                    result_str = 'win' if won else 'loss'
+                    
+                    # Preparar datos para guardar
+                    trade_id = str(trade['id'])
+                    trade_uuid = trade['uuid']
+                    
+                    # Guardar en BD de forma simple y rápida (sin bloquear)
+                    import threading
+                    def update_db_async():
+                        try:
+                            # Actualizar resultado en BD
+                            db.update_trade_result(
+                                trade_id=trade_id,
+                                result=result_str,
+                                exit_price=float(exit_price),
+                                profit=float(profit),
+                                exit_time=datetime.now()
+                            )
+                            
+                            print(f"[DEBUG] Resultado actualizado en BD")
+                            
+                            # 🧠 GUARDAR EXPERIENCIA DE APRENDIZAJE
+                            if trade.get('state_before') is not None:
+                                experience_data = {
+                                    'trade_id': trade_uuid,
+                                    'state': json.dumps({
+                                        'entry_price': float(trade['entry_price']),
+                                        'rsi': float(trade.get('df_before', pd.DataFrame()).iloc[-1].get('rsi', 0)) if trade.get('df_before') is not None else 0,
+                                        'macd': float(trade.get('df_before', pd.DataFrame()).iloc[-1].get('macd', 0)) if trade.get('df_before') is not None else 0
+                                    }),
+                                    'action': trade['direction'],
+                                    'action_confidence': getattr(self, 'last_rl_confidence', 0),
+                                    'reward': 1.0 if won else -1.0,
+                                    'next_state': json.dumps({'exit_price': float(exit_price)}),
+                                    'was_correct': won,
+                                    'error_type': None if won else 'loss',
+                                    'lesson': f"{'Ganó' if won else 'Perdió'} en {trade['asset']} con {trade['direction']}",
+                                    'should_avoid': not won,
+                                    'model_version': 'v1.0'
+                                }
+                                db.save_experience(experience_data)
+                                print(f"[DEBUG] Experiencia guardada para aprendizaje")
+                        except Exception as e:
+                            print(f"[DEBUG] Error actualizando BD: {e} (continuando sin BD)")
+                    
+                    # Lanzar thread daemon que no bloquea el cierre
+                    thread = threading.Thread(target=update_db_async, daemon=True)
+                    thread.start()
+                    # NO ESPERAR al thread - continuar inmediatamente
+                        
+            except Exception as e:
+                self.signals.log_message.emit(f"⚠️ Error actualizando BD: {e}")
+            
             # Mostrar resultado
             print(f"[DEBUG] Mostrando resultado: {'GANADA' if won else 'PERDIDA'}")
             if won:
@@ -670,8 +1046,6 @@ class LiveTrader(QThread):
                 self.signals.log_message.emit(f"✅ Racha de pérdidas reseteada")
             else:
                 self.signals.log_message.emit(f"❌ PERDIDA: ${profit:.2f}")
-                
-
                 
                 # Incrementar contador de pérdidas consecutivas
                 self.consecutive_losses += 1
@@ -691,27 +1065,41 @@ class LiveTrader(QThread):
                     self.signals.log_message.emit(f"⚠️ Análisis: {analysis['reason']} -> NO Martingala.")
                     
                 self.risk_manager.update_trade_result(profit, analysis)
-                
-                # Mostrar cooldown
-                if self.consecutive_losses == 1:
-                    self.signals.log_message.emit(f"⏳ Cooldown: 5 minutos antes de la próxima operación")
-                elif self.consecutive_losses >= 2:
-                    self.signals.log_message.emit(f"⚠️ {self.consecutive_losses} pérdidas consecutivas")
-                    self.signals.log_message.emit(f"⏳ Cooldown extendido: 10 minutos antes de la próxima operación")
+            
+            # Emitir señal de actualización de estadísticas
+            losses = self.risk_manager.total_trades - self.risk_manager.wins
+            self.signals.stats_update.emit(
+                self.risk_manager.wins,
+                losses,
+                self.risk_manager.daily_pnl
+            )
+            
+            # Mostrar cooldown
+            if self.consecutive_losses == 1:
+                self.signals.log_message.emit(f"⏳ Cooldown: 5 minutos antes de la próxima operación")
+            elif self.consecutive_losses >= 2:
+                self.signals.log_message.emit(f"⚠️ {self.consecutive_losses} pérdidas consecutivas")
+                self.signals.log_message.emit(f"⏳ Cooldown extendido: 10 minutos antes de la próxima operación")
         
-            # Emitir actualización de estadísticas
-            wins = self.risk_manager.wins
-            total = self.risk_manager.total_trades
-            losses = total - wins
-            pnl = self.risk_manager.daily_pnl
-            self.signals.stats_update.emit(wins, losses, pnl)
-
         except Exception as e:
             print(f"[DEBUG] ERROR EN PROCESO PRINCIPAL: {e}")
             self.signals.error_message.emit(f"❌ Error procesando resultado: {e}")
             import traceback
             traceback.print_exc()
-            return
+            
+            # PROTECCIÓN: No detener el bot por error en procesamiento
+            self.signals.log_message.emit("⚠️ Error procesando resultado, pero el bot continuará")
+            
+            # Intentar al menos actualizar el balance
+            try:
+                balance = self.market_data.get_balance()
+                self.signals.balance_update.emit(balance)
+            except:
+                pass
+            
+            # NO HACER RETURN - Continuar con el análisis aunque haya error
+            won = False
+            profit = 0
         
         # 🧠 INTELIGENCIA DE TRADING: Analizar operación
         print("[DEBUG] Iniciando análisis inteligente...")
@@ -784,14 +1172,7 @@ class LiveTrader(QThread):
                 # Aplicar recomendaciones de Groq/Ollama
                 self.trade_intelligence._apply_groq_recommendations()
         
-        except Exception as e:
-            print(f"[DEBUG] ERROR EN ANÁLISIS INTELIGENTE: {e}")
-            self.signals.log_message.emit(f"⚠️ Error en análisis inteligente: {e}")
-            import traceback
-            traceback.print_exc()
-        
-        # APRENDIZAJE CONTINUO: Agregar experiencia real
-        try:
+            # APRENDIZAJE CONTINUO: Agregar experiencia real
             print("[DEBUG] Guardando experiencia...")
             if trade.get('state_before') is not None:
                 # Obtener estado después
@@ -801,7 +1182,7 @@ class LiveTrader(QThread):
                     if not df_after.empty and len(df_after) >= 10:
                         state_after = df_after.iloc[-10:]
                         
-                            # Convertir dirección a acción
+                        # Convertir dirección a acción
                         action = 1 if trade['direction'] == 'call' else 2
                         
                         # Agregar experiencia
@@ -820,12 +1201,33 @@ class LiveTrader(QThread):
                         )
                         
                         self.signals.log_message.emit(f"📝 Experiencia guardada para aprendizaje continuo")
+            
+            print("[DEBUG] process_trade_result completado")
+        
         except Exception as e:
-            print(f"\n[ERROR] Error guardando experiencia: {e}")
+            print(f"[DEBUG] ERROR EN ANÁLISIS INTELIGENTE: {e}")
+            self.signals.log_message.emit(f"⚠️ Error en análisis inteligente: {e}")
             import traceback
             traceback.print_exc()
         
-        print("[DEBUG] process_trade_result completado")
+        # PROTECCIÓN FINAL: Capturar cualquier excepción no manejada en toda la función
+        except Exception as fatal_error:
+            print(f"\n[FATAL ERROR] Error crítico en process_trade_result: {fatal_error}")
+            self.signals.error_message.emit(f"❌ Error crítico procesando resultado: {fatal_error}")
+            import traceback
+            traceback.print_exc()
+            
+            # IMPORTANTE: NO DETENER EL BOT - Solo registrar el error
+            self.signals.log_message.emit("⚠️ Error crítico, pero el bot continuará operando")
+            
+            # Intentar actualizar balance al menos
+            try:
+                balance = self.market_data.get_balance()
+                self.signals.balance_update.emit(balance)
+            except:
+                pass
+            
+            print("[DEBUG] Bot continuará a pesar del error crítico")
 
     
     def analyze_indicators(self, df):
@@ -924,34 +1326,41 @@ Indicadores actuales:
                 return -trade['amount']
         except:
             return -trade['amount']  # Asumir pérdida en caso de error
-    def _calculate_profit_by_price(self, trade):
-        """
-        Calcula el resultado de la operación basado en el precio actual (Fallback)
-        Se usa cuando la API del broker falla al verificar el resultado.
-        """
+
+    def _process_basic_result(self, trade, won, profit):
+        """Procesa resultado básico cuando hay problemas de conexión"""
         try:
-            # Obtener precio actual
-            df = self.market_data.get_candles(trade['asset'], Config.TIMEFRAME, 1)
-            if df.empty:
-                return 0.0
+            print(f"[DEBUG] Procesando resultado básico: won={won}, profit={profit}")
             
-            exit_price = df.iloc[-1]['close']
-            entry_price = trade['entry_price']
-            direction = trade['direction']
-            amount = trade['amount']
-            payout = 0.85  # Estimado conservador
-            
-            won = False
-            if direction == 'call':
-                won = exit_price > entry_price
-            else:
-                won = exit_price < entry_price
-                
+            # Mostrar resultado
             if won:
-                return amount * payout
+                self.signals.log_message.emit(f"✅ GANADA (estimado): +${profit:.2f}")
+                self.risk_manager.update_trade_result(profit)
+                self.consecutive_losses = 0
+                self.last_trade_result = 'win'
             else:
-                return -amount
-                
+                self.signals.log_message.emit(f"❌ PERDIDA (estimado): ${profit:.2f}")
+                self.consecutive_losses += 1
+                self.last_trade_result = 'loss'
+                self.risk_manager.update_trade_result(profit, {'should_martingale': False, 'reason': 'Conexión perdida'})
+            
+            # Emitir señal de actualización de estadísticas
+            losses = self.risk_manager.total_trades - self.risk_manager.wins
+            self.signals.stats_update.emit(
+                self.risk_manager.wins,
+                losses,
+                self.risk_manager.daily_pnl
+            )
+            
+            # Actualizar balance
+            try:
+                balance = self.market_data.get_balance()
+                self.signals.balance_update.emit(balance)
+            except:
+                pass
+            
+            self.signals.log_message.emit("⚠️ Resultado procesado en modo básico por problemas de conexión")
+            
         except Exception as e:
-            print(f"[ERROR] Error calculando profit por precio: {e}")
-            return 0.0
+            print(f"[ERROR] Error en _process_basic_result: {e}")
+            self.signals.error_message.emit(f"❌ Error en procesamiento básico: {e}")

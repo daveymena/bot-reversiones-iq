@@ -1,0 +1,192 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              TRADING BOT PRO - GUÍA DE INSTALACIÓN                ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+¡Gracias por elegir Trading Bot Pro!
+
+═══════════════════════════════════════════════════════════════════
+
+📦 INSTALACIÓN
+
+1. Ejecuta: TradingBotPro_Setup_v1.0.0.exe
+
+2. Sigue el asistente:
+   ✓ Acepta la licencia
+   ✓ Selecciona carpeta de instalación
+   ✓ Elige si quieres acceso directo en escritorio
+   ✓ Haz clic en "Instalar"
+
+3. ¡Listo! La aplicación se instalará automáticamente
+
+═══════════════════════════════════════════════════════════════════
+
+🚀 PRIMER USO
+
+1. Abre "Trading Bot Remote" desde el menú inicio
+
+2. Configuración del Servidor:
+   ┌─────────────────────────────────────────────────────┐
+   │ URL Backend: https://tu-bot.easypanel.host         │
+   │ [🔍 Probar Conexión]                                │
+   └─────────────────────────────────────────────────────┘
+   
+   ⚠️ Asegúrate de que tu bot esté desplegado en Easypanel
+
+3. Conexión al Broker:
+   ┌─────────────────────────────────────────────────────┐
+   │ Broker:   [Exnova ▼]                                │
+   │ Cuenta:   [PRACTICE ▼]  ← ¡Usa PRACTICE primero!   │
+   │ Email:    tu@email.com                              │
+   │ Password: ••••••••                                  │
+   │ [🔌 Conectar]                                        │
+   └─────────────────────────────────────────────────────┘
+
+4. Iniciar Bot:
+   ┌─────────────────────────────────────────────────────┐
+   │ Estado: ✅ Conectado a EXNOVA                       │
+   │ Balance: $10,000.00                                 │
+   │                                                     │
+   │ [▶️ Iniciar Bot]  [⏹️ Detener Bot]                  │
+   └─────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANTE - LEE ESTO
+
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│  ⚠️  USA SIEMPRE LA CUENTA PRACTICE PRIMERO                  │
+│                                                               │
+│  No uses dinero real hasta que:                              │
+│  ✓ Hayas probado el bot en PRACTICE                          │
+│  ✓ Entiendas cómo funciona                                   │
+│  ✓ Estés satisfecho con los resultados                       │
+│                                                               │
+│  El trading conlleva riesgos. Solo invierte lo que           │
+│  puedas permitirte perder.                                   │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 REQUISITOS DEL SISTEMA
+
+✓ Windows 10 o superior (64-bit)
+✓ 4 GB RAM mínimo (8 GB recomendado)
+✓ 100 MB espacio en disco
+✓ Conexión a internet estable
+✓ Bot desplegado en Easypanel
+
+═══════════════════════════════════════════════════════════════════
+
+🌐 CONFIGURAR SERVIDOR EN EASYPANEL
+
+Si aún no has desplegado el bot en Easypanel:
+
+1. Sube el código a GitHub
+
+2. En Easypanel:
+   ✓ Crea nuevo servicio
+   ✓ Conecta tu repositorio
+   ✓ Configura variables de entorno:
+     - EXNOVA_EMAIL
+     - EXNOVA_PASSWORD
+     - GROQ_API_KEY
+     - DATABASE_URL
+   ✓ Deploy
+
+3. Copia la URL del servicio (ej: https://tu-bot.easypanel.host)
+
+4. Usa esa URL en la aplicación desktop
+
+═══════════════════════════════════════════════════════════════════
+
+📚 CARACTERÍSTICAS
+
+✨ Reinforcement Learning (PPO)
+   El bot aprende de cada operación
+
+✨ Análisis con IA (Groq/Ollama)
+   Validación inteligente de decisiones
+
+✨ 6 Mejoras de Rentabilidad
+   - Cooldown por activo
+   - Detección de resistencias
+   - Confirmación de reversión
+   - Análisis de momentum
+   - Filtros de rentabilidad
+   - Verificación de volatilidad
+
+✨ Gestión de Riesgo
+   Stop Loss, Take Profit, Martingala inteligente
+
+✨ Aprendizaje Continuo
+   Se adapta automáticamente al mercado
+
+✨ Interfaz Moderna
+   Gráficos en tiempo real, logs detallados
+
+═══════════════════════════════════════════════════════════════════
+
+🆘 SOLUCIÓN DE PROBLEMAS
+
+❌ "No se pudo conectar al backend"
+   → Verifica que la URL sea correcta
+   → Verifica que el bot esté corriendo en Easypanel
+   → Verifica tu conexión a internet
+
+❌ "No se pudo conectar al broker"
+   → Verifica tus credenciales
+   → Verifica que el broker esté disponible
+   → Intenta con cuenta PRACTICE primero
+
+❌ "El bot no ejecuta operaciones"
+   → Es normal, el bot es muy selectivo
+   → Espera condiciones óptimas del mercado
+   → Revisa los logs para ver por qué rechaza operaciones
+
+❌ Windows Defender bloquea el ejecutable
+   → Es normal para aplicaciones sin firma digital
+   → Haz clic en "Más información" → "Ejecutar de todas formas"
+   → O agrega excepción en Windows Defender
+
+═══════════════════════════════════════════════════════════════════
+
+📞 SOPORTE
+
+🌐 Sitio Web:     https://github.com/tu-usuario/trading-bot
+📧 Email:         soporte@tradingbotpro.com
+💬 Discord:       discord.gg/tradingbotpro
+📖 Documentación: github.com/tu-usuario/trading-bot/wiki
+
+═══════════════════════════════════════════════════════════════════
+
+📝 NOTAS LEGALES
+
+Este software se proporciona "tal cual", sin garantía de ningún tipo.
+El uso de este software es bajo tu propio riesgo.
+
+El trading de opciones binarias conlleva riesgos significativos.
+Solo invierte dinero que puedas permitirte perder.
+
+El autor no se hace responsable de pérdidas financieras.
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 ¡DISFRUTA TRADING BOT PRO!
+
+Recuerda:
+✓ Empieza con PRACTICE
+✓ Aprende cómo funciona
+✓ Sé paciente
+✓ Gestiona tu riesgo
+
+═══════════════════════════════════════════════════════════════════
+
+Trading Bot Pro v1.0.0
+Copyright © 2025 Trading Bot Pro Team
+Todos los derechos reservados
+
+═══════════════════════════════════════════════════════════════════

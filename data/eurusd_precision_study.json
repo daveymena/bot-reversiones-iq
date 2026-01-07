@@ -1,0 +1,79 @@
+[
+  {
+    "timestamp": "18:41:26",
+    "price": 1.157405,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 0.00036999999999998145,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:42:07",
+    "price": 1.157215,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 9.999999999843467e-06,
+    "streak": 2
+  },
+  {
+    "timestamp": "18:43:09",
+    "price": 1.156995,
+    "type": "\ud83d\udfe2 SUBE",
+    "strength": 2.999999999997449e-05,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:44:10",
+    "price": 1.157885,
+    "type": "\ud83d\udfe2 SUBE",
+    "strength": 0.00024000000000001798,
+    "streak": 2
+  },
+  {
+    "timestamp": "18:45:12",
+    "price": 1.158105,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 1.0000000000065512e-05,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:46:03",
+    "price": 1.158385,
+    "type": "\ud83d\udfe2 SUBE",
+    "strength": 2.999999999997449e-05,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:47:05",
+    "price": 1.158155,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 4.999999999988347e-05,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:48:07",
+    "price": 1.158015,
+    "type": "\ud83d\udfe2 SUBE",
+    "strength": 0.00012999999999996348,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:49:08",
+    "price": 1.158235,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 0.00016000000000016001,
+    "streak": 1
+  },
+  {
+    "timestamp": "18:50:10",
+    "price": 1.157555,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 0.00016000000000016001,
+    "streak": 2
+  },
+  {
+    "timestamp": "18:51:12",
+    "price": 1.157345,
+    "type": "\ud83d\udd34 BAJA",
+    "strength": 0.00011999999999989797,
+    "streak": 3
+  }
+]

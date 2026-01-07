@@ -70,9 +70,9 @@ class ExperienceBuffer:
             with open(self.save_path.replace('.csv', '.json'), 'w') as f:
                 json.dump(self.experiences, f, indent=2)
             
-            print(f"✅ {len(self.experiences)} experiencias guardadas")
+            print(f"{len(self.experiences)} experiencias guardadas")
         except Exception as e:
-            print(f"⚠️ Error guardando experiencias: {e}")
+            print(f"Error guardando experiencias: {e}")
     
     def load(self):
         """Carga experiencias desde disco"""
@@ -81,11 +81,11 @@ class ExperienceBuffer:
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     self.experiences = json.load(f)
-                print(f"✅ {len(self.experiences)} experiencias cargadas")
+                print(f"{len(self.experiences)} experiencias cargadas")
             else:
-                print("ℹ️ No hay experiencias previas")
+                print("No hay experiencias previas")
         except Exception as e:
-            print(f"⚠️ Error cargando experiencias: {e}")
+            print(f"Error cargando experiencias: {e}")
             self.experiences = []
     
     def get_statistics(self):

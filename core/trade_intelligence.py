@@ -5,7 +5,6 @@ Por qué ganó, por qué perdió, qué debe mejorar
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from core.knowledge_base import KnowledgeBase
 
 class TradeIntelligence:
     """
@@ -17,88 +16,22 @@ class TradeIntelligence:
         self.winning_patterns = []
         self.losing_patterns = []
         self.llm_client = llm_client  # Cliente Groq para análisis inteligente
-        self.knowledge_base = KnowledgeBase() # Base de conocimientos
         
         # Configuración adaptativa
         self.recommended_min_confidence = 0.70
         self.recommended_wait_time = 0
         self.recommended_score_threshold = 50
         
-    def evaluate_trade_opportunity(self, df, asset, proposed_action):
-        """
-        🔮 ANÁLISIS PRE-TRADE
-        Evalúa si se debe tomar la operación basándose en historia y consenso.
-        
-        Returns:
-            dict: {
-                'approved': bool,
-                'confidence': float,
-                'reason': str,
-                'risk_level': str,
-                'knowledge_analysis': dict,
-                'consensus_analysis': dict
-            }
-        """
-        if df.empty:
-            return {'approved': False, 'reason': "Datos insuficientes"}
-            
-        context = self._extract_context_from_df(df)
-        
-        # 1. Consultar Base de Conocimientos
-        kb_analysis = self.knowledge_base.get_win_probability(context)
-        
-        # Si la probabilidad histórica es muy baja (<30%), rechazar inmediatamente
-        if kb_analysis['similar_count'] >= 3 and kb_analysis['probability'] < 0.3:
-            return {
-                'approved': False,
-                'confidence': 0.0,
-                'reason': f"⛔ RECHAZADO POR MEMORIA: {kb_analysis['advice']}",
-                'risk_level': 'HIGH',
-                'knowledge_analysis': kb_analysis,
-                'consensus_analysis': None
-            }
-            
-        # 2. Consultar Consenso Multi-Agente (si hay LLM)
-        consensus_analysis = None
-        if self.llm_client:
-            market_summary = self._generate_market_summary(df, context)
-            consensus_analysis = self.llm_client.get_consensus_decision(market_summary, asset)
-            
-            # Si el consenso es HOLD, rechazar
-            if consensus_analysis['consensus'] == 'HOLD':
-                return {
-                    'approved': False,
-                    'confidence': consensus_analysis['confidence'],
-                    'reason': f"⛔ RECHAZADO POR CONSENSO: {consensus_analysis['reasoning']}",
-                    'risk_level': 'HIGH',
-                    'knowledge_analysis': kb_analysis,
-                    'consensus_analysis': consensus_analysis
-                }
-                
-            # Verificar dirección
-            if consensus_analysis['consensus'] != proposed_action:
-                return {
-                    'approved': False,
-                    'confidence': 0,
-                    'reason': f"⛔ CONTRADICCIÓN: Consenso dice {consensus_analysis['consensus']} pero señal es {proposed_action}",
-                    'risk_level': 'HIGH',
-                    'knowledge_analysis': kb_analysis,
-                    'consensus_analysis': consensus_analysis
-                }
-        
-        # Si pasa todos los filtros
-        return {
-            'approved': True,
-            'confidence': consensus_analysis['confidence'] if consensus_analysis else 0.8,
-            'reason': "✅ APROBADO: Memoria y Consenso positivos",
-            'risk_level': 'LOW',
-            'knowledge_analysis': kb_analysis,
-            'consensus_analysis': consensus_analysis
-        }
-
     def analyze_trade_result(self, trade_data, result):
         """
         Analiza una operación completada y aprende de ella
+        
+        Args:
+            trade_data: dict con datos de la operación
+            result: dict con resultado (won, profit, etc.)
+            
+        Returns:
+            dict: Análisis completo con recomendaciones
         """
         analysis = {
             'timestamp': datetime.now().isoformat(),
@@ -140,46 +73,11 @@ class TradeIntelligence:
         # Guardar en historial
         self.trade_history.append(analysis)
         
-        # 🧠 GUARDAR EN BASE DE CONOCIMIENTOS
-        try:
-            context = self._extract_context_from_df(trade_data.get('df_before'))
-            self.knowledge_base.add_experience(context, result, analysis)
-        except Exception as e:
-            print(f"⚠️ Error guardando en KnowledgeBase: {e}")
-        
         # Limitar historial a últimas 100 operaciones
         if len(self.trade_history) > 100:
             self.trade_history = self.trade_history[-100:]
         
         return analysis
-    
-    def _extract_context_from_df(self, df):
-        """Extrae contexto normalizado del DataFrame"""
-        if df is None or df.empty:
-            return {}
-            
-        last = df.iloc[-1]
-        return {
-            'rsi': float(last.get('rsi', 50)),
-            'macd': float(last.get('macd', 0)),
-            'bb_position': self._get_bb_position(last),
-            'trend': self._get_trend(df),
-            'momentum': self._get_momentum(df),
-            'volatility': self._get_volatility(df)
-        }
-        
-    def _generate_market_summary(self, df, context):
-        """Genera un resumen legible para el LLM"""
-        last = df.iloc[-1]
-        return f"""
-        Precio: {last['close']:.5f}
-        RSI: {context['rsi']:.1f}
-        MACD: {context['macd']:.5f}
-        Tendencia: {context['trend']}
-        Momentum: {context['momentum']}
-        Volatilidad: {context['volatility']}
-        Posición BB: {context['bb_position']}
-        """
     
     def _extract_pattern(self, trade_data):
         """Extrae el patrón de la operación"""
@@ -524,41 +422,41 @@ class TradeIntelligence:
         
         # Preparar contexto para Groq
         context = f"""
-        Eres un analista experto de trading de opciones binarias. Analiza esta operación:
-        
-        OPERACIÓN:
-        - Dirección: {pattern.get('direction', 'N/A').upper()}
-        - Activo: {pattern.get('asset', 'N/A')}
-        - Resultado: {'GANÓ' if result['won'] else 'PERDIÓ'}
-        - Profit: ${result['profit']:.2f}
-        
-        INDICADORES EN EL MOMENTO DE ENTRADA:
-        - RSI: {pattern.get('rsi', 'N/A')}
-        - MACD: {pattern.get('macd', 'N/A')}
-        - Posición en BB: {pattern.get('bb_position', 'N/A')}
-        - Tendencia: {pattern.get('trend', 'N/A')}
-        - Volatilidad: {pattern.get('volatility', 'N/A')}
-        - Momentum: {pattern.get('momentum', 'N/A')}
-        
-        ANÁLISIS REQUERIDO:
-        1. ¿Por qué {'ganó' if result['won'] else 'perdió'}? (análisis profundo)
-        2. ¿Qué debió hacer diferente? (si perdió)
-        3. ¿Qué hizo bien? (si ganó)
-        4. ¿Qué ajustes recomiendas para futuras operaciones?
-        5. ¿Qué patrón específico debe {'replicar' if result['won'] else 'evitar'}?
-        
-        Responde en formato JSON:
-        {{
-            "analisis_profundo": "explicación detallada",
-            "factor_clave": "el factor más importante",
-            "error_principal": "si perdió, cuál fue el error" o null,
-            "acierto_principal": "si ganó, cuál fue el acierto" o null,
-            "ajuste_confianza": "aumentar/mantener/reducir",
-            "ajuste_timing": "esperar_mas/mantener/entrar_rapido",
-            "patron_identificado": "descripción del patrón",
-            "recomendacion_especifica": "acción concreta para mejorar"
-        }}
-        """
+Eres un analista experto de trading de opciones binarias. Analiza esta operación:
+
+OPERACIÓN:
+- Dirección: {pattern.get('direction', 'N/A').upper()}
+- Activo: {pattern.get('asset', 'N/A')}
+- Resultado: {'GANÓ' if result['won'] else 'PERDIÓ'}
+- Profit: ${result['profit']:.2f}
+
+INDICADORES EN EL MOMENTO DE ENTRADA:
+- RSI: {pattern.get('rsi', 'N/A')}
+- MACD: {pattern.get('macd', 'N/A')}
+- Posición en BB: {pattern.get('bb_position', 'N/A')}
+- Tendencia: {pattern.get('trend', 'N/A')}
+- Volatilidad: {pattern.get('volatility', 'N/A')}
+- Momentum: {pattern.get('momentum', 'N/A')}
+
+ANÁLISIS REQUERIDO:
+1. ¿Por qué {'ganó' if result['won'] else 'perdió'}? (análisis profundo)
+2. ¿Qué debió hacer diferente? (si perdió)
+3. ¿Qué hizo bien? (si ganó)
+4. ¿Qué ajustes recomiendas para futuras operaciones?
+5. ¿Qué patrón específico debe {'replicar' if result['won'] else 'evitar'}?
+
+Responde en formato JSON:
+{{
+    "analisis_profundo": "explicación detallada",
+    "factor_clave": "el factor más importante",
+    "error_principal": "si perdió, cuál fue el error" o null,
+    "acierto_principal": "si ganó, cuál fue el acierto" o null,
+    "ajuste_confianza": "aumentar/mantener/reducir",
+    "ajuste_timing": "esperar_mas/mantener/entrar_rapido",
+    "patron_identificado": "descripción del patrón",
+    "recomendacion_especifica": "acción concreta para mejorar"
+}}
+"""
         
         try:
             # Intentar con Groq primero

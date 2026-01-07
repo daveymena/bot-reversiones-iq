@@ -1,0 +1,15 @@
+LICENCIA DE USO - TRADING BOT PRO
+
+Copyright (c) 2025 Trading Bot Pro
+
+Este software se proporciona "tal cual", sin garantía de ningún tipo.
+El uso de este software es bajo tu propio riesgo.
+
+TÉRMINOS DE USO:
+
+1. Este software es para uso personal o comercial.
+2. No se permite la redistribución sin autorización.
+3. El autor no se hace responsable de pérdidas financieras.
+4. Usa siempre la cuenta PRACTICE antes de operar con dinero real.
+
+Para soporte, visita: https://github.com/tu-usuario/trading-bot

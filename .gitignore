@@ -1,111 +1,37 @@
-# ============================================
-# ARCHIVOS DE CONFIGURACIÓN SENSIBLES
-# ============================================
-.env
-*.env
-!.env.example
-
-# ============================================
-# PYTHON
-# ============================================
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# ============================================
-# ENTORNOS VIRTUALES
-# ============================================
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# ============================================
-# JUPYTER NOTEBOOK
-# ============================================
-.ipynb_checkpoints
-
-# ============================================
-# LOGS Y BASES DE DATOS
-# ============================================
+*.pyc
+*.pyo
 *.log
-*.db
-*.sqlite
-*.sqlite3
+fix_env.py
+debug_conn.py
 
-# ============================================
-# MODELOS ENTRENADOS (opcional)
-# ============================================
-models/*.zip
-*.h5
-*.pkl
-temp_iqoption/
+# Archivos grandes
+*.exe
+*.msi
+*.dmg
+OllamaSetup.exe
+trading/
+
+# Build
+build/
+dist/
 *.spec
+installer_output/
+temp/
+env_installer/
 
-# ============================================
-# DATOS TEMPORALES
-# ============================================
-data/experiences.pkl
-data/temp/
-*.tmp
-*.bak
+# Environment
+.env
+venv/
+env/
 
-# ============================================
+# Data
+data/experiences.json
+data/experiences_backup.json
+models/*.zip
+
 # IDE
-# ============================================
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-
-# ============================================
-# SISTEMA OPERATIVO
-# ============================================
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ============================================
-# EXCEL Y REPORTES
-# ============================================
-*.xlsx
-*.xls
-~$*.xlsx
-~$*.xls
-
-# ============================================
-# ARCHIVOS GRANDES / INSTALADORES
-# ============================================
-*.exe
-OllamaSetup.exe
-
-# ============================================
-# OTROS
-# ============================================
-.pytest_cache/
-.coverage
-htmlcov/
-*.cover
-.hypothesis/

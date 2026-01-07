@@ -1,19 +1,7 @@
 import pandas as pd
-try:
-    from stable_baselines3 import PPO
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    STABLE_BASELINES_AVAILABLE = True
-except ImportError:
-    print("⚠️ stable-baselines3 no disponible. AutoTrainer deshabilitado.")
-    PPO = None
-    DummyVecEnv = None
-    STABLE_BASELINES_AVAILABLE = False
-
-try:
-    from env.trading_env import BinaryOptionsEnv
-except ImportError:
-    BinaryOptionsEnv = None
-    
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv
+from env.trading_env import BinaryOptionsEnv
 from strategies.technical import FeatureEngineer
 from config import Config
 import os

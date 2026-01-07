@@ -1,0 +1,68 @@
+========================================
+  TRADING BOT - LEE ESTO PRIMERO
+========================================
+
+CONFIGURACION ACTUAL:
+- Monto: $1 por operacion
+- Martingala: DESHABILITADA
+- Horario: 7:00 AM - 11:00 AM
+- Aprendizaje: ACTIVO
+- Cuenta: REAL (dinero real)
+
+========================================
+COMO INICIAR:
+========================================
+
+1. Doble clic en: start.bat
+
+2. El bot:
+   - Esperara hasta las 7:00 AM
+   - Verificara volatilidad
+   - Operara hasta las 11:00 AM
+   - Se detendra automaticamente
+
+========================================
+IMPORTANTE:
+========================================
+
+✓ Solo opera $1 por vez
+✓ NO duplica apuestas
+✓ Opera solo 2.5 horas al dia
+✓ Aprende continuamente
+✓ Se detiene automaticamente
+
+========================================
+DOCUMENTACION:
+========================================
+
+- RESUMEN_EJECUTIVO.md
+  Resumen completo del bot
+
+- INSTRUCCIONES_RAPIDAS.txt
+  Guia rapida de uso
+
+- SISTEMA_APRENDIZAJE_ACTIVO.md
+  Como aprende el bot
+
+- CHECKLIST_VERIFICACION.md
+  Lista de verificacion
+
+========================================
+SOPORTE:
+========================================
+
+Si hay problemas:
+1. Lee CHECKLIST_VERIFICACION.md
+2. Verifica .env tenga:
+   CAPITAL_PER_TRADE=1
+   MAX_MARTINGALE=0
+3. Revisa los logs en consola
+
+Si hay error en experiences.json:
+- Ejecuta: REPARAR_EXPERIENCES.bat
+
+========================================
+
+TODO LISTO - EJECUTA: start.bat
+
+========================================

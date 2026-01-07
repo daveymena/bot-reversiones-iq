@@ -1,0 +1,101 @@
+========================================
+  TRADING BOT - INSTRUCCIONES RAPIDAS
+========================================
+
+CONFIGURACION ACTUAL:
+- Monto: $1 por operacion
+- Martingala: DESHABILITADA
+- Horario: 7:00 AM - 11:00 AM
+- Broker: Exnova (REAL)
+
+========================================
+COMO EJECUTAR:
+========================================
+
+1. Doble clic en: start.bat
+
+   O tambien:
+   EJECUTAR_BOT_CONSOLA.bat
+
+   O desde consola:
+   python main_console.py
+
+2. El bot esperara hasta las 7:00 AM
+
+3. Entre 7:00-7:30 verificara volatilidad
+
+4. Operara hasta las 11:00 AM
+
+5. Se detendra automaticamente
+
+========================================
+PARA DETENER MANUALMENTE:
+========================================
+
+Presiona: Ctrl + C
+
+========================================
+QUE ESPERAR:
+========================================
+
+ANTES DE 7:00 AM:
+  "Esperando horario de inicio..."
+
+7:00-7:30 AM:
+  "Verificando volatilidad..."
+  "Iniciando operaciones..."
+
+7:30-11:00 AM:
+  "Escaneando oportunidades..."
+  "Ejecutando CALL/PUT - Monto: $1.00"
+  "GANADA: +$0.85" o "PERDIDA: -$1.00"
+
+11:00 AM:
+  "Horario finalizado"
+  "Resumen de la sesion"
+
+========================================
+SEGURIDAD:
+========================================
+
+✓ Solo opera $1 por vez
+✓ NO duplica apuestas (sin martingala)
+✓ Solo opera 2.5 horas al dia
+✓ Verifica volatilidad antes de empezar
+✓ Se detiene automaticamente
+
+========================================
+APRENDIZAJE CONTINUO:
+========================================
+
+✓ El bot SIGUE entrenando mientras opera
+✓ Guarda cada operacion en experiences.json
+✓ Re-entrena cada 20 operaciones
+✓ Mejora automaticamente con el tiempo
+✓ NO afecta monto ni martingala
+
+Ver detalles: SISTEMA_APRENDIZAJE_ACTIVO.md
+
+========================================
+ARCHIVOS IMPORTANTES:
+========================================
+
+EJECUTAR_BOT_CONSOLA.bat  - Ejecutar bot
+.env                      - Configuracion
+RESUMEN_CAMBIOS_FINALES.md - Detalles completos
+CONFIGURACION_HORARIO.md   - Info de horarios
+
+========================================
+SOPORTE:
+========================================
+
+Si hay problemas:
+1. Verifica que .env tenga:
+   CAPITAL_PER_TRADE=1
+   MAX_MARTINGALE=0
+
+2. Revisa los logs en consola
+
+3. Lee RESUMEN_CAMBIOS_FINALES.md
+
+========================================

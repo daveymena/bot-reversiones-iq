@@ -1,0 +1,6 @@
+# Dependencias para GUI de escritorio (cliente remoto)
+PySide6==6.6.0
+PySide6-Addons==6.6.0
+PySide6-Essentials==6.6.0
+requests==2.31.0
+pyqtgraph==0.13.3

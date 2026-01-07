@@ -3,22 +3,9 @@ Continuous Learner - Aprende continuamente de operaciones reales
 """
 import numpy as np
 import pandas as pd
-
-try:
-    from stable_baselines3 import PPO
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    STABLE_BASELINES_AVAILABLE = True
-except ImportError:
-    print("⚠️ stable-baselines3 no disponible. Aprendizaje continuo deshabilitado.")
-    PPO = None
-    DummyVecEnv = None
-    STABLE_BASELINES_AVAILABLE = False
-
-try:
-    from env.trading_env import BinaryOptionsEnv
-except ImportError:
-    BinaryOptionsEnv = None
-    
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv
+from env.trading_env import BinaryOptionsEnv
 from core.experience_buffer import ExperienceBuffer
 
 class ContinuousLearner:
@@ -46,6 +33,8 @@ class ContinuousLearner:
         # IMPORTANTE: Inicializar con el número de experiencias cargadas para evitar bucle
         self.last_retrain_count = len(self.experience_buffer.experiences)
         self.retraining_in_progress = False  # Flag para evitar re-entrenamientos simultáneos
+        self.last_retrain_time = 0  # Timestamp del último re-entrenamiento
+        self.retrain_cooldown = 300  # Cooldown de 5 minutos (300s) después de re-entrenar
         
     def add_real_trade_experience(self, state_before, action, profit, state_after, metadata=None):
         """
@@ -118,19 +107,19 @@ class ContinuousLearner:
         if self.retraining_in_progress:
             print("⚠️ Re-entrenamiento ya en progreso, saltando...")
             return False
-        
+
         try:
             self.retraining_in_progress = True
-            
+
             # Obtener experiencias recientes
             experiences = self.experience_buffer.get_recent_experiences(500)
-            
+
             if len(experiences) < self.min_experiences_to_train:
                 print(f"⚠️ Pocas experiencias ({len(experiences)}), se necesitan al menos {self.min_experiences_to_train}")
                 return False
-            
+
             print(f"📊 Preparando {len(experiences)} experiencias para entrenamiento...")
-            
+
             # Estadísticas ANTES del re-entrenamiento
             stats = self.experience_buffer.get_statistics()
             print(f"\n📊 Estadísticas ANTES del re-entrenamiento:")
@@ -139,23 +128,38 @@ class ContinuousLearner:
             print(f"   Perdidas: {stats['losses']}")
             print(f"   Win Rate: {stats['win_rate']:.1f}%")
             print(f"   Profit Total: ${stats['total_profit']:.2f}")
-            
-            # Si el win rate es muy bajo, re-entrenar con datos frescos
-            if stats['win_rate'] < self.min_win_rate * 100:
-                print(f"\n⚠️ Win rate bajo ({stats['win_rate']:.1f}%), re-entrenando con datos frescos...")
-                result = self.retrain_with_fresh_data()
-                
-                # Actualizar contador de último re-entrenamiento
+
+            # Evaluar si necesita re-entrenamiento
+            evaluation = self.evaluate_performance()
+            if not evaluation['should_retrain']:
+                print(f"\n✅ Rendimiento aceptable, no se necesita re-entrenamiento")
                 self.last_retrain_count = len(self.experience_buffer.experiences)
-                return result
-            
-            # Si el win rate es aceptable, solo mostrar estadísticas
-            print(f"\n✅ Win rate aceptable ({stats['win_rate']:.1f}%), continuando...")
-            
-            # Actualizar contador
+                return True
+
+            # Intentar re-entrenamiento inteligente basado en experiencias
+            print(f"\n🧠 Intentando re-entrenamiento inteligente...")
+
+            # Si hay suficientes experiencias de calidad, entrenar con ellas
+            if len(experiences) >= 100:
+                success = self._train_on_experiences(experiences)
+                if success:
+                    print("✅ Re-entrenamiento con experiencias exitoso")
+                    self.last_retrain_count = len(self.experience_buffer.experiences)
+                    return True
+
+            # Fallback: re-entrenar con datos frescos
+            print(f"⚠️ Re-entrenamiento con experiencias falló o insuficiente, usando datos frescos...")
+            result = self.retrain_with_fresh_data()
+
+            # Actualizar contador de último re-entrenamiento
             self.last_retrain_count = len(self.experience_buffer.experiences)
-            return True
             
+            # IMPORTANTE: Actualizar timestamp del último re-entrenamiento
+            import time
+            self.last_retrain_time = time.time()
+            
+            return result
+
         except Exception as e:
             print(f"❌ Error en re-entrenamiento: {e}")
             import traceback
@@ -189,32 +193,38 @@ class ContinuousLearner:
             if df_processed.empty:
                 print("❌ Error procesando indicadores")
                 return False
-            
+
             print(f"✅ Indicadores calculados ({df_processed.shape[1]} features)")
             
             # Crear entorno
             env = DummyVecEnv([lambda: BinaryOptionsEnv(
-                df=df_processed,
-                window_size=10,
-                initial_balance=1000
+                data=df_processed,
+                feature_engineer=self.feature_engineer
             )])
             
-            # Re-entrenar
-            print(f"🎓 Re-entrenando por {self.retrain_timesteps} pasos...")
-            
+            # Re-entrenar con timeout de seguridad
+            print(f"🎓 Re-entrenando por {self.retrain_timesteps} pasos (con timeout)...")
+
             # Actualizar entorno del agente
             self.agent.env = env
-            
+
+            # Timeout más corto para re-entrenamiento (2 minutos máximo)
+            timeout_seconds = 120
+
             # Si el modelo existe, continuar entrenamiento
             if self.agent.model is not None:
                 print("📦 Actualizando modelo existente...")
                 self.agent.model.set_env(env)
-                self.agent.model.learn(total_timesteps=self.retrain_timesteps)
+                # Entrenar directamente
+                success = self.agent.train(timesteps=self.retrain_timesteps, timeout_seconds=timeout_seconds)
             else:
                 print("📦 Creando nuevo modelo...")
                 # Crear nuevo modelo
-                self.agent.create_model()
-                self.agent.train(timesteps=self.retrain_timesteps)
+                success = self.agent.train(timesteps=self.retrain_timesteps, timeout_seconds=timeout_seconds)
+
+            if not success:
+                print("⚠️ Re-entrenamiento falló, pero continuando con modelo anterior...")
+                return False
             
             # Guardar
             print("💾 Guardando modelo...")
@@ -232,7 +242,12 @@ class ContinuousLearner:
             # IMPORTANTE: Actualizar contador para evitar bucle
             self.last_retrain_count = len(self.experience_buffer.experiences)
             
-            print("🔄 Continuando operaciones normales...\n")
+            # IMPORTANTE: Actualizar timestamp del último re-entrenamiento
+            import time
+            self.last_retrain_time = time.time()
+            
+            print(f"🔄 Continuando operaciones normales...")
+            print(f"⏳ Cooldown de {self.retrain_cooldown}s activado para evitar bucle\n")
             
             return True
             
@@ -285,27 +300,41 @@ class ContinuousLearner:
             else:
                 break
         
-        # CRITERIO 1: Win rate muy bajo
-        if recent_win_rate < self.min_win_rate * 100:
+        # CRITERIO 1: Win rate muy bajo (más estricto)
+        if recent_win_rate < 35:  # Reducido de 40% a 35%
             result['should_retrain'] = True
-            result['reason'] = f"Win rate bajo ({recent_win_rate:.0f}% < {self.min_win_rate*100:.0f}%)"
-            result['action'] = 'RETRAIN'
+            result['reason'] = f"Win rate crítico ({recent_win_rate:.0f}% < 35%)"
+            result['action'] = 'RETRAIN_URGENT'
             return result
-        
-        # CRITERIO 2: Muchas pérdidas consecutivas
-        if consecutive_losses >= self.max_consecutive_losses:
+
+        # CRITERIO 2: Muchas pérdidas consecutivas (más sensible)
+        if consecutive_losses >= 4:  # Reducido de 5 a 4
             result['should_retrain'] = True
             result['reason'] = f"{consecutive_losses} pérdidas consecutivas"
             result['action'] = 'RETRAIN_URGENT'
             return result
-        
-        # CRITERIO 3: Profit negativo en últimas 10 ops
+
+        # CRITERIO 3: Profit negativo significativo
         recent_profit = sum(exp['reward'] for exp in recent)
-        if recent_profit < -50:  # Perdió más de $50
+        if recent_profit < -30:  # Reducido de -50 a -30
             result['should_retrain'] = True
-            result['reason'] = f"Profit negativo (${recent_profit:.2f})"
+            result['reason'] = f"Profit negativo reciente (${recent_profit:.2f})"
             result['action'] = 'RETRAIN'
             return result
+
+        # CRITERIO 4: Tendencia negativa (nuevo)
+        if len(recent) >= 15:
+            # Calcular win rate en últimas 5 vs primeras 10
+            first_10 = recent[:10]
+            last_5 = recent[-5:]
+            first_win_rate = (sum(1 for exp in first_10 if exp['reward'] > 0) / len(first_10)) * 100
+            last_win_rate = (sum(1 for exp in last_5 if exp['reward'] > 0) / len(last_5)) * 100
+
+            if last_win_rate < first_win_rate - 15:  # Caída de al menos 15%
+                result['should_retrain'] = True
+                result['reason'] = f"Tendencia negativa (Win rate: {first_win_rate:.0f}% → {last_win_rate:.0f}%)"
+                result['action'] = 'RETRAIN'
+                return result
         
         # Todo bien
         result['reason'] = f"Rendimiento aceptable (Win rate: {recent_win_rate:.0f}%)"
@@ -319,6 +348,14 @@ class ContinuousLearner:
         Returns:
             tuple: (should_pause: bool, reason: str)
         """
+        import time
+        
+        # COOLDOWN: No pausar si acabamos de re-entrenar recientemente
+        time_since_retrain = time.time() - self.last_retrain_time
+        if time_since_retrain < self.retrain_cooldown:
+            remaining = int(self.retrain_cooldown - time_since_retrain)
+            return False, f"⏳ Cooldown post-entrenamiento: {remaining}s restantes"
+        
         stats = self.experience_buffer.get_statistics()
         
         # No hay suficientes datos

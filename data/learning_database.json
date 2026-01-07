@@ -1,0 +1,4756 @@
+{
+  "operations": [
+    {
+      "timestamp": "2026-01-06T18:40:44.853324",
+      "opportunity": {
+        "asset": "EURJPY-OTC",
+        "timestamp": "2026-01-06 18:40:43.848361",
+        "movement": {
+          "bullish_candles": 22,
+          "bearish_candles": 28,
+          "total_movement_pct": -0.0905226282285225,
+          "reversals": 28,
+          "volatility_pct": 0.02906056848657146,
+          "trend": "LATERAL"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.5714285714285714,
+          "avg_bearish_duration_candles": 1.8666666666666667,
+          "total_streaks": 29,
+          "longest_bullish": 3,
+          "longest_bearish": 4,
+          "current_streak": {
+            "type": "bearish",
+            "length": 2,
+            "start_price": 182.097755,
+            "end_price": 182.043645
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 182.05563",
+          "details": {
+            "support_level": 182.055635,
+            "current_price": 182.043645,
+            "adx": 45.81188099988825,
+            "di_plus": 4.410522813931449,
+            "di_minus": 23.467768764236542,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 182.043645
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T18:42:38.840857",
+      "opportunity": {
+        "asset": "GBPUSD-OTC",
+        "timestamp": "2026-01-06 18:42:32.448230",
+        "movement": {
+          "bullish_candles": 21,
+          "bearish_candles": 29,
+          "total_movement_pct": -0.13219801480173007,
+          "reversals": 22,
+          "volatility_pct": 0.04331016964958635,
+          "trend": "BAJISTA"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.9090909090909092,
+          "avg_bearish_duration_candles": 2.4166666666666665,
+          "total_streaks": 23,
+          "longest_bullish": 4,
+          "longest_bearish": 6,
+          "current_streak": {
+            "type": "bearish",
+            "length": 5,
+            "start_price": 1.346085,
+            "end_price": 1.344685
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 1.34510",
+          "details": {
+            "support_level": 1.345105,
+            "current_price": 1.344685,
+            "adx": 26.466169221099786,
+            "di_plus": 13.991769547319263,
+            "di_minus": 23.182441700959743,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 1.344685
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T18:43:16.921682",
+      "opportunity": {
+        "asset": "GBPUSD-OTC",
+        "timestamp": "2026-01-06 18:43:10.455449",
+        "movement": {
+          "bullish_candles": 21,
+          "bearish_candles": 29,
+          "total_movement_pct": -0.1760020793494594,
+          "reversals": 21,
+          "volatility_pct": 0.049422642815188794,
+          "trend": "BAJISTA"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.9090909090909092,
+          "avg_bearish_duration_candles": 2.6363636363636362,
+          "total_streaks": 22,
+          "longest_bullish": 4,
+          "longest_bearish": 6,
+          "current_streak": {
+            "type": "bearish",
+            "length": 6,
+            "start_price": 1.346085,
+            "end_price": 1.344205
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 1.34510",
+          "details": {
+            "support_level": 1.345105,
+            "current_price": 1.344205,
+            "adx": 27.56548552830773,
+            "di_plus": 13.492063492058271,
+            "di_minus": 26.455026455024278,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 1.344205
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T18:43:54.832252",
+      "opportunity": {
+        "asset": "GBPUSD-OTC",
+        "timestamp": "2026-01-06 18:43:48.589306",
+        "movement": {
+          "bullish_candles": 21,
+          "bearish_candles": 29,
+          "total_movement_pct": -0.19531032434139442,
+          "reversals": 21,
+          "volatility_pct": 0.05066793907474833,
+          "trend": "BAJISTA"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.9090909090909092,
+          "avg_bearish_duration_candles": 2.6363636363636362,
+          "total_streaks": 22,
+          "longest_bullish": 4,
+          "longest_bearish": 6,
+          "current_streak": {
+            "type": "bearish",
+            "length": 6,
+            "start_price": 1.346085,
+            "end_price": 1.343945
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 1.34510",
+          "details": {
+            "support_level": 1.345105,
+            "current_price": 1.343945,
+            "adx": 28.01465750065855,
+            "di_plus": 12.960609911049554,
+            "di_minus": 29.351969504445545,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 1.343945
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T18:44:32.825893",
+      "opportunity": {
+        "asset": "USDCAD-OTC",
+        "timestamp": "2026-01-06 18:44:29.113710",
+        "movement": {
+          "bullish_candles": 18,
+          "bearish_candles": 32,
+          "total_movement_pct": -0.5575908058514623,
+          "reversals": 25,
+          "volatility_pct": 0.21491251421915597,
+          "trend": "BAJISTA"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.3846153846153846,
+          "avg_bearish_duration_candles": 2.4615384615384617,
+          "total_streaks": 26,
+          "longest_bullish": 3,
+          "longest_bearish": 5,
+          "current_streak": {
+            "type": "bearish",
+            "length": 3,
+            "start_price": 1.388395,
+            "end_price": 1.385725
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 1.38660",
+          "details": {
+            "support_level": 1.386595,
+            "current_price": 1.385725,
+            "adx": 44.54909269084778,
+            "di_plus": 4.268049461508144,
+            "di_minus": 41.72317510969116,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 1.385725
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T18:45:10.723632",
+      "opportunity": {
+        "asset": "GBPUSD-OTC",
+        "timestamp": "2026-01-06 18:45:04.456994",
+        "movement": {
+          "bullish_candles": 20,
+          "bearish_candles": 30,
+          "total_movement_pct": -0.18189850063664945,
+          "reversals": 23,
+          "volatility_pct": 0.05625122871454788,
+          "trend": "BAJISTA"
+        },
+        "timing": {
+          "avg_bullish_duration_candles": 1.6666666666666667,
+          "avg_bearish_duration_candles": 2.5,
+          "total_streaks": 24,
+          "longest_bullish": 4,
+          "longest_bearish": 6,
+          "current_streak": {
+            "type": "bearish",
+            "length": 1,
+            "start_price": 1.344525,
+            "end_price": 1.344455
+          }
+        },
+        "strategy": {
+          "action": "PUT",
+          "confidence": 85,
+          "strategy": "Breakout Momentum (Bajista)",
+          "reason": "Ruptura de soporte 1.34510",
+          "details": {
+            "support_level": 1.345105,
+            "current_price": 1.344455,
+            "adx": 30.020982403381872,
+            "di_plus": 8.17120622567699,
+            "di_minus": 30.350194552526872,
+            "ma_alignment": "MAs alineadas bajista"
+          },
+          "expiration": 120
+        },
+        "current_price": 1.344455
+      },
+      "executed": false
+    },
+    {
+      "timestamp": "2026-01-06T20:58:26.697799",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 156.66045 con RSI 70.5",
+        "details": {
+          "price": 156.63875,
+          "resistance": 156.66045,
+          "rsi": 70.49315412722953,
+          "bb_high": 156.61428431153428
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.13219805800540554,
+        "reversals": 23,
+        "volatility_pct": 0.03299829210530095,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5,
+        "avg_bearish_duration_candles": 1.6666666666666667,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 156.55525,
+          "end_price": 156.63875
+        }
+      },
+      "current_price": 156.63875,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T20:58:55.541651",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 80,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 156.66345 con RSI 68.0",
+        "details": {
+          "price": 156.61055,
+          "resistance": 156.66345,
+          "rsi": 67.98290900395742,
+          "bb_high": 156.6065789733219
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.11417105009557751,
+        "reversals": 23,
+        "volatility_pct": 0.03191279053155188,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5,
+        "avg_bearish_duration_candles": 1.6666666666666667,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 156.55525,
+          "end_price": 156.61055
+        }
+      },
+      "current_price": 156.61055,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T20:59:24.515857",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.48865",
+        "details": {
+          "resistance_level": 156.48865,
+          "current_price": 156.63425,
+          "adx": 37.578388005549876,
+          "di_plus": 42.10055466094151,
+          "di_minus": 0.733583825370124,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 31,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.1279132465641424,
+        "reversals": 22,
+        "volatility_pct": 0.034971438786882504,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5833333333333335,
+        "avg_bearish_duration_candles": 1.7272727272727273,
+        "total_streaks": 23,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 156.55525,
+          "end_price": 156.63425
+        }
+      },
+      "current_price": 156.63425,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:01:17.414865",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.38326 con RSI 66.6",
+        "details": {
+          "price": 1.383165,
+          "resistance": 1.383265,
+          "rsi": 66.62289296006466,
+          "bb_high": 1.3843626569205547
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 26,
+        "bearish_candles": 23,
+        "total_movement_pct": -0.12491921770242578,
+        "reversals": 25,
+        "volatility_pct": 0.18869620401897494,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.8461538461538463,
+        "total_streaks": 26,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.382105,
+          "end_price": 1.383165
+        }
+      },
+      "current_price": 1.383165,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:01:45.749532",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.38299",
+        "details": {
+          "resistance_level": 1.382995,
+          "current_price": 1.384665,
+          "adx": 51.29117744036757,
+          "di_plus": 39.935513588209616,
+          "di_minus": 5.1589129433442045,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 26,
+        "bearish_candles": 23,
+        "total_movement_pct": -0.016607757266792967,
+        "reversals": 25,
+        "volatility_pct": 0.1928218843391245,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.8461538461538463,
+        "total_streaks": 26,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.382105,
+          "end_price": 1.384665
+        }
+      },
+      "current_price": 1.384665,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:02:43.156651",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 0.67356",
+        "details": {
+          "support_level": 0.673565,
+          "current_price": 0.673055,
+          "adx": 50.8116788005428,
+          "di_plus": 20.797720797718327,
+          "di_minus": 39.031339031333445,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 25,
+        "bearish_candles": 24,
+        "total_movement_pct": 0.011887514395032354,
+        "reversals": 30,
+        "volatility_pct": 0.07240378603707662,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 1.5625,
+        "total_streaks": 31,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 0.673315,
+          "end_price": 0.673055
+        }
+      },
+      "current_price": 0.673055,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:04:08.122635",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.16016 con RSI 34.4",
+        "details": {
+          "price": 1.160235,
+          "support": 1.160165,
+          "rsi": 34.429230995986714,
+          "bb_low": 1.1600594534749717
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": 0.021552002827610824,
+        "reversals": 20,
+        "volatility_pct": 0.112203996153246,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 21,
+        "longest_bullish": 7,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.160455,
+          "end_price": 1.160235
+        }
+      },
+      "current_price": 1.160235,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:04:36.087941",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.38712 con RSI 75.1",
+        "details": {
+          "price": 1.387075,
+          "resistance": 1.387115,
+          "rsi": 75.09090081881148,
+          "bb_high": 1.3877014605044657
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.37484758248636557,
+        "reversals": 27,
+        "volatility_pct": 0.21901669906125953,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.5714285714285714,
+        "total_streaks": 28,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.385725,
+          "end_price": 1.387075
+        }
+      },
+      "current_price": 1.387075,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:05:33.173740",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 156.66345 con RSI 66.5",
+        "details": {
+          "price": 156.64895,
+          "resistance": 156.66345,
+          "rsi": 66.53315820064404,
+          "bb_high": 156.6789387988653
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.07551231946438743,
+        "reversals": 22,
+        "volatility_pct": 0.041700900394480656,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5,
+        "avg_bearish_duration_candles": 1.8181818181818181,
+        "total_streaks": 23,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 156.54615,
+          "end_price": 156.64895
+        }
+      },
+      "current_price": 156.64895,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:08:20.094756",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.38299",
+        "details": {
+          "resistance_level": 1.382995,
+          "current_price": 1.384565,
+          "adx": 60.5874266963192,
+          "di_plus": 30.800821355236558,
+          "di_minus": 18.48049281314157,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.2614132973196167,
+        "reversals": 27,
+        "volatility_pct": 0.23049525191966547,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.5714285714285714,
+        "total_streaks": 28,
+        "longest_bullish": 7,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.382695,
+          "end_price": 1.384565
+        }
+      },
+      "current_price": 1.384565,
+      "executed": true,
+      "result": "win",
+      "id": 13490899254,
+      "expiration_time": 1767751830.852703,
+      "profit": 0.8500000000000001
+    },
+    {
+      "timestamp": "2026-01-06T21:08:49.519611",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.38299",
+        "details": {
+          "resistance_level": 1.382995,
+          "current_price": 1.384795,
+          "adx": 60.722334436832156,
+          "di_plus": 31.670721816707726,
+          "di_minus": 18.248175182481614,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.27806843814607035,
+        "reversals": 27,
+        "volatility_pct": 0.23106326834797264,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.5714285714285714,
+        "total_streaks": 28,
+        "longest_bullish": 7,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.382695,
+          "end_price": 1.384795
+        }
+      },
+      "current_price": 1.384795,
+      "executed": true,
+      "result": "loose",
+      "id": 13490900294,
+      "expiration_time": 1767751860.3384857,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-06T21:11:13.014755",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.16156",
+        "details": {
+          "support_level": 1.161565,
+          "current_price": 1.160865,
+          "adx": 33.170173459484666,
+          "di_plus": 23.483870967740625,
+          "di_minus": 27.741935483868822,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 29,
+        "total_movement_pct": 0.012061427125290573,
+        "reversals": 21,
+        "volatility_pct": 0.07564921935073084,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 5,
+          "start_price": 1.162055,
+          "end_price": 1.160865
+        }
+      },
+      "current_price": 1.160865,
+      "executed": true,
+      "result": "win",
+      "id": 13490907014,
+      "expiration_time": 1767752004.0302541,
+      "profit": 0.8700000000000001
+    },
+    {
+      "timestamp": "2026-01-06T21:15:59.688024",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.38712",
+        "details": {
+          "resistance_level": 1.387115,
+          "current_price": 1.387725,
+          "adx": 33.24880863195794,
+          "di_plus": 25.794768611669166,
+          "di_minus": 21.287726358148166,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.8297579388289811,
+        "reversals": 31,
+        "volatility_pct": 0.2661645702629909,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.875,
+        "avg_bearish_duration_candles": 1.25,
+        "total_streaks": 32,
+        "longest_bullish": 7,
+        "longest_bearish": 3,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.383615,
+          "end_price": 1.387725
+        }
+      },
+      "current_price": 1.387725,
+      "executed": true,
+      "result": "loose",
+      "id": 13490917857,
+      "expiration_time": 1767752290.5136259,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-06T21:19:48.606892",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67249 con RSI 33.6",
+        "details": {
+          "price": 0.672505,
+          "support": 0.672495,
+          "rsi": 33.627934814168995,
+          "bb_low": 0.6726429652372299
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 27,
+        "total_movement_pct": -0.16922859963334247,
+        "reversals": 24,
+        "volatility_pct": 0.07278802863155157,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.75,
+        "avg_bearish_duration_candles": 2.230769230769231,
+        "total_streaks": 25,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 0.673135,
+          "end_price": 0.672505
+        }
+      },
+      "current_price": 0.672505,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:20:16.912982",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 80,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67246 con RSI 33.8",
+        "details": {
+          "price": 0.672505,
+          "support": 0.672465,
+          "rsi": 33.828229955593045,
+          "bb_low": 0.6725507554289663
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 26,
+        "total_movement_pct": -0.1825643613586875,
+        "reversals": 23,
+        "volatility_pct": 0.07489552677104924,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.75,
+        "avg_bearish_duration_candles": 2.4166666666666665,
+        "total_streaks": 24,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 0.673135,
+          "end_price": 0.672505
+        }
+      },
+      "current_price": 0.672505,
+      "executed": true,
+      "result": "loose",
+      "id": 13490929082,
+      "expiration_time": 1767752547.7897332,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-06T21:20:46.103550",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 80,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67244 con RSI 33.1",
+        "details": {
+          "price": 0.672475,
+          "support": 0.672445,
+          "rsi": 33.06987810293539,
+          "bb_low": 0.6725425317135172
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 27,
+        "total_movement_pct": -0.18701715066011532,
+        "reversals": 23,
+        "volatility_pct": 0.07505201381868547,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.75,
+        "avg_bearish_duration_candles": 2.4166666666666665,
+        "total_streaks": 24,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 0.673135,
+          "end_price": 0.672475
+        }
+      },
+      "current_price": 0.672475,
+      "executed": true,
+      "result": "win",
+      "id": 13490930228,
+      "expiration_time": 1767752576.9204626,
+      "profit": 0.8500000000000001
+    },
+    {
+      "timestamp": "2026-01-06T21:22:13.713923",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.34542 con RSI 34.4",
+        "details": {
+          "price": 1.345415,
+          "support": 1.345415,
+          "rsi": 34.44809117129394,
+          "bb_low": 1.3454253565720158
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 19,
+        "bearish_candles": 31,
+        "total_movement_pct": -0.2121228977767787,
+        "reversals": 18,
+        "volatility_pct": 0.05702105355203202,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.111111111111111,
+        "avg_bearish_duration_candles": 3.1,
+        "total_streaks": 19,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 5,
+          "start_price": 1.346915,
+          "end_price": 1.345415
+        }
+      },
+      "current_price": 1.345415,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-06T21:24:35.995371",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 156.38045",
+        "details": {
+          "support_level": 156.38045,
+          "current_price": 156.37415,
+          "adx": 41.495802742117135,
+          "di_plus": 17.68747259172354,
+          "di_minus": 41.60210495541338,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 21,
+        "total_movement_pct": -0.10336283773793042,
+        "reversals": 23,
+        "volatility_pct": 0.046198616274221234,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4166666666666665,
+        "avg_bearish_duration_candles": 1.75,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 3,
+        "current_streak": {
+          "type": "bearish",
+          "length": 2,
+          "start_price": 156.46965,
+          "end_price": 156.37415
+        }
+      },
+      "current_price": 156.37415,
+      "executed": true,
+      "result": "pending",
+      "id": 13490939920,
+      "expiration_time": 1767752806.7555463
+    },
+    {
+      "timestamp": "2026-01-06T21:25:05.287767",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 156.38045",
+        "details": {
+          "support_level": 156.38045,
+          "current_price": 156.36805,
+          "adx": 41.539481142029324,
+          "di_plus": 17.579543803571294,
+          "di_minus": 41.958448351007036,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 21,
+        "total_movement_pct": -0.1072597061569582,
+        "reversals": 23,
+        "volatility_pct": 0.04634718196567157,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4166666666666665,
+        "avg_bearish_duration_candles": 1.75,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 3,
+        "current_streak": {
+          "type": "bearish",
+          "length": 2,
+          "start_price": 156.46965,
+          "end_price": 156.36805
+        }
+      },
+      "current_price": 156.36805,
+      "executed": true,
+      "result": "pending",
+      "id": 13490941025,
+      "expiration_time": 1767752836.212193
+    },
+    {
+      "timestamp": "2026-01-06T21:25:34.884050",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 156.38045",
+        "details": {
+          "support_level": 156.38045,
+          "current_price": 156.34255,
+          "adx": 43.936117996550315,
+          "di_plus": 17.97385620914726,
+          "di_minus": 45.95959595959276,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 22,
+        "total_movement_pct": -0.12457074995745213,
+        "reversals": 23,
+        "volatility_pct": 0.04849228419304978,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 1.8333333333333333,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 3,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 156.46965,
+          "end_price": 156.34255
+        }
+      },
+      "current_price": 156.34255,
+      "executed": true,
+      "result": "pending",
+      "id": 13490942440,
+      "expiration_time": 1767752865.790865
+    },
+    {
+      "timestamp": "2026-01-06T21:26:04.606214",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 85,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 156.38045",
+        "details": {
+          "support_level": 156.38045,
+          "current_price": 156.33505,
+          "adx": 43.980414293135766,
+          "di_plus": 17.846607669613775,
+          "di_minus": 46.34218289085139,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 22,
+        "total_movement_pct": -0.12936193264811846,
+        "reversals": 23,
+        "volatility_pct": 0.048702683262663374,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 1.8333333333333333,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 3,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 156.46965,
+          "end_price": 156.33505
+        }
+      },
+      "current_price": 156.33505,
+      "executed": true,
+      "result": "pending",
+      "id": 13490943587,
+      "expiration_time": 1767752895.4596798
+    },
+    {
+      "timestamp": "2026-01-07T14:25:57.883402",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 42.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.46995 (Baja Volatilidad: 0.052% < 0.075%)",
+        "details": {
+          "resistance_level": 156.46995,
+          "current_price": 156.53895,
+          "adx": 61.96445543310415,
+          "di_plus": 27.995885479176142,
+          "di_minus": 13.337905023144655,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.1544489980809032,
+        "reversals": 27,
+        "volatility_pct": 0.05176428379726373,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.142857142857143,
+        "avg_bearish_duration_candles": 1.4285714285714286,
+        "total_streaks": 28,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 156.48225,
+          "end_price": 156.53895
+        }
+      },
+      "current_price": 156.53895,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:26:26.126227",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 42.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.46995 (Baja Volatilidad: 0.053% < 0.075%)",
+        "details": {
+          "resistance_level": 156.46995,
+          "current_price": 156.54465,
+          "adx": 58.54238797674479,
+          "di_plus": 25.670923560992513,
+          "di_minus": 14.399407736443498,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 31,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.14034840820659422,
+        "reversals": 26,
+        "volatility_pct": 0.0532203967452995,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.2142857142857144,
+        "avg_bearish_duration_candles": 1.4615384615384615,
+        "total_streaks": 27,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 156.48225,
+          "end_price": 156.54465
+        }
+      },
+      "current_price": 156.54465,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:26:54.412533",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 42.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.46995 (Baja Volatilidad: 0.054% < 0.075%)",
+        "details": {
+          "resistance_level": 156.46995,
+          "current_price": 156.56975,
+          "adx": 59.19985512418197,
+          "di_plus": 29.802482083560157,
+          "di_minus": 13.59902115014914,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 31,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.1564046755082675,
+        "reversals": 26,
+        "volatility_pct": 0.05390471432573547,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.2142857142857144,
+        "avg_bearish_duration_candles": 1.4615384615384615,
+        "total_streaks": 27,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 156.48225,
+          "end_price": 156.56975
+        }
+      },
+      "current_price": 156.56975,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:27:22.792147",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 90,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33946 con RSI 24.8",
+        "details": {
+          "price": 1.339525,
+          "support": 1.339465,
+          "rsi": 24.82824647977897,
+          "bb_low": 1.3394362200915653
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.31478952636454977,
+        "reversals": 24,
+        "volatility_pct": 0.07782433681508649,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6153846153846154,
+        "avg_bearish_duration_candles": 2.4166666666666665,
+        "total_streaks": 25,
+        "longest_bullish": 5,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bullish",
+          "length": 1,
+          "start_price": 1.339515,
+          "end_price": 1.339525
+        }
+      },
+      "current_price": 1.339525,
+      "executed": true,
+      "result": "win",
+      "id": 13493214480,
+      "expiration_time": 1767814173.6002584,
+      "profit": 0.8700000000000001
+    },
+    {
+      "timestamp": "2026-01-07T14:27:51.858070",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 42.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.46995 (Baja Volatilidad: 0.058% < 0.075%)",
+        "details": {
+          "resistance_level": 156.46995,
+          "current_price": 156.61285,
+          "adx": 56.71432350769506,
+          "di_plus": 32.67962513017097,
+          "di_minus": 13.50225616105588,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 31,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.21641385854967551,
+        "reversals": 25,
+        "volatility_pct": 0.05799172180846211,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3846153846153846,
+        "avg_bearish_duration_candles": 1.4615384615384615,
+        "total_streaks": 26,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 5,
+          "start_price": 156.48225,
+          "end_price": 156.61285
+        }
+      },
+      "current_price": 156.61285,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:28:20.146241",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 42.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.46995 (Baja Volatilidad: 0.061% < 0.075%)",
+        "details": {
+          "resistance_level": 156.46995,
+          "current_price": 156.63155,
+          "adx": 54.92281976967018,
+          "di_plus": 36.9334277620472,
+          "di_minus": 13.774787535411715,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 32,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.24249188733760085,
+        "reversals": 25,
+        "volatility_pct": 0.06138481140097673,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4615384615384617,
+        "avg_bearish_duration_candles": 1.3846153846153846,
+        "total_streaks": 26,
+        "longest_bullish": 6,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 156.48225,
+          "end_price": 156.63155
+        }
+      },
+      "current_price": 156.63155,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:28:48.547218",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 0.67144 (Baja Volatilidad: 0.045% < 0.075%) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 0.671445,
+          "current_price": 0.671055,
+          "adx": 35.30575037489414,
+          "di_plus": 0.6250000000005855,
+          "di_minus": 39.68749999999728,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 22,
+        "bearish_candles": 26,
+        "total_movement_pct": -0.13839594633810237,
+        "reversals": 19,
+        "volatility_pct": 0.044803682269528765,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.2,
+        "avg_bearish_duration_candles": 2.8,
+        "total_streaks": 20,
+        "longest_bullish": 5,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 0.671615,
+          "end_price": 0.671055
+        }
+      },
+      "current_price": 0.671055,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:29:16.795183",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 45.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67097 con RSI 26.1 (Baja Volatilidad: 0.049% < 0.075%)",
+        "details": {
+          "price": 0.671015,
+          "support": 0.670965,
+          "rsi": 26.140358356432913,
+          "bb_low": 0.6710387494068274
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 27,
+        "total_movement_pct": -0.17257410644548501,
+        "reversals": 19,
+        "volatility_pct": 0.049312949604603,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1,
+        "avg_bearish_duration_candles": 2.9,
+        "total_streaks": 20,
+        "longest_bullish": 4,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 0.671615,
+          "end_price": 0.671015
+        }
+      },
+      "current_price": 0.671015,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T14:31:10.101210",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 80,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39817 con RSI 69.0",
+        "details": {
+          "price": 1.397975,
+          "resistance": 1.398175,
+          "rsi": 69.04082572622447,
+          "bb_high": 1.397273932901299
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 22,
+        "bearish_candles": 28,
+        "total_movement_pct": -0.10861060596857909,
+        "reversals": 19,
+        "volatility_pct": 0.2889839262003368,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.2,
+        "avg_bearish_duration_candles": 2.8,
+        "total_streaks": 20,
+        "longest_bullish": 5,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 5,
+          "start_price": 1.389835,
+          "end_price": 1.397975
+        }
+      },
+      "current_price": 1.397975,
+      "executed": true,
+      "result": "pending",
+      "id": 13493223847,
+      "expiration_time": 1767814400.9837737
+    },
+    {
+      "timestamp": "2026-01-07T14:31:39.422613",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 80,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39874 con RSI 68.2",
+        "details": {
+          "price": 1.397775,
+          "resistance": 1.398745,
+          "rsi": 68.16518436451372,
+          "bb_high": 1.397220213823389
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.12290147517496981,
+        "reversals": 20,
+        "volatility_pct": 0.2886801191315694,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1,
+        "avg_bearish_duration_candles": 2.6363636363636362,
+        "total_streaks": 21,
+        "longest_bullish": 4,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.397875,
+          "end_price": 1.397775
+        }
+      },
+      "current_price": 1.397775,
+      "executed": true,
+      "result": "pending",
+      "id": 13493225069,
+      "expiration_time": 1767814430.258632
+    },
+    {
+      "timestamp": "2026-01-07T14:32:10.257852",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39899 con RSI 70.6",
+        "details": {
+          "price": 1.398795,
+          "resistance": 1.398995,
+          "rsi": 70.63703832114943,
+          "bb_high": 1.3987400525100697
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 23,
+        "bearish_candles": 27,
+        "total_movement_pct": 0.01143972516059858,
+        "reversals": 19,
+        "volatility_pct": 0.28870304591432483,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3,
+        "avg_bearish_duration_candles": 2.7,
+        "total_streaks": 20,
+        "longest_bullish": 6,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 1.389835,
+          "end_price": 1.398795
+        }
+      },
+      "current_price": 1.398795,
+      "executed": true,
+      "result": "pending",
+      "id": 13493226303,
+      "expiration_time": 1767814461.1343563
+    },
+    {
+      "timestamp": "2026-01-07T14:32:39.620401",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39928 con RSI 71.2",
+        "details": {
+          "price": 1.399075,
+          "resistance": 1.399275,
+          "rsi": 71.16776043522235,
+          "bb_high": 1.3988111914153445
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 23,
+        "bearish_candles": 27,
+        "total_movement_pct": 0.031459244191658006,
+        "reversals": 19,
+        "volatility_pct": 0.2892356780651257,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3,
+        "avg_bearish_duration_candles": 2.7,
+        "total_streaks": 20,
+        "longest_bullish": 6,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 1.389835,
+          "end_price": 1.399075
+        }
+      },
+      "current_price": 1.399075,
+      "executed": true,
+      "result": "pending",
+      "id": 13493227573,
+      "expiration_time": 1767814490.6393476
+    },
+    {
+      "timestamp": "2026-01-07T16:58:35.954767",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 93.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.16993 (Activo Rentable)",
+        "details": {
+          "resistance_level": 1.169925,
+          "current_price": 1.170165,
+          "adx": 51.14295536180759,
+          "di_plus": 41.923076923078426,
+          "di_minus": 16.249999999997623,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 26,
+        "bearish_candles": 24,
+        "total_movement_pct": 0.3886293736890127,
+        "reversals": 25,
+        "volatility_pct": 0.12490312370644989,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.8461538461538463,
+        "total_streaks": 26,
+        "longest_bullish": 5,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.168485,
+          "end_price": 1.170165
+        }
+      },
+      "current_price": 1.170165,
+      "executed": true,
+      "result": "loose",
+      "id": 13493596241,
+      "expiration_time": 1767823246.7473435,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-07T16:59:04.921640",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39634 con RSI 68.9",
+        "details": {
+          "price": 1.395835,
+          "resistance": 1.396335,
+          "rsi": 68.89815365518432,
+          "bb_high": 1.3956346789690885
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.6431540505366256,
+        "reversals": 21,
+        "volatility_pct": 0.14619433676765825,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.6363636363636362,
+        "avg_bearish_duration_candles": 1.9090909090909092,
+        "total_streaks": 22,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.392235,
+          "end_price": 1.395835
+        }
+      },
+      "current_price": 1.395835,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T16:59:33.087951",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 0.67165 con RSI 74.7",
+        "details": {
+          "price": 0.671625,
+          "resistance": 0.671645,
+          "rsi": 74.71748338030865,
+          "bb_high": 0.6716188799086474
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 26,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.26124276917335765,
+        "reversals": 21,
+        "volatility_pct": 0.07576738658050731,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3636363636363638,
+        "avg_bearish_duration_candles": 2.1818181818181817,
+        "total_streaks": 22,
+        "longest_bullish": 3,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 0.671215,
+          "end_price": 0.671625
+        }
+      },
+      "current_price": 0.671625,
+      "executed": true,
+      "result": "loose",
+      "id": 13493598734,
+      "expiration_time": 1767823303.8966942,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-07T17:00:02.166527",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 70,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39684 con RSI 71.0",
+        "details": {
+          "price": 1.396795,
+          "resistance": 1.396835,
+          "rsi": 71.00193831360507,
+          "bb_high": 1.3964691395958784
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.7167295787951921,
+        "reversals": 21,
+        "volatility_pct": 0.15890889410132336,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.727272727272727,
+        "avg_bearish_duration_candles": 1.8181818181818181,
+        "total_streaks": 22,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.392235,
+          "end_price": 1.396795
+        }
+      },
+      "current_price": 1.396795,
+      "executed": true,
+      "result": "loose",
+      "id": 13493599771,
+      "expiration_time": 1767823333.0403342,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-07T17:00:31.176417",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 90,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 0.67178 con RSI 76.4",
+        "details": {
+          "price": 0.671725,
+          "resistance": 0.671775,
+          "rsi": 76.38041315028805,
+          "bb_high": 0.671749621103366
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 22,
+        "total_movement_pct": 0.28814786613814486,
+        "reversals": 21,
+        "volatility_pct": 0.07874546314885565,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 0.671215,
+          "end_price": 0.671725
+        }
+      },
+      "current_price": 0.671725,
+      "executed": true,
+      "result": "loose",
+      "id": 13493601556,
+      "expiration_time": 1767823362.0259223,
+      "profit": -1.0
+    },
+    {
+      "timestamp": "2026-01-07T17:01:09.656209",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 90,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 0.67187 con RSI 78.1",
+        "details": {
+          "price": 0.671835,
+          "resistance": 0.671865,
+          "rsi": 78.0877445521658,
+          "bb_high": 0.6718890005030217
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.2955863582417063,
+        "reversals": 21,
+        "volatility_pct": 0.08164631897184088,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 0.671835,
+          "end_price": 0.671835
+        }
+      },
+      "current_price": 0.671835,
+      "executed": true,
+      "result": "win",
+      "id": 13493603039,
+      "expiration_time": 1767823400.56131,
+      "profit": 0.8500000000000001
+    },
+    {
+      "timestamp": "2026-01-07T17:01:39.194038",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 56.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.39857 con RSI 73.4 (Bajo rendimiento: 0%)",
+        "details": {
+          "price": 1.397955,
+          "resistance": 1.398575,
+          "rsi": 73.43126899985822,
+          "bb_high": 1.3979140741986158
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 31,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.4981937779694904,
+        "reversals": 20,
+        "volatility_pct": 0.18822508530992257,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.8181818181818183,
+        "avg_bearish_duration_candles": 1.9,
+        "total_streaks": 21,
+        "longest_bullish": 7,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 5,
+          "start_price": 1.392235,
+          "end_price": 1.397955
+        }
+      },
+      "current_price": 1.397955,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:02:10.180570",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 0.67121 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 0.671205,
+          "current_price": 0.671905,
+          "adx": 33.674195238918294,
+          "di_plus": 42.94670846395193,
+          "di_minus": 10.031347962382654,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.2775932959726545,
+        "reversals": 20,
+        "volatility_pct": 0.08408944712034803,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5454545454545454,
+        "avg_bearish_duration_candles": 2.2,
+        "total_streaks": 21,
+        "longest_bullish": 6,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 0.671215,
+          "end_price": 0.671905
+        }
+      },
+      "current_price": 0.671905,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:06:01.362140",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 156.98155 con RSI 65.4 (Baja Volatilidad: 0.033% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 156.97325,
+          "resistance": 156.98155,
+          "rsi": 65.38388143972404,
+          "bb_high": 156.97187635354226
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.13459873151859758,
+        "reversals": 27,
+        "volatility_pct": 0.03345180568120563,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.5714285714285714,
+        "total_streaks": 28,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 156.88555,
+          "end_price": 156.97325
+        }
+      },
+      "current_price": 156.97325,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:06:29.809477",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 44.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33991 con RSI 34.6 (Baja Volatilidad: 0.053% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.340005,
+          "support": 1.339915,
+          "rsi": 34.59328219342669,
+          "bb_low": 1.3396523996270924
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 23,
+        "bearish_candles": 27,
+        "total_movement_pct": -0.10213400428665312,
+        "reversals": 23,
+        "volatility_pct": 0.053269481967582334,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9166666666666667,
+        "avg_bearish_duration_candles": 2.25,
+        "total_streaks": 24,
+        "longest_bullish": 6,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 1.340795,
+          "end_price": 1.340005
+        }
+      },
+      "current_price": 1.340005,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:06:58.361006",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 44.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33991 con RSI 34.7 (Baja Volatilidad: 0.053% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.340015,
+          "support": 1.339915,
+          "rsi": 34.68589810161784,
+          "bb_low": 1.3396544704999631
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 23,
+        "bearish_candles": 27,
+        "total_movement_pct": -0.10138850060572382,
+        "reversals": 23,
+        "volatility_pct": 0.053243619308428844,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9166666666666667,
+        "avg_bearish_duration_candles": 2.25,
+        "total_streaks": 24,
+        "longest_bullish": 6,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 1.340795,
+          "end_price": 1.340015
+        }
+      },
+      "current_price": 1.340015,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:07:26.958578",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 0.67121 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 0.671205,
+          "current_price": 0.671225,
+          "adx": 27.659652793434816,
+          "di_plus": 25.83586626140033,
+          "di_minus": 24.316109422494627,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 22,
+        "total_movement_pct": 0.2030259828472777,
+        "reversals": 20,
+        "volatility_pct": 0.0765920521957437,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.3,
+        "total_streaks": 21,
+        "longest_bullish": 5,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 0.671075,
+          "end_price": 0.671225
+        }
+      },
+      "current_price": 0.671225,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:07:55.346218",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 0.67121 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 0.671205,
+          "current_price": 0.671365,
+          "adx": 28.290660204103027,
+          "di_plus": 28.612716763005597,
+          "di_minus": 22.543352601157483,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 22,
+        "total_movement_pct": 0.2239257163756795,
+        "reversals": 20,
+        "volatility_pct": 0.07698910893340383,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.3,
+        "total_streaks": 21,
+        "longest_bullish": 5,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 0.671075,
+          "end_price": 0.671365
+        }
+      },
+      "current_price": 0.671365,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:08:23.798514",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.04425 con RSI 68.6 (Baja Volatilidad: 0.039% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.04425,
+          "resistance": 157.04425,
+          "rsi": 68.59727080487194,
+          "bb_high": 157.02254285315112
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.1465426177243306,
+        "reversals": 28,
+        "volatility_pct": 0.039069598067032994,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9333333333333333,
+        "avg_bearish_duration_candles": 1.5,
+        "total_streaks": 29,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 156.92245,
+          "end_price": 157.04425
+        }
+      },
+      "current_price": 157.04425,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:08:52.421672",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 32.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.04715 con RSI 67.5 (Baja Volatilidad: 0.038% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.02955,
+          "resistance": 157.04715,
+          "rsi": 67.46314266720717,
+          "bb_high": 157.01846207246479
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.137168481603581,
+        "reversals": 28,
+        "volatility_pct": 0.038494208559952815,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9333333333333333,
+        "avg_bearish_duration_candles": 1.5,
+        "total_streaks": 29,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 156.92245,
+          "end_price": 157.02955
+        }
+      },
+      "current_price": 157.02955,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:09:20.907805",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.060% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.339575,
+          "adx": 48.23709122388563,
+          "di_plus": 6.555090655508544,
+          "di_minus": 34.588563458853194,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.130468007380772,
+        "reversals": 21,
+        "volatility_pct": 0.06017211922373477,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9090909090909092,
+        "avg_bearish_duration_candles": 2.6363636363636362,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bearish",
+          "length": 7,
+          "start_price": 1.340795,
+          "end_price": 1.339575
+        }
+      },
+      "current_price": 1.339575,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:09:49.513519",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.060% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.339575,
+          "adx": 48.23709122388563,
+          "di_plus": 6.555090655508544,
+          "di_minus": 34.588563458853194,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.130468007380772,
+        "reversals": 21,
+        "volatility_pct": 0.06017211922373477,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9090909090909092,
+        "avg_bearish_duration_candles": 2.6363636363636362,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bearish",
+          "length": 7,
+          "start_price": 1.340795,
+          "end_price": 1.339575
+        }
+      },
+      "current_price": 1.339575,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:10:17.985931",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.063% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.339445,
+          "adx": 51.50904026144628,
+          "di_plus": 6.98365527488799,
+          "di_minus": 33.580980683505004,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.14834859683845555,
+        "reversals": 21,
+        "volatility_pct": 0.06261781703337833,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 8,
+          "start_price": 1.340795,
+          "end_price": 1.339445
+        }
+      },
+      "current_price": 1.339445,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:10:46.576260",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.063% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.339245,
+          "adx": 51.77427456029398,
+          "di_plus": 6.657223796033514,
+          "di_minus": 36.685552407929826,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.16325800355588713,
+        "reversals": 21,
+        "volatility_pct": 0.06324806377394522,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 8,
+          "start_price": 1.340795,
+          "end_price": 1.339245
+        }
+      },
+      "current_price": 1.339245,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:12:12.304613",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 157.04715 (Baja Volatilidad: 0.047% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 157.04715,
+          "current_price": 157.04835,
+          "adx": 36.070892198955285,
+          "di_plus": 35.55787278414647,
+          "di_minus": 10.17428869357483,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 29,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.1557356740877116,
+        "reversals": 28,
+        "volatility_pct": 0.04713204228556175,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.9333333333333333,
+        "avg_bearish_duration_candles": 1.5,
+        "total_streaks": 29,
+        "longest_bullish": 3,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 157.00155,
+          "end_price": 157.04835
+        }
+      },
+      "current_price": 157.04835,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:12:40.818576",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.069% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.338975,
+          "adx": 55.56498727090252,
+          "di_plus": 8.779761904760159,
+          "di_minus": 32.142857142857025,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 19,
+        "bearish_candles": 31,
+        "total_movement_pct": -0.20124098608082622,
+        "reversals": 23,
+        "volatility_pct": 0.06884707575252585,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5833333333333333,
+        "avg_bearish_duration_candles": 2.5833333333333335,
+        "total_streaks": 24,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.339375,
+          "end_price": 1.338975
+        }
+      },
+      "current_price": 1.338975,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:13:09.097936",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.069% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.338975,
+          "adx": 55.59806210973272,
+          "di_plus": 8.740740740739035,
+          "di_minus": 32.44444444444408,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 19,
+        "bearish_candles": 31,
+        "total_movement_pct": -0.20124098608082622,
+        "reversals": 23,
+        "volatility_pct": 0.06884707575252585,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5833333333333333,
+        "avg_bearish_duration_candles": 2.5833333333333335,
+        "total_streaks": 24,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.339375,
+          "end_price": 1.338975
+        }
+      },
+      "current_price": 1.338975,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:14:34.673851",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Baja Volatilidad: 0.075% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.338745,
+          "adx": 60.99780500224386,
+          "di_plus": 5.152979066020874,
+          "di_minus": 38.96940418679582,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 17,
+        "bearish_candles": 33,
+        "total_movement_pct": -0.21094608948436636,
+        "reversals": 22,
+        "volatility_pct": 0.0749272566906938,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5454545454545454,
+        "avg_bearish_duration_candles": 2.75,
+        "total_streaks": 23,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 1.339375,
+          "end_price": 1.338745
+        }
+      },
+      "current_price": 1.338745,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:15:24.827314",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 77.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33848 con RSI 23.2 (Activo Rentable)",
+        "details": {
+          "price": 1.338575,
+          "support": 1.338475,
+          "rsi": 23.185611384992782,
+          "bb_low": 1.3383955364717348
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 17,
+        "bearish_candles": 33,
+        "total_movement_pct": -0.19832467837477288,
+        "reversals": 22,
+        "volatility_pct": 0.07855834168164841,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5454545454545454,
+        "avg_bearish_duration_candles": 2.75,
+        "total_streaks": 23,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 1.339375,
+          "end_price": 1.338575
+        }
+      },
+      "current_price": 1.338575,
+      "executed": true,
+      "result": "win",
+      "id": 13493639324,
+      "expiration_time": 1767824255.630923,
+      "profit": 0.8700000000000001
+    },
+    {
+      "timestamp": "2026-01-07T17:16:22.337177",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 74.8,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33994 (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339945,
+          "current_price": 1.338455,
+          "adx": 67.21970291360617,
+          "di_plus": 4.9689440993774685,
+          "di_minus": 41.45962732919605,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 18,
+        "bearish_candles": 32,
+        "total_movement_pct": -0.17675684746331427,
+        "reversals": 24,
+        "volatility_pct": 0.08163952289633145,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5,
+        "avg_bearish_duration_candles": 2.4615384615384617,
+        "total_streaks": 25,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.338825,
+          "end_price": 1.338455
+        }
+      },
+      "current_price": 1.338455,
+      "executed": false,
+      "result": "pending",
+      "reason_not_executed": "Operaci\u00f3n activa en curso"
+    },
+    {
+      "timestamp": "2026-01-07T17:17:19.151664",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 157.04715 (Baja Volatilidad: 0.056% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 157.04715,
+          "current_price": 157.08005,
+          "adx": 46.00540405711762,
+          "di_plus": 32.56764374295502,
+          "di_minus": 11.92220969559897,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.15908890200283798,
+        "reversals": 28,
+        "volatility_pct": 0.05602441975400335,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.4285714285714286,
+        "total_streaks": 29,
+        "longest_bullish": 5,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 5,
+          "start_price": 156.98495,
+          "end_price": 157.08005
+        }
+      },
+      "current_price": 157.08005,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:17:47.381196",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 183.41920 con RSI 66.8 (Baja Volatilidad: 0.020% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 183.419195,
+          "resistance": 183.419195,
+          "rsi": 66.80193770714011,
+          "bb_high": 183.3871827891811
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.06694072355284748,
+        "reversals": 22,
+        "volatility_pct": 0.020455163468309275,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.25,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 23,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 183.305525,
+          "end_price": 183.419195
+        }
+      },
+      "current_price": 183.419195,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:18:15.482014",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 36.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.11055 con RSI 70.3 (Baja Volatilidad: 0.060% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.10505,
+          "resistance": 157.11055,
+          "rsi": 70.34836867811347,
+          "bb_high": 157.13112188295673
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.1767543201032173,
+        "reversals": 28,
+        "volatility_pct": 0.059726756663408,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.4285714285714286,
+        "total_streaks": 29,
+        "longest_bullish": 6,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 156.98495,
+          "end_price": 157.10505
+        }
+      },
+      "current_price": 157.10505,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:18:43.776637",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 36.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.11055 con RSI 70.5 (Baja Volatilidad: 0.060% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.10645,
+          "resistance": 157.11055,
+          "rsi": 70.46794200109184,
+          "bb_high": 157.13142383439174
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.17764701868959057,
+        "reversals": 28,
+        "volatility_pct": 0.05976776732377454,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 1.4285714285714286,
+        "total_streaks": 29,
+        "longest_bullish": 6,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 156.98495,
+          "end_price": 157.10645
+        }
+      },
+      "current_price": 157.10645,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:19:12.062234",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 74.8,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33998 (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.339985,
+          "current_price": 1.339125,
+          "adx": 67.02172633966838,
+          "di_plus": 11.608623548921244,
+          "di_minus": 33.830845771146336,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.08654875642121264,
+        "reversals": 25,
+        "volatility_pct": 0.08668412427141325,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.5384615384615385,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 26,
+        "longest_bullish": 3,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.339235,
+          "end_price": 1.339125
+        }
+      },
+      "current_price": 1.339125,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:19:40.348165",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 30.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67036 con RSI 30.2 (Baja Volatilidad: 0.059% < 0.075%)",
+        "details": {
+          "price": 0.670355,
+          "support": 0.670355,
+          "rsi": 30.15857611696535,
+          "bb_low": 0.670314695160907
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 22,
+        "bearish_candles": 28,
+        "total_movement_pct": 0.007459290919804341,
+        "reversals": 20,
+        "volatility_pct": 0.05860023033764172,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.2,
+        "avg_bearish_duration_candles": 2.5454545454545454,
+        "total_streaks": 21,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 5,
+          "start_price": 0.670905,
+          "end_price": 0.670355
+        }
+      },
+      "current_price": 0.670355,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:20:08.391135",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 183.52883 con RSI 74.2 (Baja Volatilidad: 0.032% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 183.510185,
+          "resistance": 183.528825,
+          "rsi": 74.21078622784485,
+          "bb_high": 183.50288720541968
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.10240425811448803,
+        "reversals": 21,
+        "volatility_pct": 0.03185560122591738,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 5,
+          "start_price": 183.305525,
+          "end_price": 183.510185
+        }
+      },
+      "current_price": 183.510185,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:21:33.162534",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 35.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67026 con RSI 28.2 (Baja Volatilidad: 0.058% < 0.075%)",
+        "details": {
+          "price": 0.670255,
+          "support": 0.670255,
+          "rsi": 28.23649545305976,
+          "bb_low": 0.6702198810806017
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 22,
+        "bearish_candles": 28,
+        "total_movement_pct": -0.04772024009245602,
+        "reversals": 21,
+        "volatility_pct": 0.058332110489182604,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 2.5454545454545454,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 0.670475,
+          "end_price": 0.670255
+        }
+      },
+      "current_price": 0.670255,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:22:01.513040",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 35.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67022 con RSI 27.5 (Baja Volatilidad: 0.059% < 0.075%)",
+        "details": {
+          "price": 0.670215,
+          "support": 0.670215,
+          "rsi": 27.531232483212136,
+          "bb_low": 0.6702100929945033
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 22,
+        "bearish_candles": 28,
+        "total_movement_pct": -0.053685270104019224,
+        "reversals": 21,
+        "volatility_pct": 0.05856589292611454,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.0,
+        "avg_bearish_duration_candles": 2.5454545454545454,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 0.670475,
+          "end_price": 0.670215
+        }
+      },
+      "current_price": 0.670215,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:22:29.835808",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 183.54233 con RSI 73.9 (Baja Volatilidad: 0.037% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 183.533175,
+          "resistance": 183.542325,
+          "rsi": 73.94377481060619,
+          "bb_high": 183.55269893357914
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.06741198051671339,
+        "reversals": 22,
+        "volatility_pct": 0.037390323447094885,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.25,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 23,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 183.485225,
+          "end_price": 183.533175
+        }
+      },
+      "current_price": 183.533175,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:22:58.025419",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 35.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 0.67004 con RSI 25.2 (Baja Volatilidad: 0.061% < 0.075%)",
+        "details": {
+          "price": 0.670075,
+          "support": 0.670035,
+          "rsi": 25.195528327854504,
+          "bb_low": 0.6701102742420716
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.05518722639440692,
+        "reversals": 20,
+        "volatility_pct": 0.06123313848579523,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1,
+        "avg_bearish_duration_candles": 2.6363636363636362,
+        "total_streaks": 21,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 2,
+          "start_price": 0.670475,
+          "end_price": 0.670075
+        }
+      },
+      "current_price": 0.670075,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:23:26.064599",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 157.04715 (Baja Volatilidad: 0.065% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 157.04715,
+          "current_price": 157.05005,
+          "adx": 37.35917022851637,
+          "di_plus": 22.130408653847844,
+          "di_minus": 21.49939903845932,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.1328728689095095,
+        "reversals": 29,
+        "volatility_pct": 0.06504327837933538,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8666666666666667,
+        "avg_bearish_duration_candles": 1.4666666666666666,
+        "total_streaks": 30,
+        "longest_bullish": 6,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 1,
+          "start_price": 157.02905,
+          "end_price": 157.05005
+        }
+      },
+      "current_price": 157.05005,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:23:54.424339",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 183.59031 con RSI 77.2 (Baja Volatilidad: 0.042% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 183.581435,
+          "resistance": 183.590305,
+          "rsi": 77.17937517712294,
+          "bb_high": 183.59258936817847
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.0962951765309396,
+        "reversals": 21,
+        "volatility_pct": 0.042210112225385316,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.4545454545454546,
+        "avg_bearish_duration_candles": 2.090909090909091,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 183.485225,
+          "end_price": 183.581435
+        }
+      },
+      "current_price": 183.581435,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:24:22.787891",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 183.61229 con RSI 78.9 (Baja Volatilidad: 0.048% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 183.612295,
+          "resistance": 183.612295,
+          "rsi": 78.94649859355523,
+          "bb_high": 183.63341640161474
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 22,
+        "total_movement_pct": 0.1333494939337047,
+        "reversals": 21,
+        "volatility_pct": 0.04754410616531352,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5454545454545454,
+        "avg_bearish_duration_candles": 2.0,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 183.485225,
+          "end_price": 183.612295
+        }
+      },
+      "current_price": 183.612295,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:36:46.063986",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 0.66980 (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 0.669805,
+          "current_price": 0.669725,
+          "adx": 32.56497092167669,
+          "di_plus": 23.460410557188315,
+          "di_minus": 30.791788856308642,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.15355830370254048,
+        "reversals": 20,
+        "volatility_pct": 0.08020768677280903,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1,
+        "avg_bearish_duration_candles": 2.6363636363636362,
+        "total_streaks": 21,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bearish",
+          "length": 3,
+          "start_price": 0.670225,
+          "end_price": 0.669725
+        }
+      },
+      "current_price": 0.669725,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:38:39.275674",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172365,
+          "adx": 46.65850923660155,
+          "di_plus": 44.10609037328234,
+          "di_minus": 9.528487229862195,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 25,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.44208172514682964,
+        "reversals": 21,
+        "volatility_pct": 0.11046889005930166,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.272727272727273,
+        "avg_bearish_duration_candles": 2.272727272727273,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 1,
+          "start_price": 1.171915,
+          "end_price": 1.172365
+        }
+      },
+      "current_price": 1.172365,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:40:41.747628",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172105,
+          "adx": 52.212503321483226,
+          "di_plus": 39.300411522634164,
+          "di_minus": 13.5802469135805,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 25,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.31752960257446156,
+        "reversals": 20,
+        "volatility_pct": 0.10832000410740245,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.272727272727273,
+        "avg_bearish_duration_candles": 2.5,
+        "total_streaks": 21,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.171565,
+          "end_price": 1.172105
+        }
+      },
+      "current_price": 1.172105,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:41:10.072174",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172185,
+          "adx": 52.421181945183335,
+          "di_plus": 41.17647058823464,
+          "di_minus": 13.160518444666486,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 25,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.3243766020908991,
+        "reversals": 20,
+        "volatility_pct": 0.10858655345480524,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.272727272727273,
+        "avg_bearish_duration_candles": 2.5,
+        "total_streaks": 21,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.171565,
+          "end_price": 1.172185
+        }
+      },
+      "current_price": 1.172185,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:41:38.318150",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 44.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33840 con RSI 31.6 (Baja Volatilidad: 0.070% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.338495,
+          "support": 1.338395,
+          "rsi": 31.640288225786094,
+          "bb_low": 1.3386563168644423
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.29869534936555686,
+        "reversals": 21,
+        "volatility_pct": 0.07011997558273612,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 2,
+          "start_price": 1.339275,
+          "end_price": 1.338495
+        }
+      },
+      "current_price": 1.338495,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:42:06.635065",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 38.5,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33821 con RSI 29.9 (Baja Volatilidad: 0.071% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.338325,
+          "support": 1.338215,
+          "rsi": 29.932679591394034,
+          "bb_low": 1.338605892347391
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.3113582444758174,
+        "reversals": 21,
+        "volatility_pct": 0.070531530917331,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 2,
+          "start_price": 1.339275,
+          "end_price": 1.338325
+        }
+      },
+      "current_price": 1.338325,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:43:03.187365",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.09635 con RSI 66.9 (Baja Volatilidad: 0.046% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.08845,
+          "resistance": 157.09635,
+          "rsi": 66.8667697245553,
+          "bb_high": 157.07031429044125
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.10597611618245531,
+        "reversals": 23,
+        "volatility_pct": 0.04582460275036811,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.25,
+        "avg_bearish_duration_candles": 1.9166666666666667,
+        "total_streaks": 24,
+        "longest_bullish": 6,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 6,
+          "start_price": 156.93005,
+          "end_price": 157.08845
+        }
+      },
+      "current_price": 157.08845,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:43:31.461714",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 32.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.09705 con RSI 66.8 (Baja Volatilidad: 0.047% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.08825,
+          "resistance": 157.09705,
+          "rsi": 66.78326782542291,
+          "bb_high": 157.08277170782475
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 27,
+        "bearish_candles": 21,
+        "total_movement_pct": 0.10878324317450937,
+        "reversals": 24,
+        "volatility_pct": 0.04690851210771822,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.25,
+        "avg_bearish_duration_candles": 1.7692307692307692,
+        "total_streaks": 25,
+        "longest_bullish": 6,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 157.08865,
+          "end_price": 157.08825
+        }
+      },
+      "current_price": 157.08825,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:43:59.795421",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.12165 con RSI 69.9 (Baja Volatilidad: 0.048% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.12165,
+          "resistance": 157.12165,
+          "rsi": 69.8755544775306,
+          "bb_high": 157.09209428427317
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.13006830657245325,
+        "reversals": 23,
+        "volatility_pct": 0.04769216764396883,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 1.8333333333333333,
+        "total_streaks": 24,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 7,
+          "start_price": 156.93005,
+          "end_price": 157.12165
+        }
+      },
+      "current_price": 157.12165,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:44:28.078408",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172095,
+          "adx": 44.78274479328589,
+          "di_plus": 26.1640798226167,
+          "di_minus": 22.727272727274965,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 24,
+        "bearish_candles": 24,
+        "total_movement_pct": 0.24717650027155708,
+        "reversals": 21,
+        "volatility_pct": 0.1162762645401177,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1818181818181817,
+        "avg_bearish_duration_candles": 2.3636363636363638,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.171225,
+          "end_price": 1.172095
+        }
+      },
+      "current_price": 1.172095,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:44:56.340232",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172425,
+          "adx": 45.34762199886093,
+          "di_plus": 29.374337221633674,
+          "di_minus": 21.739130434784656,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 24,
+        "bearish_candles": 24,
+        "total_movement_pct": 0.27540080653093346,
+        "reversals": 21,
+        "volatility_pct": 0.11726379313822019,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1818181818181817,
+        "avg_bearish_duration_candles": 2.3636363636363638,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.171225,
+          "end_price": 1.172425
+        }
+      },
+      "current_price": 1.172425,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:45:24.811532",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 33.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33821 con RSI 33.3 (Baja Volatilidad: 0.056% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.338245,
+          "support": 1.338205,
+          "rsi": 33.25702540658578,
+          "bb_low": 1.3380082972613212
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.21400103645102397,
+        "reversals": 24,
+        "volatility_pct": 0.05631531506584717,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 25,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.338395,
+          "end_price": 1.338245
+        }
+      },
+      "current_price": 1.338245,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:45:53.162769",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 33.0,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33804 con RSI 32.5 (Baja Volatilidad: 0.057% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.338175,
+          "support": 1.338045,
+          "rsi": 32.533335949622526,
+          "bb_low": 1.3379930291890987
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.21922057392543998,
+        "reversals": 24,
+        "volatility_pct": 0.05651316679693251,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 25,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.338395,
+          "end_price": 1.338175
+        }
+      },
+      "current_price": 1.338175,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:46:21.403499",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.99805 (Baja Volatilidad: 0.050% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 156.99805,
+          "current_price": 157.16055,
+          "adx": 36.83595291624908,
+          "di_plus": 37.585669781929326,
+          "di_minus": 8.224299065423217,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.19208302985000736,
+        "reversals": 24,
+        "volatility_pct": 0.05040690974232111,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3076923076923075,
+        "avg_bearish_duration_candles": 1.6666666666666667,
+        "total_streaks": 25,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 157.08045,
+          "end_price": 157.16055
+        }
+      },
+      "current_price": 157.16055,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:46:49.642585",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 156.99805 (Baja Volatilidad: 0.052% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 156.99805,
+          "current_price": 157.20175,
+          "adx": 37.166419595976386,
+          "di_plus": 41.54631655725486,
+          "di_minus": 7.702407002190751,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 18,
+        "total_movement_pct": 0.21834861508008047,
+        "reversals": 24,
+        "volatility_pct": 0.05170831303912902,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3076923076923075,
+        "avg_bearish_duration_candles": 1.6666666666666667,
+        "total_streaks": 25,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 157.08045,
+          "end_price": 157.20175
+        }
+      },
+      "current_price": 157.20175,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:47:17.737860",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172105,
+          "adx": 39.5562076047239,
+          "di_plus": 31.151003167899884,
+          "di_minus": 21.75290390707527,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 24,
+        "bearish_candles": 24,
+        "total_movement_pct": 0.20346662677125385,
+        "reversals": 21,
+        "volatility_pct": 0.12229574936584127,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.1818181818181817,
+        "avg_bearish_duration_candles": 2.3636363636363638,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 1,
+          "start_price": 1.171665,
+          "end_price": 1.172105
+        }
+      },
+      "current_price": 1.172105,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:48:14.256101",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33821 (Baja Volatilidad: 0.059% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.338205,
+          "current_price": 1.337675,
+          "adx": 51.99500515683663,
+          "di_plus": 0.4658385093198701,
+          "di_minus": 35.86956521739554,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 19,
+        "bearish_candles": 31,
+        "total_movement_pct": -0.23716210925118383,
+        "reversals": 22,
+        "volatility_pct": 0.05883046875632162,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.7272727272727273,
+        "avg_bearish_duration_candles": 2.5833333333333335,
+        "total_streaks": 23,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 1.338395,
+          "end_price": 1.337675
+        }
+      },
+      "current_price": 1.337675,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:48:42.562117",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33821 (Baja Volatilidad: 0.059% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.338205,
+          "current_price": 1.337515,
+          "adx": 52.015200424180314,
+          "di_plus": 0.44576523031500653,
+          "di_minus": 38.63298662704652,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 19,
+        "bearish_candles": 31,
+        "total_movement_pct": -0.24909479399337725,
+        "reversals": 22,
+        "volatility_pct": 0.059391988560688044,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.7272727272727273,
+        "avg_bearish_duration_candles": 2.5833333333333335,
+        "total_streaks": 23,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 4,
+          "start_price": 1.338395,
+          "end_price": 1.337515
+        }
+      },
+      "current_price": 1.337515,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:49:10.840715",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 68.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17199 (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 1.171985,
+          "current_price": 1.172345,
+          "adx": 36.28682463448559,
+          "di_plus": 27.93522267206894,
+          "di_minus": 22.368421052630545,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 25,
+        "bearish_candles": 23,
+        "total_movement_pct": 0.23512412416264009,
+        "reversals": 21,
+        "volatility_pct": 0.12431643929764463,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.272727272727273,
+        "avg_bearish_duration_candles": 2.272727272727273,
+        "total_streaks": 22,
+        "longest_bullish": 4,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.171665,
+          "end_price": 1.172345
+        }
+      },
+      "current_price": 1.172345,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:49:39.162330",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33821 (Baja Volatilidad: 0.060% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.338205,
+          "current_price": 1.337225,
+          "adx": 58.541948570842024,
+          "di_plus": 0.4184100418437771,
+          "di_minus": 38.07531380753287,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.2565890807919866,
+        "reversals": 24,
+        "volatility_pct": 0.06028881090649744,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 25,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.337965,
+          "end_price": 1.337225
+        }
+      },
+      "current_price": 1.337225,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:50:07.554236",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33821 (Baja Volatilidad: 0.061% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.338205,
+          "current_price": 1.337045,
+          "adx": 58.558081506229726,
+          "di_plus": 0.4005340453965064,
+          "di_minus": 40.72096128171134,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.27001525362413104,
+        "reversals": 24,
+        "volatility_pct": 0.06103729738274131,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 25,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.337965,
+          "end_price": 1.337045
+        }
+      },
+      "current_price": 1.337045,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:51:32.054178",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 24.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 0.67114 con RSI 66.0 (Baja Volatilidad: 0.066% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 0.671105,
+          "resistance": 0.671145,
+          "rsi": 66.02951937480648,
+          "bb_high": 0.6712142301007187
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.09378698445071634,
+        "reversals": 21,
+        "volatility_pct": 0.06622337953025387,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.8181818181818181,
+        "avg_bearish_duration_candles": 2.727272727272727,
+        "total_streaks": 22,
+        "longest_bullish": 5,
+        "longest_bearish": 5,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 0.670805,
+          "end_price": 0.671105
+        }
+      },
+      "current_price": 0.671105,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:52:56.832345",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 37.4,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.33689 (Baja Volatilidad: 0.066% < 0.075%) (Activo Rentable) (Bajo rendimiento: 20%)",
+        "details": {
+          "support_level": 1.336895,
+          "current_price": 1.336725,
+          "adx": 71.33693225308465,
+          "di_plus": 2.39234449761007,
+          "di_minus": 36.244019138757366,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": -0.28793399896313737,
+        "reversals": 24,
+        "volatility_pct": 0.06584792609020211,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6666666666666667,
+        "avg_bearish_duration_candles": 2.3076923076923075,
+        "total_streaks": 25,
+        "longest_bullish": 4,
+        "longest_bearish": 8,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 1.337645,
+          "end_price": 1.336725
+        }
+      },
+      "current_price": 1.336725,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:53:25.493882",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 38.5,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 1.33648 con RSI 27.5 (Baja Volatilidad: 0.070% < 0.075%) (Activo Rentable)",
+        "details": {
+          "price": 1.336565,
+          "support": 1.336485,
+          "rsi": 27.495982167963092,
+          "bb_low": 1.336442004324326
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": -0.29391908273374995,
+        "reversals": 25,
+        "volatility_pct": 0.07040119179542156,
+        "trend": "BAJISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.6153846153846154,
+        "avg_bearish_duration_candles": 2.230769230769231,
+        "total_streaks": 26,
+        "longest_bullish": 4,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bullish",
+          "length": 1,
+          "start_price": 1.336495,
+          "end_price": 1.336565
+        }
+      },
+      "current_price": 1.336565,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:53:53.890688",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 34.0,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 157.21125 (Baja Volatilidad: 0.057% < 0.075%) (Bajo rendimiento: 25%)",
+        "details": {
+          "resistance_level": 157.21125,
+          "current_price": 157.22075,
+          "adx": 63.724594461386275,
+          "di_plus": 42.37171550419653,
+          "di_minus": 7.208694455909724,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.16290250600373696,
+        "reversals": 22,
+        "volatility_pct": 0.05705307150859251,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5,
+        "avg_bearish_duration_candles": 1.8181818181818181,
+        "total_streaks": 23,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 157.14675,
+          "end_price": 157.22075
+        }
+      },
+      "current_price": 157.22075,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:54:22.259102",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.24445 con RSI 71.4 (Baja Volatilidad: 0.060% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.24315,
+          "resistance": 157.24445,
+          "rsi": 71.38399191497513,
+          "bb_high": 157.2989798946647
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.18055584313812956,
+        "reversals": 22,
+        "volatility_pct": 0.06002182107101769,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.5,
+        "avg_bearish_duration_candles": 1.8181818181818181,
+        "total_streaks": 23,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bullish",
+          "length": 4,
+          "start_price": 157.14675,
+          "end_price": 157.24315
+        }
+      },
+      "current_price": 157.24315,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:54:50.527525",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 48.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.17308 con RSI 65.3 (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 1.173065,
+          "resistance": 1.173075,
+          "rsi": 65.27311752994359,
+          "bb_high": 1.1729691473517523
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 28,
+        "bearish_candles": 20,
+        "total_movement_pct": 0.3567471843065465,
+        "reversals": 23,
+        "volatility_pct": 0.1378255916276938,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 1.8333333333333333,
+        "total_streaks": 24,
+        "longest_bullish": 4,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 2,
+          "start_price": 1.172115,
+          "end_price": 1.173065
+        }
+      },
+      "current_price": 1.173065,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:55:18.884421",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 48.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.40003 con RSI 66.6 (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 1.399855,
+          "resistance": 1.400035,
+          "rsi": 66.57172609767026,
+          "bb_high": 1.3994209470165002
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": 0.21835546121326865,
+        "reversals": 27,
+        "volatility_pct": 0.08959750375176613,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.4285714285714286,
+        "avg_bearish_duration_candles": 2.142857142857143,
+        "total_streaks": 28,
+        "longest_bullish": 3,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.397305,
+          "end_price": 1.399855
+        }
+      },
+      "current_price": 1.399855,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:55:47.249282",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 48.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.40044 con RSI 67.1 (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 1.400035,
+          "resistance": 1.400435,
+          "rsi": 67.09983982828288,
+          "bb_high": 1.399471245738944
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 20,
+        "bearish_candles": 30,
+        "total_movement_pct": 0.23124201302256536,
+        "reversals": 27,
+        "volatility_pct": 0.09039445200258171,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 1.4285714285714286,
+        "avg_bearish_duration_candles": 2.142857142857143,
+        "total_streaks": 28,
+        "longest_bullish": 3,
+        "longest_bearish": 4,
+        "current_streak": {
+          "type": "bullish",
+          "length": 3,
+          "start_price": 1.397305,
+          "end_price": 1.400035
+        }
+      },
+      "current_price": 1.400035,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:56:15.568552",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 28.0,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 157.27525 con RSI 71.1 (Baja Volatilidad: 0.066% < 0.075%) (Bajo rendimiento: 12%)",
+        "details": {
+          "price": 157.26085,
+          "resistance": 157.27525,
+          "rsi": 71.12213203336565,
+          "bb_high": 157.32832239209154
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 30,
+        "bearish_candles": 19,
+        "total_movement_pct": 0.15271837756784995,
+        "reversals": 21,
+        "volatility_pct": 0.06582048088823979,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.727272727272727,
+        "avg_bearish_duration_candles": 1.8181818181818181,
+        "total_streaks": 22,
+        "longest_bullish": 7,
+        "longest_bearish": 6,
+        "current_streak": {
+          "type": "bearish",
+          "length": 1,
+          "start_price": 157.26915,
+          "end_price": 157.26085
+        }
+      },
+      "current_price": 157.26085,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:57:12.121389",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 183.48641 con RSI 34.1",
+        "details": {
+          "price": 183.492305,
+          "support": 183.486415,
+          "rsi": 34.05192922517992,
+          "bb_low": 183.5116550465328
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": 0.1133647262364269,
+        "reversals": 18,
+        "volatility_pct": 0.0830591093965325,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 2.9,
+        "total_streaks": 19,
+        "longest_bullish": 4,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bearish",
+          "length": 6,
+          "start_price": 183.693665,
+          "end_price": 183.492305
+        }
+      },
+      "current_price": 183.492305,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:57:40.404418",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 183.46239 con RSI 32.5",
+        "details": {
+          "price": 183.473315,
+          "support": 183.462385,
+          "rsi": 32.50149653232717,
+          "bb_low": 183.50615658459358
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": 0.10300378605341153,
+        "reversals": 18,
+        "volatility_pct": 0.08318840176740848,
+        "trend": "ALCISTA"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 2.9,
+        "total_streaks": 19,
+        "longest_bullish": 4,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bearish",
+          "length": 6,
+          "start_price": 183.693665,
+          "end_price": 183.473315
+        }
+      },
+      "current_price": 183.473315,
+      "executed": false,
+      "result": "pending"
+    },
+    {
+      "timestamp": "2026-01-07T17:58:08.939793",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 60,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 183.43966 con RSI 30.3",
+        "details": {
+          "price": 183.443305,
+          "support": 183.439665,
+          "rsi": 30.28449410780094,
+          "bb_low": 183.46465401850438
+        },
+        "expiration": 120
+      },
+      "movement": {
+        "bullish_candles": 21,
+        "bearish_candles": 29,
+        "total_movement_pct": 0.09988526972201835,
+        "reversals": 18,
+        "volatility_pct": 0.08088422956306393,
+        "trend": "LATERAL"
+      },
+      "timing": {
+        "avg_bullish_duration_candles": 2.3333333333333335,
+        "avg_bearish_duration_candles": 2.9,
+        "total_streaks": 19,
+        "longest_bullish": 4,
+        "longest_bearish": 7,
+        "current_streak": {
+          "type": "bearish",
+          "length": 7,
+          "start_price": 183.693665,
+          "end_price": 183.443305
+        }
+      },
+      "current_price": 183.443305,
+      "executed": false,
+      "result": "pending"
+    }
+  ],
+  "patterns_found": {
+    "best_assets": {
+      "AUDUSD-OTC": -1.2999999999999998,
+      "EURUSD-OTC": -0.1299999999999999,
+      "GBPUSD-OTC": 0.8700000000000001,
+      "USDCAD-OTC": -2.15,
+      "USDJPY-OTC": 0.0
+    },
+    "volatility_correlation": {
+      "avg_win_volatility": 0.10813342817520182,
+      "min_win_volatility": 0.07505201381868547
+    },
+    "strategy_performance": {
+      "Breakout Momentum (Alcista)": 0.25,
+      "Breakout Momentum (Bajista)": 0.2,
+      "Smart Reversal (Alcista)": 0.6666666666666666,
+      "Smart Reversal (Bajista)": 0.125
+    },
+    "last_update": "2026-01-07T17:14:34.721609"
+  },
+  "asset_statistics": {},
+  "timing_analysis": {},
+  "success_factors": []
+}

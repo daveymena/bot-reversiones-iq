@@ -1,0 +1,6 @@
+# Dependencias mínimas para el cliente remoto
+# Solo GUI + comunicación HTTP/WebSocket
+PySide6==6.6.0
+requests==2.31.0
+pyqtgraph==0.13.3
+numpy==1.26.2

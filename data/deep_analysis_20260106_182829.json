@@ -1,0 +1,254 @@
+[
+  {
+    "asset": "EURUSD-OTC",
+    "timestamp": "2026-01-06 18:28:22.353829",
+    "movement": {
+      "bullish_candles": 23,
+      "bearish_candles": 27,
+      "total_movement_pct": -0.08361312122608862,
+      "reversals": 25,
+      "volatility_pct": 0.07610981678201764,
+      "trend": "LATERAL"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.7692307692307692,
+      "avg_bearish_duration_candles": 2.076923076923077,
+      "total_streaks": 26,
+      "longest_bullish": 3,
+      "longest_bearish": 5,
+      "current_streak": {
+        "type": "bearish",
+        "length": 1,
+        "start_price": 1.159145,
+        "end_price": 1.159135
+      }
+    },
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          1.158705,
+          1.159865
+        ],
+        "supports": [
+          1.156875,
+          1.158045,
+          1.159265
+        ],
+        "current_price": 1.159135
+      }
+    },
+    "current_price": 1.159135
+  },
+  {
+    "asset": "GBPUSD-OTC",
+    "timestamp": "2026-01-06 18:28:23.698210",
+    "movement": {
+      "bullish_candles": 22,
+      "bearish_candles": 28,
+      "total_movement_pct": -0.021544759237324695,
+      "reversals": 24,
+      "volatility_pct": 0.0245947058924706,
+      "trend": "LATERAL"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.8333333333333333,
+      "avg_bearish_duration_candles": 2.1538461538461537,
+      "total_streaks": 25,
+      "longest_bullish": 4,
+      "longest_bearish": 5,
+      "current_streak": {
+        "type": "bearish",
+        "length": 5,
+        "start_price": 1.347015,
+        "end_price": 1.345745
+      }
+    },
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          1.346565
+        ],
+        "supports": [
+          1.345595
+        ],
+        "current_price": 1.345745
+      }
+    },
+    "current_price": 1.345745
+  },
+  {
+    "asset": "USDJPY-OTC",
+    "timestamp": "2026-01-06 18:28:25.031634",
+    "movement": {
+      "bullish_candles": 20,
+      "bearish_candles": 30,
+      "total_movement_pct": -0.2626921897726309,
+      "reversals": 22,
+      "volatility_pct": 0.06021633306283761,
+      "trend": "BAJISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.8181818181818181,
+      "avg_bearish_duration_candles": 2.5,
+      "total_streaks": 23,
+      "longest_bullish": 4,
+      "longest_bearish": 9,
+      "current_streak": {
+        "type": "bearish",
+        "length": 9,
+        "start_price": 156.45755,
+        "end_price": 156.31165
+      }
+    },
+    "strategy": {
+      "action": "PUT",
+      "confidence": 85,
+      "strategy": "Breakout Momentum (Bajista)",
+      "reason": "Ruptura de soporte 156.38305",
+      "details": {
+        "support_level": 156.38305,
+        "current_price": 156.31165,
+        "adx": 35.576496123320744,
+        "di_plus": 10.784867306605145,
+        "di_minus": 30.924148315454914,
+        "ma_alignment": "MAs alineadas bajista"
+      },
+      "expiration": 120
+    },
+    "current_price": 156.31165
+  },
+  {
+    "asset": "USDCAD-OTC",
+    "timestamp": "2026-01-06 18:28:26.304241",
+    "movement": {
+      "bullish_candles": 22,
+      "bearish_candles": 28,
+      "total_movement_pct": 0.3190973282785633,
+      "reversals": 26,
+      "volatility_pct": 0.19675933941522653,
+      "trend": "ALCISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.6923076923076923,
+      "avg_bearish_duration_candles": 2.0,
+      "total_streaks": 27,
+      "longest_bullish": 3,
+      "longest_bearish": 5,
+      "current_streak": {
+        "type": "bearish",
+        "length": 3,
+        "start_price": 1.398695,
+        "end_price": 1.395865
+      }
+    },
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          1.391075,
+          1.394295,
+          1.397985,
+          1.399605
+        ],
+        "supports": [
+          1.386805,
+          1.388605,
+          1.390715,
+          1.392605
+        ],
+        "current_price": 1.395865
+      }
+    },
+    "current_price": 1.395865
+  },
+  {
+    "asset": "AUDUSD-OTC",
+    "timestamp": "2026-01-06 18:28:27.634495",
+    "movement": {
+      "bullish_candles": 26,
+      "bearish_candles": 23,
+      "total_movement_pct": 0.17909512189661417,
+      "reversals": 29,
+      "volatility_pct": 0.06196616163632151,
+      "trend": "ALCISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.7333333333333334,
+      "avg_bearish_duration_candles": 1.6,
+      "total_streaks": 30,
+      "longest_bullish": 4,
+      "longest_bearish": 3,
+      "current_streak": {
+        "type": "bullish",
+        "length": 1,
+        "start_price": 0.671135,
+        "end_price": 0.671235
+      }
+    },
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          0.670365,
+          0.671075
+        ],
+        "supports": [
+          0.669695,
+          0.670715
+        ],
+        "current_price": 0.671235
+      }
+    },
+    "current_price": 0.671235
+  },
+  {
+    "asset": "EURJPY-OTC",
+    "timestamp": "2026-01-06 18:28:28.980431",
+    "movement": {
+      "bullish_candles": 22,
+      "bearish_candles": 28,
+      "total_movement_pct": -0.05542213139791049,
+      "reversals": 29,
+      "volatility_pct": 0.028048094779923708,
+      "trend": "LATERAL"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.4666666666666666,
+      "avg_bearish_duration_candles": 1.8666666666666667,
+      "total_streaks": 30,
+      "longest_bullish": 2,
+      "longest_bearish": 4,
+      "current_streak": {
+        "type": "bearish",
+        "length": 3,
+        "start_price": 182.185535,
+        "end_price": 182.172735
+      }
+    },
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          182.193205
+        ],
+        "supports": [
+          182.092605
+        ],
+        "current_price": 182.172735
+      }
+    },
+    "current_price": 182.172735
+  }
+]

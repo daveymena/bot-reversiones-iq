@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-01-06T18:02:40.982480",
+  "total_observations": 6,
+  "total_opportunities": 0,
+  "best_opportunity": null,
+  "all_observations": [
+    {
+      "timestamp": "2026-01-06 18:02:27.140914",
+      "asset": "EURUSD-OTC",
+      "price": 1.159245,
+      "trend": "\u27a1\ufe0f LATERAL",
+      "rsi": 50.37239137795505,
+      "macd": -0.000500024441146163,
+      "volatility": 0.5405166959994412,
+      "signals": [],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 0
+    },
+    {
+      "timestamp": "2026-01-06 18:02:29.415455",
+      "asset": "GBPUSD-OTC",
+      "price": 1.346955,
+      "trend": "\ud83d\udcc8 ALCISTA",
+      "rsi": 58.31227632833633,
+      "macd": 0.00014228897723334022,
+      "volatility": 0.2543528571920656,
+      "signals": [],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 0
+    },
+    {
+      "timestamp": "2026-01-06 18:02:31.709969",
+      "asset": "USDJPY-OTC",
+      "price": 156.52985,
+      "trend": "\u27a1\ufe0f LATERAL",
+      "rsi": 47.466575611129436,
+      "macd": -0.034146232688442524,
+      "volatility": 0.5340901637870766,
+      "signals": [],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 0
+    },
+    {
+      "timestamp": "2026-01-06 18:02:34.195920",
+      "asset": "AUDUSD-OTC",
+      "price": 0.669855,
+      "trend": "\u27a1\ufe0f LATERAL",
+      "rsi": 44.1961067376485,
+      "macd": 1.7351080305649802e-05,
+      "volatility": 0.30405348157480544,
+      "signals": [],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 0
+    },
+    {
+      "timestamp": "2026-01-06 18:02:36.712181",
+      "asset": "USDCAD-OTC",
+      "price": 1.393485,
+      "trend": "\ud83d\udcc8 ALCISTA",
+      "rsi": 57.976710850933166,
+      "macd": 0.000828995798983545,
+      "volatility": 0.7295516809535966,
+      "signals": [
+        "\ud83d\udfe2 MACD alcista"
+      ],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 15
+    },
+    {
+      "timestamp": "2026-01-06 18:02:38.960712",
+      "asset": "EURJPY-OTC",
+      "price": 182.129415,
+      "trend": "\u27a1\ufe0f LATERAL",
+      "rsi": 41.54208344532768,
+      "macd": -0.01448437837069605,
+      "volatility": 0.6694125122719501,
+      "signals": [
+        "\ud83d\udd34 MACD bajista"
+      ],
+      "recommended_action": "\u23f8\ufe0f ESPERAR",
+      "signal_strength": 15
+    }
+  ],
+  "all_opportunities": []
+}

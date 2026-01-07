@@ -1,16 +1,22 @@
-numpy
-pandas
-ta
-torch
-gymnasium
-stable-baselines3[extra]
-python-dotenv
-requests
+# Core Trading
+PySide6>=6.5.0
+pyqtgraph>=0.13.0
+
+# Machine Learning
+stable-baselines3>=2.0.0
+gymnasium>=0.29.0
+
+# Data Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+ta>=0.11.0
+
+# Broker API
 websocket-client==1.8.0
-PySide6
-pyqtgraph
-groq
-ollama
-fastapi
-uvicorn[standard]
-websockets
+requests>=2.31.0
+
+# LLM
+groq>=0.4.0
+
+# Utils
+python-dotenv>=1.0.0

@@ -36,8 +36,15 @@ class FeatureEngineer:
         # 5. ATR (Average True Range) - Volatilidad
         df['atr'] = ta.volatility.AverageTrueRange(high=df['high'], low=df['low'], close=df['close'], window=14).average_true_range()
 
-        # Limpiar NaNs generados por las ventanas de cálculo
-        df.dropna(inplace=True)
+        # Limpiar NaNs solo en columnas críticas (no eliminar todo por SMA_50)
+        # Rellenar NaN en SMA_50 con SMA_20 si no hay suficientes datos
+        if 'sma_50' in df.columns:
+            df['sma_50'].fillna(df['sma_20'], inplace=True)
+        
+        # Eliminar solo filas donde falten indicadores críticos
+        critical_cols = ['rsi', 'macd', 'bb_high', 'bb_low', 'sma_20', 'atr']
+        df.dropna(subset=critical_cols, inplace=True)
+        
         return df
 
     def detect_patterns(self, df):

@@ -1,31 +1,54 @@
-# Archivos a ignorar en Docker build
+# Python
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
 *.log
-.git/
-.gitignore
-*.md
-!README.md
-!DEPLOYMENT_GUIDE.md
-.env
+
+# Virtual environments
+venv/
+env/
+env_installer/
+
+# Build artifacts
+build/
+dist/
+*.spec
+*.exe
+*.msi
+
+# IDE
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
-temp_iqoption/
+
+# Git
+.git/
+.gitignore
+
+# GUI (no necesario en backend)
+gui/
+main.py
+main_modern.py
+main_modern_lite.py
+main_console.py
+main_console_full.py
+
+# Data (se monta como volumen)
+data/experiences*.json
 models/*.zip
-bot_errors.log
-logs/
-tests/
-*.spec
-env/
-venv/
+
+# Documentación
+*.md
+!README.md
+*.txt
+!requirements*.txt
+*.bat
+
+# Instaladores
+installer_*/
+OllamaSetup.exe
+
+# Tests
+test_*.py
+demo_*.py
+diagnostico_*.py
