@@ -210,22 +210,22 @@ class IntelligentLearningSystem:
         base = 75.0
         
         if win_rate < 0.40:
-            # Rendimiento muy pobre, subir exigencia drásticamente
-            adjustment = 15.0
-            print(f"⚠️ RENDIMIENTO CRÍTICO ({win_rate*100:.0f}% WR). Subiendo muro de seguridad.")
+            # Rendimiento muy pobre, subir exigencia pero no tanto
+            adjustment = 10.0
+            print(f"⚠️ RENDIMIENTO BAJO ({win_rate*100:.0f}% WR). Ajustando filtros de seguridad.")
         elif win_rate < 0.60:
-            # Rendimiento regular, ser más estrictos
-            adjustment = 8.0
-            print(f"📉 RENDIMIENTO BAJO ({win_rate*100:.0f}% WR). Incrementando filtros.")
+            # Rendimiento regular, equilibrio entre aprendizaje y seguridad
+            adjustment = 5.0
+            print(f"📉 FASE DE APRENDIZAJE ({win_rate*100:.0f}% WR). Manteniendo cautela.")
         elif win_rate > 0.85:
-            # Rendimiento excelente, podemos ser ligeramente más flexibles para captar volumen
-            adjustment = -3.0
-            print(f"🔥 RENDIMIENTO EXCELENTE ({win_rate*100:.0f}% WR). Optimizando volumen.")
+            # Rendimiento excelente, ser más flexible
+            adjustment = -5.0
+            print(f"🔥 RENDIMIENTO EXCELENTE ({win_rate*100:.0f}% WR). Maximizando oportunidades.")
         else:
             adjustment = 0
             
-        final_threshold = max(70.0, min(90.0, base + adjustment))
-        print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo fijado en {final_threshold}%")
+        final_threshold = max(65.0, min(85.0, base + adjustment))
+        print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
         return final_threshold
     
     def analyze_movements(self, df, asset):
