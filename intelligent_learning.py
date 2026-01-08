@@ -459,7 +459,7 @@ class IntelligentLearningSystem:
                     else:
                         print(f"❌ Error al ejecutar: {order_id}")
                 else:
-                    print(f"\n⏸️ Oportunidad en {best_opportunity['asset']} con confianza {best_opportunity['strategy']['confidence']}% - Demasiado baja (requiere 80%)")
+                    print(f"\n⏸️ Oportunidad en {best_opportunity['asset']} con confianza {best_opportunity['strategy']['confidence']}% - Demasiado baja (requiere {current_threshold}%)")
                 
                 self.learning_database['operations'].append(opportunity_record)
             else:
