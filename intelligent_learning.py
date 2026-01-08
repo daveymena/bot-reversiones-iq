@@ -407,7 +407,7 @@ class IntelligentLearningSystem:
                     if asset in active_assets:
                         continue
                         
-                    print(f"\n🚀 EJECUTANDO EN {asset} ({strategy['type']}) - Confianza: {strategy['confidence']}%")
+                    print(f"\n🚀 EJECUTANDO EN {asset} ({strategy.get('strategy', 'Unknown')}) - Confianza: {strategy['confidence']}%")
                     
                     # Ejecutar en el broker
                     action = strategy['action'].lower()

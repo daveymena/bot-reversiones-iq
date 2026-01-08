@@ -4728,6 +4728,136 @@
       "current_price": 183.443305,
       "executed": false,
       "result": "pending"
+    },
+    {
+      "id": 13495342828,
+      "timestamp": "2026-01-08T07:31:04.241266",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 76.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17230 (Ajuste por historial: 25%)",
+        "details": {
+          "resistance_level": 1.172305,
+          "current_price": 1.173005,
+          "adx": 23.022002857030195,
+          "di_plus": 28.15533980582387,
+          "di_minus": 18.66235167206118,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875594.2412667
+    },
+    {
+      "id": 13495342875,
+      "timestamp": "2026-01-08T07:31:05.084580",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 76.5,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 155.66425 (Ajuste por historial: 20%)",
+        "details": {
+          "support_level": 155.66425,
+          "current_price": 155.47905,
+          "adx": 25.211609004609098,
+          "di_plus": 9.281350014550142,
+          "di_minus": 40.529531568231654,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875595.0845807
+    },
+    {
+      "id": 13495342912,
+      "timestamp": "2026-01-08T07:31:05.923830",
+      "asset": "EURJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Trend Following",
+        "reason": "Tendencia bullish con racha de 3 velas",
+        "details": {
+          "streak": 3,
+          "body_ratio": 0.9169043544395876,
+          "last_type": "bullish"
+        },
+        "expiration": 60
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875535.92383
+    },
+    {
+      "id": 13495344019,
+      "timestamp": "2026-01-08T07:31:36.426674",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 90,
+        "strategy": "Smart Reversal (Alcista)",
+        "reason": "Reversi\u00f3n en soporte 155.47035 con RSI 25.3",
+        "details": {
+          "price": 155.49025,
+          "support": 155.47035,
+          "rsi": 25.338597304816545,
+          "bb_low": 155.51471661654813
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875626.4266744
+    },
+    {
+      "id": 13495344035,
+      "timestamp": "2026-01-08T07:31:37.334724",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Trend Following",
+        "reason": "Tendencia bullish con racha de 3 velas",
+        "details": {
+          "streak": 3,
+          "body_ratio": 0.6666666666666666,
+          "last_type": "bullish"
+        },
+        "expiration": 60
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875567.3347242
+    },
+    {
+      "id": 13495346114,
+      "timestamp": "2026-01-08T07:32:34.624567",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 76.5,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 1.17230 (Ajuste por historial: 25%)",
+        "details": {
+          "resistance_level": 1.172305,
+          "current_price": 1.173155,
+          "adx": 25.914141949972834,
+          "di_plus": 33.64928909952639,
+          "di_minus": 17.061611374409303,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1767875684.6245673
     }
   ],
   "patterns_found": {

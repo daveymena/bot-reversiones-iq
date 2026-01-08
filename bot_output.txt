@@ -1,0 +1,156 @@
+🤖 MODO HEADLESS ACTIVADO
+✅ Cliente Groq #1 inicializado correctamente.
+✅ Base de conocimiento cargada: 111 operaciones
+
+================================================================================
+🧠 SESIÓN DE APRENDIZAJE CONTINUO
+   Build ID: 2026-01-08-0505 (Ultra-Active Mode)
+   Duración: 1440 minutos
+   Objetivo: 200 operaciones
+================================================================================
+================================================================================
+🔌 CONECTANDO A EXNOVA...
+================================================================================
+Conectando a EXNOVA (PRACTICE)...
+✅ Conectado a EXNOVA (PRACTICE)
+✅ Conectado exitosamente a Exnova
+💰 Balance: $4510.55
+
+================================================================================
+🔄 ITERACIÓN #1
+   Tiempo transcurrido: 0.0 minutos
+   Operaciones completadas: 0/200
+================================================================================
+
+================================================================================
+🔍 ANÁLISIS PROFUNDO DE MÚLTIPLES DIVISAS
+================================================================================
+
+📊 Analizando EURUSD-OTC...
+   💡 Velas obtenidas para EURUSD-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: BAJISTA
+      Velas alcistas: 25
+      Velas bajistas: 25
+      Movimiento total: -0.204%
+      Reversiones: 29
+      Volatilidad: 0.097%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 1.7 velas
+      Duración promedio bajada: 1.7 velas
+      Racha actual: bearish (1 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: WAIT
+
+📊 Analizando GBPUSD-OTC...
+   💡 Velas obtenidas para GBPUSD-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: LATERAL
+      Velas alcistas: 25
+      Velas bajistas: 24
+      Movimiento total: -0.073%
+      Reversiones: 22
+      Volatilidad: 0.065%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 2.1 velas
+      Duración promedio bajada: 2.3 velas
+      Racha actual: bullish (4 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: CALL
+      Tipo: Trend Following
+      Confianza: 88.0%
+      Razón: Tendencia bullish con racha de 4 velas (Activo Rentable)
+
+📊 Analizando USDJPY-OTC...
+   💡 Velas obtenidas para USDJPY-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: LATERAL
+      Velas alcistas: 25
+      Velas bajistas: 25
+      Movimiento total: 0.016%
+      Reversiones: 25
+      Volatilidad: 0.028%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 1.9 velas
+      Duración promedio bajada: 1.9 velas
+      Racha actual: bearish (2 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: WAIT
+
+📊 Analizando USDCAD-OTC...
+   💡 Velas obtenidas para USDCAD-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: LATERAL
+      Velas alcistas: 25
+      Velas bajistas: 25
+      Movimiento total: 0.042%
+      Reversiones: 21
+      Volatilidad: 0.240%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 2.3 velas
+      Duración promedio bajada: 2.3 velas
+      Racha actual: bullish (3 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: WAIT
+
+📊 Analizando AUDUSD-OTC...
+   💡 Velas obtenidas para AUDUSD-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: ALCISTA
+      Velas alcistas: 24
+      Velas bajistas: 24
+      Movimiento total: 0.118%
+      Reversiones: 28
+      Volatilidad: 0.033%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 1.7 velas
+      Duración promedio bajada: 1.7 velas
+      Racha actual: bearish (1 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: WAIT
+
+📊 Analizando EURJPY-OTC...
+   💡 Velas obtenidas para EURJPY-OTC: 200
+
+   📈 MOVIMIENTO:
+      Tendencia: BAJISTA
+      Velas alcistas: 21
+      Velas bajistas: 29
+      Movimiento total: -0.189%
+      Reversiones: 30
+      Volatilidad: 0.045%
+
+   ⏱️ TIMING:
+      Duración promedio subida: 1.4 velas
+      Duración promedio bajada: 1.8 velas
+      Racha actual: bearish (1 velas)
+
+   🎯 ESTRATEGIA:
+      Acción: PUT
+      Tipo: Breakout Momentum (Bajista)
+      Confianza: 76.5%
+      Razón: Ruptura de soporte 183.37366 (Ajuste por historial: 20%)
+📉 FASE DE APRENDIZAJE (46% WR). Manteniendo cautela.
+🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en 75.0%
+Traceback (most recent call last):
+  File "C:\trading\trading\intelligent_learning.py", line 634, in <module>
+    system_main.continuous_learning_session(1440, 200)
+  File "C:\trading\trading\intelligent_learning.py", line 410, in continuous_learning_session
+    print(f"\n🚀 EJECUTANDO EN {asset} ({strategy['type']}) - Confianza: {strategy['confidence']}%")
+                                         ~~~~~~~~^^^^^^^^
+KeyError: 'type'
