@@ -201,13 +201,13 @@ class IntelligentLearningSystem:
         recent_ops = history[-20:]
         
         if len(recent_ops) < 5:
-            return 75.0
+            return 70.0  # Umbral base más bajo para empezar
             
         wins = len([o for o in recent_ops if o.get('result') == 'win'])
         total = len(recent_ops)
         win_rate = wins / total
         
-        base = 75.0
+        base = 70.0 # Bajamos la base de 75 a 70
         
         if win_rate < 0.40:
             # Rendimiento muy pobre, subir exigencia pero no tanto
@@ -224,7 +224,7 @@ class IntelligentLearningSystem:
         else:
             adjustment = 0
             
-        final_threshold = max(65.0, min(85.0, base + adjustment))
+        final_threshold = max(65.0, min(80.0, base + adjustment))
         print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
         return final_threshold
     

@@ -29,9 +29,8 @@ class FeatureEngineer:
         df['bb_width'] = (df['bb_high'] - df['bb_low']) / df['close']
 
         # 4. SMA (Simple Moving Averages)
-        # Ajustamos las ventanas para que funcionen con menos datos
-        df['sma_20'] = ta.trend.SMAIndicator(close=df['close'], window=20).sma_indicator()
-        df['sma_50'] = ta.trend.SMAIndicator(close=df['close'], window=50).sma_indicator()
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
 
         # 5. ATR (Average True Range) - Volatilidad
         df['atr'] = ta.volatility.AverageTrueRange(high=df['high'], low=df['low'], close=df['close'], window=14).average_true_range()
@@ -39,11 +38,14 @@ class FeatureEngineer:
         # Limpiar NaNs solo en columnas críticas (no eliminar todo por SMA_50)
         # Rellenar NaN en SMA_50 con SMA_20 si no hay suficientes datos
         if 'sma_50' in df.columns:
-            df['sma_50'].fillna(df['sma_20'], inplace=True)
+            df['sma_50'] = df['sma_50'].fillna(df['sma_20'])
         
+        # Fill NaN in sma_20 with close price if there are not enough data for SMA_20
+        df['sma_20'] = df['sma_20'].fillna(df['close'])
+
         # Eliminar solo filas donde falten indicadores críticos
         critical_cols = ['rsi', 'macd', 'bb_high', 'bb_low', 'sma_20', 'atr']
-        df.dropna(subset=critical_cols, inplace=True)
+        df = df.dropna(subset=critical_cols)
         
         return df
 
