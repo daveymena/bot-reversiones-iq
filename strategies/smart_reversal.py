@@ -51,9 +51,9 @@ class SmartReversalStrategy:
         
         # --- LÓGICA PARA CALL (Reversión al Alza) ---
         # 1. Precio cerca o debajo del soporte o banda inferior
-        at_bottom = current_price <= support * 1.0001 or current_price <= last_candle['bb_low']
+        at_bottom = current_price <= support * 1.0005 or current_price <= last_candle['bb_low'] * 1.0005
         # 2. RSI en sobreventa (o cerca)
-        oversold = rsi < 35
+        oversold = rsi < 40 # Subimos de 35 a 40 para ser más flexibles
         # 3. Vela de rechazo (mecha inferior larga o cambio de color)
         rejection_low = (last_candle['low'] < last_candle['open']) and (abs(last_candle['low'] - min(last_candle['open'], last_candle['close'])) > abs(last_candle['open'] - last_candle['close']))
         
@@ -78,9 +78,9 @@ class SmartReversalStrategy:
 
         # --- LÓGICA PARA PUT (Reversión a la Baja) ---
         # 1. Precio cerca o arriba de la resistencia o banda superior
-        at_top = current_price >= resistance * 0.9999 or current_price >= last_candle['bb_high']
+        at_top = current_price >= resistance * 0.9995 or current_price >= last_candle['bb_high'] * 0.9995
         # 2. RSI en sobrecompra (o cerca)
-        overbought = rsi > 65
+        overbought = rsi > 60 # Bajamos de 65 a 60
         # 3. Vela de rechazo (mecha superior larga)
         rejection_high = (last_candle['high'] > last_candle['open']) and (abs(last_candle['high'] - max(last_candle['open'], last_candle['close'])) > abs(last_candle['open'] - last_candle['close']))
         

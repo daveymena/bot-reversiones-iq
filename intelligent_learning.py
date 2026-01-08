@@ -13,6 +13,7 @@ sys.path.insert(0, '.')
 from observe_market import MarketObserver
 from strategies.breakout_momentum import BreakoutMomentumStrategy
 from strategies.smart_reversal import SmartReversalStrategy
+from strategies.trend_following import TrendFollowingStrategy
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -26,6 +27,7 @@ class IntelligentLearningSystem:
         self.observer = MarketObserver()
         self.breakout_strategy = BreakoutMomentumStrategy()
         self.reversal_strategy = SmartReversalStrategy()
+        self.trend_strategy = TrendFollowingStrategy()
         
         # Priorizar EUR/USD (más líquido y predecible)
         self.priority_assets = [
@@ -115,9 +117,10 @@ class IntelligentLearningSystem:
                 # Análisis de múltiples estrategias
                 breakout_analysis = self.breakout_strategy.analyze(df)
                 reversal_analysis = self.reversal_strategy.analyze(df)
+                trend_analysis = self.trend_strategy.analyze(df)
                 
                 # Elegir la mejor señal
-                strategies = [breakout_analysis, reversal_analysis]
+                strategies = [breakout_analysis, reversal_analysis, trend_analysis]
                 best_strat = max(strategies, key=lambda x: x['confidence'])
                 
                 result = {
@@ -128,7 +131,8 @@ class IntelligentLearningSystem:
                     'strategy': best_strat,
                     'all_strategies': {
                         'breakout': breakout_analysis,
-                        'reversal': reversal_analysis
+                        'reversal': reversal_analysis,
+                        'trend': trend_analysis
                     },
                     'current_price': df.iloc[-1]['close']
                 }
@@ -162,7 +166,8 @@ class IntelligentLearningSystem:
         volatility = result['movement'].get('volatility_pct', 0)
         
         # 1. Filtro de Volatilidad Mínima Ganadora
-        min_vol = patterns.get('volatility_correlation', {}).get('min_win_volatility', 0.075)
+        # OTC suele tener baja volatilidad, bajamos el muro de 0.075 a 0.03
+        min_vol = patterns.get('volatility_correlation', {}).get('min_win_volatility', 0.03)
         if volatility < min_vol:
             # Si no hay suficiente "fuerza", bajamos la confianza drásticamente
             strategy['confidence'] *= 0.5

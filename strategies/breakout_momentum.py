@@ -18,9 +18,9 @@ class BreakoutMomentumStrategy:
     """
     
     def __init__(self, 
-                 min_adx: float = 25,
-                 min_body_ratio: float = 0.6,
-                 lookback_period: int = 50):
+                 min_adx: float = 18, # Bajamos de 25 a 18
+                 min_body_ratio: float = 0.4, # Bajamos de 0.6 a 0.4
+                 lookback_period: int = 40):
         """
         Args:
             min_adx: ADX mínimo para confirmar tendencia fuerte
@@ -325,7 +325,7 @@ class BreakoutMomentumStrategy:
             # Solo considerar si estamos cerca del nivel
             distance_to_resistance = abs(current_price - nearest_resistance) / current_price
             
-            if distance_to_resistance < 0.002:  # Dentro del 0.2%
+            if distance_to_resistance < 0.005:  # Subimos de 0.2% a 0.5% para ser más flexibles
                 is_valid, reason = self.is_valid_breakout_up(df, nearest_resistance)
                 
                 if is_valid:
@@ -355,7 +355,7 @@ class BreakoutMomentumStrategy:
             
             distance_to_support = abs(current_price - nearest_support) / current_price
             
-            if distance_to_support < 0.002:
+            if distance_to_support < 0.005: # Subimos a 0.5%
                 is_valid, reason = self.is_valid_breakout_down(df, nearest_support)
                 
                 if is_valid:
