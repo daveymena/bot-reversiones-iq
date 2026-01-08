@@ -165,13 +165,15 @@ class IntelligentLearningSystem:
         strategy = result['strategy']
         volatility = result['movement'].get('volatility_pct', 0)
         
-        # 1. Filtro de Volatilidad Mínima Ganadora
-        # OTC suele tener baja volatilidad, bajamos el muro de 0.075 a 0.03
-        min_vol = patterns.get('volatility_correlation', {}).get('min_win_volatility', 0.03)
+        # 1. Filtro de Volatilidad Mínima (Forzado para OTC)
+        # Bajamos a 0.02 y lo hacemos obligatorio ignorando memoria vieja si es muy alta
+        db_min_vol = patterns.get('volatility_correlation', {}).get('min_win_volatility', 0.03)
+        min_vol = min(0.025, db_min_vol) 
+        
         if volatility < min_vol:
-            # Si no hay suficiente "fuerza", bajamos la confianza drásticamente
-            strategy['confidence'] *= 0.5
-            strategy['reason'] += f" (Baja Volatilidad: {volatility:.3f}% < {min_vol:.3f}%)"
+            # Penalización suave (0.8) en lugar de drástica (0.5)
+            strategy['confidence'] *= 0.8
+            strategy['reason'] += f" (Volatilidad Baja: {volatility:.3f}% < {min_vol:.3f}%)"
 
         # 2. Bono por Activo Estrella
         best_assets = patterns.get('best_assets', {})
@@ -184,9 +186,9 @@ class IntelligentLearningSystem:
         strat_perf = patterns.get('strategy_performance', {})
         strat_name = strategy.get('strategy')
         if strat_name in strat_perf and strat_perf[strat_name] < 0.3:
-            # Si la estrategia gana menos del 30%, bajamos confianza
-            strategy['confidence'] *= 0.8
-            strategy['reason'] += f" (Bajo rendimiento: {strat_perf[strat_name]*100:.0f}%)"
+            # Penalización más suave para permitir exploración
+            strategy['confidence'] *= 0.9
+            strategy['reason'] += f" (Ajuste por historial: {strat_perf[strat_name]*100:.0f}%)"
 
         # Asegurar límites
         strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
@@ -229,7 +231,7 @@ class IntelligentLearningSystem:
         else:
             adjustment = 0
             
-        final_threshold = max(65.0, min(80.0, base + adjustment))
+        final_threshold = max(60.0, min(80.0, base + adjustment))
         print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
         return final_threshold
     
