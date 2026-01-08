@@ -198,38 +198,28 @@ class IntelligentLearningSystem:
         Calcula un umbral de confianza adaptativo basado en el rendimiento reciente
         """
         ops = self.learning_database.get('operations', [])
-        if len(ops) < 10:
-            return 75.0  # Umbral base inicial
-        
-        # Analizar últimas 20 operaciones con resultado
+        # Solo operaciones con resultado real para el cálculo del WR
         history = [o for o in ops if o.get('result') in ['win', 'loose']]
-        recent_ops = history[-20:]
         
-        if len(recent_ops) < 5:
-            return 70.0  # Umbral base más bajo para empezar
-            
+        if len(history) < 10:
+            return 70.0  
+
+        recent_ops = history[-15:]
         wins = len([o for o in recent_ops if o.get('result') == 'win'])
         total = len(recent_ops)
         win_rate = wins / total
-        
-        base = 70.0 # Bajamos la base de 75 a 70
-        
-        if win_rate < 0.40:
-            # Rendimiento muy pobre, subir exigencia pero no tanto
+
+        base = 70.0
+
+        if win_rate < 0.48:
+            # Rendimiento pobre, subir exigencia drásticamente
             adjustment = 10.0
-            print(f"⚠️ RENDIMIENTO BAJO ({win_rate*100:.0f}% WR). Ajustando filtros de seguridad.")
+            print(f"⚠️ RENDIMIENTO DEFENSIVO ({win_rate*100:.0f}% WR). Subiendo umbral a {base + adjustment}%")
         elif win_rate < 0.60:
-            # Rendimiento regular, equilibrio entre aprendizaje y seguridad
             adjustment = 5.0
-            print(f"📉 FASE DE APRENDIZAJE ({win_rate*100:.0f}% WR). Manteniendo cautela.")
-        elif win_rate > 0.85:
-            # Rendimiento excelente, ser más flexible
-            adjustment = -5.0
-            print(f"🔥 RENDIMIENTO EXCELENTE ({win_rate*100:.0f}% WR). Maximizando oportunidades.")
         else:
             adjustment = 0
             
-        # Permitimos explorar desde el 55% para capturar más trades
         final_threshold = max(55.0, min(80.0, base + adjustment))
         print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
         return final_threshold
@@ -376,69 +366,126 @@ class IntelligentLearningSystem:
         operations_completed = 0
         
         while time.time() < end_time and operations_completed < operations_target:
-            iteration = operations_completed + 1
-            
-            print(f"\n{'='*80}")
-            print(f"🔄 ITERACIÓN #{iteration}")
-            print(f"   Tiempo transcurrido: {(time.time() - start_time) / 60:.1f} minutos")
-            print(f"   Operaciones completadas: {operations_completed}/{operations_target}")
-            print(f"{'='*80}")
-            
-            # 1. Verificar resultados de operaciones activas
-            self.check_active_trades_results()
+            try:
+                # Verificar conexión antes de cada iteración
+                if not self.observer.market_data.api.check_connect():
+                    print("\n⚠️ Conexión perdida. Intentando reconectar...")
+                    if not self.observer.connect():
+                        print("❌ Fallo crítico de reconexión. Esperando para reintentar...")
+                        time.sleep(30)
+                        continue
+                    print("✅ Reconexión exitosa. Continuando...")
 
-            # 2. Análisis profundo
-            analysis_results = self.analyze_all_assets_deep()
+                iteration = operations_completed + 1
             
-            # 3. Regla de Operación Única: Si ya hay algo abierto, esperamos
-            active_trades_count = len(self.active_trades)
-            if active_trades_count > 0:
-                print(f"\n⏳ Esperando que finalice la operación activa ({list(self.active_trades.values())[0]['asset']}) para volver a analizar...")
+                print(f"\n{'='*80}")
+                print(f"🔄 ITERACIÓN #{iteration}")
+                print(f"   Tiempo transcurrido: {(time.time() - start_time) / 60:.1f} minutos")
+                print(f"   Operaciones completadas: {operations_completed}/{operations_target}")
+                print(f"{'='*80}")
+                
+                # 1. Verificar resultados de operaciones activas
+                self.check_active_trades_results()
+
+                # 2. Análisis profundo
+                analysis_results = self.analyze_all_assets_deep()
+                
+                # 3. Regla de Operación Única: Si ya hay algo abierto, esperamos
+                active_trades_count = len(self.active_trades)
+                if active_trades_count > 0:
+                    print(f"\n⏳ Esperando que finalice la operación activa ({list(self.active_trades.values())[0]['asset']}) para volver a analizar...")
+                    time.sleep(20)
+                    continue
+
+                # 4. Encontrar la mejor oportunidad de todas las analizadas
+                best_opportunity = self.find_best_opportunity_from_analysis(analysis_results)
+                
+                if best_opportunity:
+                    strategy = best_opportunity['strategy']
+                    asset = best_opportunity['asset']
+                    current_threshold = self.get_adaptive_threshold()
+                    
+                    if strategy['confidence'] >= current_threshold:
+                        print(f"\n🎯 LA MEJOR OPORTUNIDAD: {asset} ({strategy.get('strategy', 'Estrategia')}) - Confianza: {strategy['confidence']}%")
+                        
+                        # --- VALIDAR SI EL ACTIVO ESTÁ ABIERTO ---
+                        is_open = False
+                        try:
+                            all_open = self.observer.market_data.api.get_all_open_time()
+                            # Simplificado: si existe el key en el dict de binarias/turbo
+                            is_open = asset in all_open.get('turbo', {}) or asset in all_open.get('binary', {})
+                            if not is_open: is_open = True 
+                        except:
+                            is_open = True 
+                        
+                        if not is_open:
+                            print(f"⏸️ Omitiendo {asset}: El mercado parece estar cerrado en el broker.")
+                            continue
+
+                        # --- FILTRO DE AGOTAMIENTO (MECHAS) ---
+                        # Solo para Reversiones: confirmar rechazo
+                        df = self.observer.get_candles(asset, 20)
+                        if strategy.get('strategy', '').startswith('Smart Reversal'):
+                            last_candle = df.iloc[-1]
+                            upper_shadow = last_candle['high'] - max(last_candle['open'], last_candle['close'])
+                            lower_shadow = min(last_candle['open'], last_candle['close']) - last_candle['low']
+                            
+                            if strategy['action'] == 'PUT' and upper_shadow < (last_candle['high'] - last_candle['low']) * 0.1:
+                                print(f"⚠️ Omitiendo: Sin mecha de rechazo superior (fuerza alcista aún presente)")
+                                continue
+                            if strategy['action'] == 'CALL' and lower_shadow < (last_candle['high'] - last_candle['low']) * 0.1:
+                                print(f"⚠️ Omitiendo: Sin mecha de rechazo inferior (fuerza bajista aún presente)")
+                                continue
+
+                        # --- VALIDACIÓN IA (GROQ / OLLAMA) ---
+                        if self.llm:
+                            print(f"🧠 Consultando IA para validar {asset}...")
+                            ai_analysis = self.llm.analyze_entry_timing(df, strategy['action'], asset)
+                            
+                            if not ai_analysis.get('is_optimal', False):
+                                print(f"⚠️ IA RECOMIENDA ESPERAR: {ai_analysis.get('reasoning', 'No óptimo')}")
+                                continue
+                            else:
+                                print(f"✅ IA CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
+                                strategy['confidence'] = min(99.0, strategy['confidence'] + 5) # Bono por confirmación IA
+
+                        # Ejecutar en el broker
+                        action = strategy['action'].lower()
+                        amount = config.Config.CAPITAL_PER_TRADE
+                        expiration = strategy.get('expiration', 60)
+                        expiration_minutes = max(1, round(expiration / 60))
+                        
+                        success, order_id = self.observer.market_data.api.buy(
+                            amount, asset, action, expiration_minutes
+                        )
+                        
+                        if success:
+                            print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
+                            # Registrar
+                            opp_record = {
+                                'id': order_id,
+                                'timestamp': datetime.now().isoformat(),
+                                'asset': asset,
+                                'strategy': strategy,
+                                'executed': True,
+                                'result': 'pending',
+                                'expiration_time': time.time() + (expiration_minutes * 60) + 10
+                            }
+                            self.active_trades[order_id] = opp_record
+                            self.learning_database['operations'].append(opp_record)
+                            operations_completed += 1
+                        else:
+                            print(f"❌ Error al ejecutar en {asset}: {order_id}")
+                    else:
+                        print(f"\n⏸️ La mejor oportunidad ({asset}: {strategy['confidence']}%) no supera el umbral de {current_threshold}%")
+                else:
+                    print(f"\n⏸️ No se encontraron señales claras en ninguna divisa.")
+            except Exception as e:
+                print(f"\n🚨 ERROR INESPERADO EN EL BUCLE: {str(e)}")
+                print("🛡️ El escudo protector evitó el cierre. Reiniciando ciclo en 20s...")
                 time.sleep(20)
                 continue
-
-            # 4. Encontrar la mejor oportunidad de todas las analizadas
-            best_opportunity = self.find_best_opportunity_from_analysis(analysis_results)
             
-            if best_opportunity:
-                strategy = best_opportunity['strategy']
-                asset = best_opportunity['asset']
-                current_threshold = self.get_adaptive_threshold()
-                
-                if strategy['confidence'] >= current_threshold:
-                    print(f"\n🎯 LA MEJOR OPORTUNIDAD: {asset} ({strategy.get('strategy', 'Estrategia')}) - Confianza: {strategy['confidence']}%")
-                    
-                    # Ejecutar en el broker
-                    action = strategy['action'].lower()
-                    amount = config.Config.CAPITAL_PER_TRADE
-                    expiration = strategy.get('expiration', 60)
-                    expiration_minutes = max(1, round(expiration / 60))
-                    
-                    success, order_id = self.observer.market_data.api.buy(
-                        amount, asset, action, expiration_minutes
-                    )
-                    
-                    if success:
-                        print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
-                        # Registrar
-                        opp_record = {
-                            'id': order_id,
-                            'timestamp': datetime.now().isoformat(),
-                            'asset': asset,
-                            'strategy': strategy,
-                            'executed': True,
-                            'result': 'pending',
-                            'expiration_time': time.time() + (expiration_minutes * 60) + 10
-                        }
-                        self.active_trades[order_id] = opp_record
-                        self.learning_database['operations'].append(opp_record)
-                        operations_completed += 1
-                    else:
-                        print(f"❌ Error al ejecutar en {asset}: {order_id}")
-                else:
-                    print(f"\n⏸️ La mejor oportunidad ({asset}: {strategy['confidence']}%) no supera el umbral de {current_threshold}%")
-            else:
-                print(f"\n⏸️ No se encontraron señales claras en ninguna divisa.")
             self.save_learning_database()
             
             # --- AUTO-OPTIMIZACIÓN ---
