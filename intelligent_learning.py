@@ -390,24 +390,23 @@ class IntelligentLearningSystem:
             # 2. Análisis profundo
             analysis_results = self.analyze_all_assets_deep()
             
-            # 3. Ejecutar TODAS las oportunidades que pasen el filtro
-            executed_any = False
-            current_threshold = self.get_adaptive_threshold()
+            # 3. Regla de Operación Única: Si ya hay algo abierto, esperamos
+            active_trades_count = len(self.active_trades)
+            if active_trades_count > 0:
+                print(f"\n⏳ Esperando que finalice la operación activa ({list(self.active_trades.values())[0]['asset']}) para volver a analizar...")
+                time.sleep(20)
+                continue
+
+            # 4. Encontrar la mejor oportunidad de todas las analizadas
+            best_opportunity = self.find_best_opportunity_from_analysis(analysis_results)
             
-            for opp in analysis_results:
-                if opp['strategy']['action'] == 'WAIT':
-                    continue
-                
-                strategy = opp['strategy']
-                asset = opp['asset']
+            if best_opportunity:
+                strategy = best_opportunity['strategy']
+                asset = best_opportunity['asset']
+                current_threshold = self.get_adaptive_threshold()
                 
                 if strategy['confidence'] >= current_threshold:
-                    # --- REGLA: UNA OPERACIÓN POR ACTIVO ---
-                    active_assets = [t['asset'] for t in self.active_trades.values()]
-                    if asset in active_assets:
-                        continue
-                        
-                    print(f"\n🚀 EJECUTANDO EN {asset} ({strategy.get('strategy', 'Unknown')}) - Confianza: {strategy['confidence']}%")
+                    print(f"\n🎯 LA MEJOR OPORTUNIDAD: {asset} ({strategy.get('strategy', 'Estrategia')}) - Confianza: {strategy['confidence']}%")
                     
                     # Ejecutar en el broker
                     action = strategy['action'].lower()
@@ -420,8 +419,7 @@ class IntelligentLearningSystem:
                     )
                     
                     if success:
-                        print(f"✅ ¡Operación abierta! ID: {order_id}")
-                        executed_any = True
+                        print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
                         # Registrar
                         opp_record = {
                             'id': order_id,
@@ -438,14 +436,9 @@ class IntelligentLearningSystem:
                     else:
                         print(f"❌ Error al ejecutar en {asset}: {order_id}")
                 else:
-                    if strategy['confidence'] > 30: # No llenar el log con basura de 0%
-                        print(f"⏸️ Omitiendo {asset}: Confianza {strategy['confidence']}% < {current_threshold}%")
-
-            if not executed_any:
-                print(f"\n⏸️ No se encontraron señales que superen el {current_threshold}% en esta vuelta.")
+                    print(f"\n⏸️ La mejor oportunidad ({asset}: {strategy['confidence']}%) no supera el umbral de {current_threshold}%")
             else:
-                print(f"\n⏸️ No hay oportunidades claras en este momento")
-            
+                print(f"\n⏸️ No se encontraron señales claras en ninguna divisa.")
             self.save_learning_database()
             
             # --- AUTO-OPTIMIZACIÓN ---
