@@ -165,15 +165,13 @@ class IntelligentLearningSystem:
         strategy = result['strategy']
         volatility = result['movement'].get('volatility_pct', 0)
         
-        # 1. Filtro de Volatilidad Mínima (Forzado para OTC)
-        # Bajamos a 0.02 y lo hacemos obligatorio ignorando memoria vieja si es muy alta
-        db_min_vol = patterns.get('volatility_correlation', {}).get('min_win_volatility', 0.03)
-        min_vol = min(0.025, db_min_vol) 
+        # 1. Filtro de Volatilidad Mínima (Ultra-permisivo para OTC)
+        # Bajamos a 0.01 para asegurar que no se pierda ninguna oportunidad por falta de 'ruido'
+        min_vol = 0.01
         
         if volatility < min_vol:
-            # Penalización suave (0.8) en lugar de drástica (0.5)
-            strategy['confidence'] *= 0.8
-            strategy['reason'] += f" (Volatilidad Baja: {volatility:.3f}% < {min_vol:.3f}%)"
+            strategy['confidence'] *= 0.9 # Solo una pequeña quita
+            strategy['reason'] += f" (Vol. baja: {volatility:.3f}%)"
 
         # 2. Bono por Activo Estrella
         best_assets = patterns.get('best_assets', {})
@@ -231,7 +229,8 @@ class IntelligentLearningSystem:
         else:
             adjustment = 0
             
-        final_threshold = max(60.0, min(80.0, base + adjustment))
+        # Permitimos explorar desde el 55% para capturar más trades
+        final_threshold = max(55.0, min(80.0, base + adjustment))
         print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
         return final_threshold
     
@@ -389,66 +388,29 @@ class IntelligentLearningSystem:
             # 2. Análisis profundo
             analysis_results = self.analyze_all_assets_deep()
             
-            # 3. Encontrar mejor oportunidad
-            best_opportunity = self.find_best_opportunity_from_analysis(analysis_results)
+            # 3. Ejecutar TODAS las oportunidades que pasen el filtro
+            executed_any = False
+            current_threshold = self.get_adaptive_threshold()
             
-            if best_opportunity:
-                # Registrar todas las oportunidades encontradas para análisis
-                opportunity_record = {
-                    'timestamp': datetime.now().isoformat(),
-                    'asset': best_opportunity['asset'],
-                    'strategy': best_opportunity['strategy'],
-                    'movement': best_opportunity['movement'],
-                    'timing': best_opportunity['timing'],
-                    'current_price': best_opportunity['current_price'],
-                    'executed': False,
-                    'result': 'pending'
-                }
-
-                # --- REGLA: UNA OPERACIÓN POR ACTIVO ---
-                active_assets = [t['asset'] for t in self.active_trades.values()]
+            for opp in analysis_results:
+                if opp['strategy']['action'] == 'WAIT':
+                    continue
                 
-                # Umbral Adaptativo: Se vuelve más estricto si perdemos
-                current_threshold = self.get_adaptive_threshold()
+                strategy = opp['strategy']
+                asset = opp['asset']
                 
-                if best_opportunity['asset'] in active_assets:
-                    print(f"\n⏸️ Omitiendo {best_opportunity['asset']}: Ya hay una operación activa. Esperando resultado para aprender.")
-                    opportunity_record['reason_not_executed'] = "Operación activa en curso"
-                elif best_opportunity['strategy']['confidence'] >= current_threshold:
-                    
-                    # --- VALIDACIÓN IA (LLM / GROQ / OLLAMA) ---
-                    if self.llm:
-                        print(f"🧠 Consultando IA para validación de timing...")
-                        ai_analysis = self.llm.analyze_entry_timing(
-                            df, 
-                            best_opportunity['strategy']['action'],
-                            best_opportunity['asset']
-                        )
+                if strategy['confidence'] >= current_threshold:
+                    # --- REGLA: UNA OPERACIÓN POR ACTIVO ---
+                    active_assets = [t['asset'] for t in self.active_trades.values()]
+                    if asset in active_assets:
+                        continue
                         
-                        if ai_analysis.get('is_optimal'):
-                            print(f"✅ IA CONFIRMA ENTRADA: {ai_analysis.get('reasoning')}")
-                            best_opportunity['strategy']['confidence'] *= (0.5 + ai_analysis.get('confidence', 0.5))
-                            best_opportunity['strategy']['reason'] += f" | IA: {ai_analysis.get('reasoning')}"
-                        else:
-                            print(f"⚠️ IA RECOMIENDA ESPERAR: {ai_analysis.get('reasoning')}")
-                            opportunity_record['reason_not_executed'] = f"IA: {ai_analysis.get('reasoning')}"
-                            # No ejecutamos
-                            self.learning_database['operations'].append(opportunity_record)
-                            time.sleep(1)
-                            continue
-
-                    print(f"\n🚀 EJECUTANDO OPERACIÓN REAL (DEMO):")
-                    print(f"   Activo: {best_opportunity['asset']}")
-                    print(f"   Acción: {best_opportunity['strategy']['action']}")
-                    print(f"   Confianza: {best_opportunity['strategy']['confidence']}%")
+                    print(f"\n🚀 EJECUTANDO EN {asset} ({strategy['type']}) - Confianza: {strategy['confidence']}%")
                     
                     # Ejecutar en el broker
-                    asset = best_opportunity['asset']
-                    action = best_opportunity['strategy']['action'].lower()
+                    action = strategy['action'].lower()
                     amount = config.Config.CAPITAL_PER_TRADE
-                    expiration = best_opportunity['strategy'].get('expiration', 60) # segundos
-                    
-                    # Exnovaapi espera minutos
+                    expiration = strategy.get('expiration', 60)
                     expiration_minutes = max(1, round(expiration / 60))
                     
                     success, order_id = self.observer.market_data.api.buy(
@@ -456,19 +418,29 @@ class IntelligentLearningSystem:
                     )
                     
                     if success:
-                        print(f"✅ Operación enviada exitosamente! ID: {order_id}")
-                        opportunity_record['id'] = order_id
-                        opportunity_record['executed'] = True
-                        opportunity_record['expiration_time'] = time.time() + (expiration_minutes * 60) + 10
-                        
-                        self.active_trades[order_id] = opportunity_record
+                        print(f"✅ ¡Operación abierta! ID: {order_id}")
+                        executed_any = True
+                        # Registrar
+                        opp_record = {
+                            'id': order_id,
+                            'timestamp': datetime.now().isoformat(),
+                            'asset': asset,
+                            'strategy': strategy,
+                            'executed': True,
+                            'result': 'pending',
+                            'expiration_time': time.time() + (expiration_minutes * 60) + 10
+                        }
+                        self.active_trades[order_id] = opp_record
+                        self.learning_database['operations'].append(opp_record)
                         operations_completed += 1
                     else:
-                        print(f"❌ Error al ejecutar: {order_id}")
+                        print(f"❌ Error al ejecutar en {asset}: {order_id}")
                 else:
-                    print(f"\n⏸️ Oportunidad en {best_opportunity['asset']} con confianza {best_opportunity['strategy']['confidence']}% - Demasiado baja (requiere {current_threshold}%)")
-                
-                self.learning_database['operations'].append(opportunity_record)
+                    if strategy['confidence'] > 30: # No llenar el log con basura de 0%
+                        print(f"⏸️ Omitiendo {asset}: Confianza {strategy['confidence']}% < {current_threshold}%")
+
+            if not executed_any:
+                print(f"\n⏸️ No se encontraron señales que superen el {current_threshold}% en esta vuelta.")
             else:
                 print(f"\n⏸️ No hay oportunidades claras en este momento")
             
