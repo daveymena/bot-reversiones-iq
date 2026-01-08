@@ -360,9 +360,11 @@ class IntelligentLearningSystem:
         """
         print("\n" + "="*80)
         print(f"🧠 SESIÓN DE APRENDIZAJE CONTINUO")
+        print(f"   Build ID: 2026-01-08-0505 (Ultra-Active Mode)")
         print(f"   Duración: {duration_minutes} minutos")
         print(f"   Objetivo: {operations_target} operaciones")
         print("="*80)
+        sys.stdout.flush() # Forzar que se vea en Easypanel
         
         # Conectar
         if not self.observer.connect():

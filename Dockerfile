@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements_cloud.txt .
 RUN pip install --no-cache-dir -r requirements_cloud.txt
 
-# Copiar código
+# Copiar código (Actualizado: 2026-01-08-0505)
+ENV BUILD_VERSION=2026.01.08.0505
 COPY . .
 
 # Variables de entorno
