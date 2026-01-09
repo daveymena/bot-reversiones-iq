@@ -350,7 +350,7 @@ class IntelligentLearningSystem:
         """
         print("\n" + "="*80)
         print(f"🧠 SESIÓN DE APRENDIZAJE CONTINUO")
-        print(f"   Build ID: 2026-01-08-2055 (Ultra-Stable Mode)")
+        print(f"   Build ID: FORCE-UPDATE-2101 (FIXED & STABLE)")
         print(f"   Duración: {duration_minutes} minutos")
         print(f"   Objetivo: {operations_target} operaciones")
         print("="*80)
