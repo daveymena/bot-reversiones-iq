@@ -350,7 +350,7 @@ class IntelligentLearningSystem:
         """
         print("\n" + "="*80)
         print(f"🧠 SESIÓN DE APRENDIZAJE CONTINUO")
-        print(f"   Build ID: 2026-01-08-0505 (Ultra-Active Mode)")
+        print(f"   Build ID: 2026-01-08-2055 (Ultra-Stable Mode)")
         print(f"   Duración: {duration_minutes} minutos")
         print(f"   Objetivo: {operations_target} operaciones")
         print("="*80)
@@ -424,7 +424,7 @@ class IntelligentLearningSystem:
 
                         # --- FILTRO DE AGOTAMIENTO (MECHAS) ---
                         # Solo para Reversiones: confirmar rechazo
-                        df = self.observer.get_candles(asset, 20)
+                        df = self.observer.market_data.get_candles(asset, 60, 20, time.time())
                         if strategy.get('strategy', '').startswith('Smart Reversal'):
                             last_candle = df.iloc[-1]
                             upper_shadow = last_candle['high'] - max(last_candle['open'], last_candle['close'])
@@ -449,18 +449,37 @@ class IntelligentLearningSystem:
                                 print(f"✅ IA CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
                                 strategy['confidence'] = min(99.0, strategy['confidence'] + 5) # Bono por confirmación IA
 
-                        # Ejecutar en el broker
+                        # --- EJECUCIÓN ROBUSTA (Digital o Binaria) ---
                         action = strategy['action'].lower()
                         amount = config.Config.CAPITAL_PER_TRADE
                         expiration = strategy.get('expiration', 60)
-                        expiration_minutes = max(1, round(expiration / 60))
+                        duration = max(1, round(expiration / 60))
                         
-                        success, order_id = self.observer.market_data.api.buy(
-                            amount, asset, action, expiration_minutes
-                        )
+                        print(f"🚀 Enviando orden a {asset} ({action})...")
                         
-                        if success:
-                            print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
+                        success = False
+                        order_id = None
+                        
+                        # Intento 1: Digital (La más común para Exnova/IQ)
+                        try:
+                            success, order_id = self.observer.market_data.api.buy_digital_spot(asset, amount, action, duration)
+                            if success:
+                                print(f"✅ ¡Operación DIGITAL abierta! ID: {order_id}")
+                        except Exception as e:
+                            print(f"⚠️ Falló intento Digital: {e}")
+                        
+                        # Intento 2: Binaria (Fallback si Digital no está disponible para ese activo/hora)
+                        if not success or not order_id:
+                            try:
+                                print(f"🔄 Intentando vía BINARIA para {asset}...")
+                                success, order_id = self.observer.market_data.api.buy(amount, asset, action, duration)
+                                if success:
+                                    print(f"✅ ¡Operación BINARIA abierta! ID: {order_id}")
+                            except Exception as e:
+                                print(f"❌ Falló intento Binario: {e}")
+
+                        if success and order_id:
+                            print(f"✅ ¡Confirmado! Esperando resultado...")
                             # Registrar
                             opp_record = {
                                 'id': order_id,
@@ -469,13 +488,13 @@ class IntelligentLearningSystem:
                                 'strategy': strategy,
                                 'executed': True,
                                 'result': 'pending',
-                                'expiration_time': time.time() + (expiration_minutes * 60) + 10
+                                'expiration_time': time.time() + (duration * 60) + 10
                             }
                             self.active_trades[order_id] = opp_record
                             self.learning_database['operations'].append(opp_record)
                             operations_completed += 1
                         else:
-                            print(f"❌ Error al ejecutar en {asset}: {order_id}")
+                            print(f"❌ No se pudo ejecutar en {asset} por ninguna vía.")
                     else:
                         print(f"\n⏸️ La mejor oportunidad ({asset}: {strategy['confidence']}%) no supera el umbral de {current_threshold}%")
                 else:
