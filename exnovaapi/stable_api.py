@@ -363,7 +363,7 @@ class Exnova:
             return
             
         if "underlying" not in digital_data_result:
-            logging.error('**error** "underlying" key not found in digital_data_result')
+            logging.error(f'**error** "underlying" key not found in digital_data_result. Available keys: {list(digital_data_result.keys())}')
             return
         
         digital_data = digital_data_result["underlying"]
@@ -1176,8 +1176,12 @@ class Exnova:
 
         request_id = self.api.place_digital_option(instrument_id, amount)
 
+        start_t = time.time()
         while self.api.digital_option_placed_id.get(request_id) == None:
-            pass
+            if time.time() - start_t > 10:
+                logging.error('**error** buy_digital_spot timeout')
+                return False, None
+            time.sleep(0.1)
         digital_order_id = self.api.digital_option_placed_id.get(request_id)
         if isinstance(digital_order_id, int):
             return True, digital_order_id

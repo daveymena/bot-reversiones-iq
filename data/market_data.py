@@ -219,6 +219,36 @@ class MarketDataHandler:
         # Intentar conectar de nuevo
         return self.connect(email, password)
     
+    def buy(self, asset, amount, action, duration):
+        """
+        Ejecuta una operación buscando la mejor vía disponible (Digital -> Binaria).
+        """
+        if not self.connected or not self.api:
+            return False, "No conectado"
+
+        # 1. Intentar Digital (Suele tener mejor payout)
+        try:
+            print(f"📦 Intentando operación DIGITAL en {asset}...")
+            # En iqoption/exnova API, buy_digital_spot devuelve (success, id)
+            check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
+            if check:
+                return True, order_id
+        except Exception as e:
+            print(f"⚠️ Fallo en Digital: {e}")
+
+        # 2. Intentar Binaria (Fallback)
+        try:
+            print(f"📦 Intentando operación BINARIA en {asset}...")
+            # En iqoption/exnova API, buy devuelve solo un booleano (success)
+            # Para obtener el ID de una binaria, hay que consultarlo luego o no es necesario para el seguimiento básico
+            check, order_id = self.api.buy(amount, asset, action, duration)
+            if check:
+                return True, order_id
+        except Exception as e:
+            print(f"⚠️ Fallo en Binaria: {e}")
+
+        return False, "Error en ejecución"
+
     def disconnect(self):
         """Desconecta del broker"""
         if self.api:

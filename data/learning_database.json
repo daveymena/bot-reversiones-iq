@@ -9304,6 +9304,27 @@
       "executed": true,
       "result": "pending",
       "expiration_time": 1767886911.1002152
+    },
+    {
+      "id": 13503255942,
+      "timestamp": "2026-01-10T18:06:30.414938",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 75,
+        "strategy": "Smart Reversal (Bajista)",
+        "reason": "Reversi\u00f3n en resistencia 1.33184 con RSI 80.8",
+        "details": {
+          "price": 1.331705,
+          "resistance": 1.331835,
+          "rsi": 80.75112707986577,
+          "bb_high": 1.3317781243099902
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "pending",
+      "expiration_time": 1768086520.4149382
     }
   ],
   "patterns_found": {

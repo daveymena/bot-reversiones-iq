@@ -350,7 +350,7 @@ class IntelligentLearningSystem:
         """
         print("\n" + "="*80)
         print(f"🧠 SESIÓN DE APRENDIZAJE CONTINUO")
-        print(f"   Build ID: FORCE-UPDATE-2101 (FIXED & STABLE)")
+        print(f"   Build ID: FORCE-STABLE-V3-0943 (FIXED & TESTED)")
         print(f"   Duración: {duration_minutes} minutos")
         print(f"   Objetivo: {operations_target} operaciones")
         print("="*80)
@@ -449,37 +449,18 @@ class IntelligentLearningSystem:
                                 print(f"✅ IA CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
                                 strategy['confidence'] = min(99.0, strategy['confidence'] + 5) # Bono por confirmación IA
 
-                        # --- EJECUCIÓN ROBUSTA (Digital o Binaria) ---
+                        # --- EJECUCIÓN UNIFICADA (Digital -> Binaria) ---
                         action = strategy['action'].lower()
                         amount = config.Config.CAPITAL_PER_TRADE
                         expiration = strategy.get('expiration', 60)
                         duration = max(1, round(expiration / 60))
                         
-                        print(f"🚀 Enviando orden a {asset} ({action})...")
+                        print(f"🚀 Enviando orden a {asset} ({action}, {duration}min)...")
                         
-                        success = False
-                        order_id = None
-                        
-                        # Intento 1: Digital (La más común para Exnova/IQ)
-                        try:
-                            success, order_id = self.observer.market_data.api.buy_digital_spot(asset, amount, action, duration)
-                            if success:
-                                print(f"✅ ¡Operación DIGITAL abierta! ID: {order_id}")
-                        except Exception as e:
-                            print(f"⚠️ Falló intento Digital: {e}")
-                        
-                        # Intento 2: Binaria (Fallback si Digital no está disponible para ese activo/hora)
-                        if not success or not order_id:
-                            try:
-                                print(f"🔄 Intentando vía BINARIA para {asset}...")
-                                success, order_id = self.observer.market_data.api.buy(amount, asset, action, duration)
-                                if success:
-                                    print(f"✅ ¡Operación BINARIA abierta! ID: {order_id}")
-                            except Exception as e:
-                                print(f"❌ Falló intento Binario: {e}")
+                        success, order_id = self.observer.market_data.buy(asset, amount, action, duration)
 
-                        if success and order_id:
-                            print(f"✅ ¡Confirmado! Esperando resultado...")
+                        if success:
+                            print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
                             # Registrar
                             opp_record = {
                                 'id': order_id,
@@ -494,7 +475,7 @@ class IntelligentLearningSystem:
                             self.learning_database['operations'].append(opp_record)
                             operations_completed += 1
                         else:
-                            print(f"❌ No se pudo ejecutar en {asset} por ninguna vía.")
+                            print(f"❌ Error al ejecutar en {asset}: {order_id}")
                     else:
                         print(f"\n⏸️ La mejor oportunidad ({asset}: {strategy['confidence']}%) no supera el umbral de {current_threshold}%")
                 else:
