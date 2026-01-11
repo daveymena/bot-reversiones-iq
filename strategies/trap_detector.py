@@ -248,6 +248,32 @@ class TrapDetector:
         Returns:
             tuple: (is_trap, trap_type, trap_score, should_inverse)
         """
+        # Detectar niveles de soporte y resistencia
+        recent = df.tail(20)
+        resistance = recent['high'].max()
+        support = recent['low'].min()
+        current_price = df.iloc[-1]['close']
+        
+        # 🚨 NUEVA TRAMPA: Operación en dirección equivocada
+        # NO comprar en resistencia, NO vender en soporte
+        at_resistance = current_price >= resistance * 0.998
+        at_support = current_price <= support * 1.002
+        
+        if proposed_action == 'CALL' and at_resistance:
+            # Intentando comprar en resistencia = TRAMPA
+            print(f"   🚨 TRAMPA: Intentando COMPRAR en RESISTENCIA ({resistance:.5f})")
+            print(f"      - Precio actual: {current_price:.5f}")
+            print(f"      - Esto es una trampa común - el precio probablemente rebote a la baja")
+            return True, 'WRONG_DIRECTION_CALL', 80, True  # Invertir a PUT
+        
+        if proposed_action == 'PUT' and at_support:
+            # Intentando vender en soporte = TRAMPA
+            print(f"   🚨 TRAMPA: Intentando VENDER en SOPORTE ({support:.5f})")
+            print(f"      - Precio actual: {current_price:.5f}")
+            print(f"      - Esto es una trampa común - el precio probablemente rebote al alza")
+            return True, 'WRONG_DIRECTION_PUT', 80, True  # Invertir a CALL
+        
+        # Detectores originales
         bull_trap, bull_score = self.detect_bull_trap(df)
         bear_trap, bear_score = self.detect_bear_trap(df)
         fakeout, fakeout_score = self.detect_fakeout(df)

@@ -50,55 +50,89 @@ class SmartReversalStrategy:
         support, resistance = self.find_levels(df)
         
         # --- LÓGICA PARA CALL (Reversión al Alza) ---
-        # 1. Precio cerca o debajo del soporte o banda inferior
-        at_bottom = current_price <= support * 1.0005 or current_price <= last_candle['bb_low'] * 1.0005
-        # 2. RSI en sobreventa (o cerca)
-        oversold = rsi < 40 # Subimos de 35 a 40 para ser más flexibles
-        # 3. Vela de rechazo (mecha inferior larga o cambio de color)
-        rejection_low = (last_candle['low'] < last_candle['open']) and (abs(last_candle['low'] - min(last_candle['open'], last_candle['close'])) > abs(last_candle['open'] - last_candle['close']))
+        # REGLA: Solo comprar si el precio YA REBOTÓ del soporte
+        # NO comprar mientras está cayendo hacia el soporte
         
-        if at_bottom and oversold:
-            confidence = 60
-            if rejection_low: confidence += 20
+        # 1. Precio cerca del soporte o banda inferior
+        at_bottom = current_price <= support * 1.0005 or current_price <= last_candle['bb_low'] * 1.0005
+        
+        # 2. RSI en sobreventa
+        oversold = rsi < 35
+        
+        # 3. 🚨 CONFIRMACIÓN DE REBOTE (CRÍTICO)
+        # La vela actual debe ser ALCISTA (close > open) = ya está rebotando
+        candle_is_bullish = last_candle['close'] > last_candle['open']
+        
+        # 4. Vela anterior era BAJISTA (estaba cayendo)
+        prev_was_bearish = prev_candle['close'] < prev_candle['open']
+        
+        # 5. Mecha inferior larga = rechazo del soporte
+        lower_wick = min(last_candle['open'], last_candle['close']) - last_candle['low']
+        candle_range = last_candle['high'] - last_candle['low']
+        strong_rejection = candle_range > 0 and lower_wick / candle_range > 0.3
+        
+        # ✅ SOLO OPERAR SI HAY CONFIRMACIÓN DE REBOTE
+        if at_bottom and oversold and candle_is_bullish and (prev_was_bearish or strong_rejection):
+            confidence = 55
+            if strong_rejection: confidence += 20
             if rsi < 30: confidence += 10
+            if prev_was_bearish: confidence += 10  # Cambio de tendencia confirmado
             
             return {
                 'action': 'CALL',
                 'confidence': min(confidence, 95),
                 'strategy': 'Smart Reversal (Alcista)',
-                'reason': f'Reversión en soporte {support:.5f} con RSI {rsi:.1f}',
+                'reason': f'Rebote confirmado en soporte {support:.5f} con RSI {rsi:.1f}',
                 'details': {
                     'price': current_price,
                     'support': support,
                     'rsi': rsi,
-                    'bb_low': last_candle['bb_low']
+                    'bb_low': last_candle['bb_low'],
+                    'rejection_confirmed': strong_rejection
                 },
                 'expiration': 120 # 2 minutos para el rebote
             }
 
         # --- LÓGICA PARA PUT (Reversión a la Baja) ---
-        # 1. Precio cerca o arriba de la resistencia o banda superior
-        at_top = current_price >= resistance * 0.9995 or current_price >= last_candle['bb_high'] * 0.9995
-        # 2. RSI en sobrecompra (o cerca)
-        overbought = rsi > 60 # Bajamos de 65 a 60
-        # 3. Vela de rechazo (mecha superior larga)
-        rejection_high = (last_candle['high'] > last_candle['open']) and (abs(last_candle['high'] - max(last_candle['open'], last_candle['close'])) > abs(last_candle['open'] - last_candle['close']))
+        # REGLA: Solo vender si el precio YA RECHAZÓ la resistencia
+        # NO vender mientras está subiendo hacia la resistencia
         
-        if at_top and overbought:
-            confidence = 60
-            if rejection_high: confidence += 20
+        # 1. Precio cerca de la resistencia o banda superior
+        at_top = current_price >= resistance * 0.9995 or current_price >= last_candle['bb_high'] * 0.9995
+        
+        # 2. RSI en sobrecompra
+        overbought = rsi > 65
+        
+        # 3. 🚨 CONFIRMACIÓN DE RECHAZO (CRÍTICO)
+        # La vela actual debe ser BAJISTA (close < open) = ya está cayendo
+        candle_is_bearish = last_candle['close'] < last_candle['open']
+        
+        # 4. Vela anterior era ALCISTA (estaba subiendo)
+        prev_was_bullish = prev_candle['close'] > prev_candle['open']
+        
+        # 5. Mecha superior larga = rechazo de la resistencia
+        upper_wick = last_candle['high'] - max(last_candle['open'], last_candle['close'])
+        candle_range = last_candle['high'] - last_candle['low']
+        strong_rejection = candle_range > 0 and upper_wick / candle_range > 0.3
+        
+        # ✅ SOLO OPERAR SI HAY CONFIRMACIÓN DE RECHAZO
+        if at_top and overbought and candle_is_bearish and (prev_was_bullish or strong_rejection):
+            confidence = 55
+            if strong_rejection: confidence += 20
             if rsi > 70: confidence += 10
+            if prev_was_bullish: confidence += 10  # Cambio de tendencia confirmado
             
             return {
                 'action': 'PUT',
                 'confidence': min(confidence, 95),
                 'strategy': 'Smart Reversal (Bajista)',
-                'reason': f'Reversión en resistencia {resistance:.5f} con RSI {rsi:.1f}',
+                'reason': f'Rechazo confirmado en resistencia {resistance:.5f} con RSI {rsi:.1f}',
                 'details': {
                     'price': current_price,
                     'resistance': resistance,
                     'rsi': rsi,
-                    'bb_high': last_candle['bb_high']
+                    'bb_high': last_candle['bb_high'],
+                    'rejection_confirmed': strong_rejection
                 },
                 'expiration': 120 # 2 minutos
             }
