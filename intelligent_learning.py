@@ -15,6 +15,7 @@ from strategies.breakout_momentum import BreakoutMomentumStrategy
 from strategies.smart_reversal import SmartReversalStrategy
 from strategies.trend_following import TrendFollowingStrategy
 from strategies.trap_detector import TrapDetector
+from strategies.multi_timeframe import MultiTimeframeAnalyzer
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -30,6 +31,7 @@ class IntelligentLearningSystem:
         self.reversal_strategy = SmartReversalStrategy()
         self.trend_strategy = TrendFollowingStrategy()
         self.trap_detector = TrapDetector()  # 🚨 Detector de trampas
+        self.mtf_analyzer = None  # Se inicializa después de conectar
         
         # Priorizar EUR/USD (más líquido y predecible)
         self.priority_assets = [
@@ -377,6 +379,10 @@ class IntelligentLearningSystem:
             print("❌ No se pudo conectar")
             return
         
+        # Inicializar analizador multi-timeframe
+        self.mtf_analyzer = MultiTimeframeAnalyzer(self.observer.market_data)
+        print("✅ Analizador Multi-Timeframe inicializado (M15/M30 -> M1)")
+        
         start_time = time.time()
         end_time = start_time + (duration_minutes * 60)
         operations_completed = 0
@@ -437,6 +443,34 @@ class IntelligentLearningSystem:
                         if not is_open:
                             print(f"⏸️ Omitiendo {asset}: El mercado parece estar cerrado en el broker.")
                             continue
+
+                        # --- 🎯 ANÁLISIS MULTI-TIMEFRAME (M15/M30 -> M1) ---
+                        print(f"\n🔍 Analizando {asset} en múltiples temporalidades...")
+                        mtf_analysis = self.mtf_analyzer.analyze_asset(asset)
+                        
+                        if mtf_analysis and mtf_analysis['entry_signal']:
+                            mtf_signal = mtf_analysis['entry_signal']
+                            context = mtf_analysis['current_context']
+                            
+                            print(f"   📊 Contexto M30: {context['trend_m30']}")
+                            print(f"   📍 Posición: {context['position']}")
+                            if context['nearest_level']:
+                                print(f"   🎯 Nivel clave: {context['nearest_level']:.5f} (distancia: {context['distance_to_level']*100:.2f}%)")
+                            
+                            print(f"   ✅ SEÑAL MTF: {mtf_signal['action']} - Confianza: {mtf_signal['confidence']}%")
+                            print(f"   📝 Razón: {mtf_signal['reason']}")
+                            
+                            # Si el MTF da señal, REEMPLAZAR la estrategia original
+                            if mtf_signal['confidence'] >= 70:
+                                strategy = mtf_signal
+                                strategy['strategy'] = f"Multi-Timeframe {mtf_signal['timeframe']}"
+                                print(f"   🔄 Usando señal Multi-Timeframe (más confiable)")
+                        else:
+                            print(f"   ⚠️ No hay señal MTF clara - precio no está en nivel clave M30")
+                            # Si no hay señal MTF, podemos rechazar la operación
+                            if strategy.get('strategy', '').startswith('Smart Reversal'):
+                                print(f"   ❌ RECHAZADO: Reversión sin confirmación de nivel M30")
+                                continue
 
                         # --- FILTRO DE AGOTAMIENTO (MECHAS) ---
                         # Solo para Reversiones: confirmar rechazo
