@@ -47,7 +47,7 @@ class BollingerRSIStrategy:
         
         return df
     
-    def analyze(self, df):
+    def analyze(self, df, min_confidence=75):
         """
         Analiza el mercado buscando el patrón exacto de las imágenes
         """
@@ -83,15 +83,19 @@ class BollingerRSIStrategy:
             current_atr = df['atr'].iloc[-1]
             last_candle_range = last_candle['high'] - last_candle['low']
             
-            if current_atr > 0 and last_candle_range > current_atr * 3:
-                return {'action': 'WAIT', 'confidence': 0, 'reason': f'Volatilidad Extrema (Vela > 3x ATR)'}
+            # En modo aprendizaje (< 70 confianza), somos menos estrictos con la volatilidad
+            volatility_limit = 4 if min_confidence < 70 else 3
+            if current_atr > 0 and last_candle_range > current_atr * volatility_limit:
+                return {'action': 'WAIT', 'confidence': 0, 'reason': f'Volatilidad Extrema (Vela > {volatility_limit}x ATR)'}
 
             # --- ANÁLISIS PARA CALL (Compra en Banda Inferior) ---
             call_score = 0
             call_reasons = []
             
             # 1. Precio tocó/perforó banda inferior (OBLIGATORIO)
-            touched_lower = last_candle['low'] <= bb_low * 1.0002
+            # En modo aprendizaje, tolerancia un poco mayor
+            tolerance = 1.0005 if min_confidence < 70 else 1.0002
+            touched_lower = last_candle['low'] <= bb_low * tolerance
             if touched_lower:
                 call_score += 20
                 call_reasons.append(f"Toque Banda Inferior")
@@ -100,8 +104,9 @@ class BollingerRSIStrategy:
             
             if call_score > 0:
                 # 2. RSI en sobreventa EXTREMA (OBLIGATORIO)
-                # Si el activo es muy volátil (ATR alto), exigimos RSI más bajo
-                rsi_limit = 25 if last_candle_range > current_atr else 30
+                rsi_limit = 30 # Estándar
+                if last_candle_range > current_atr: rsi_limit = 25 # Volátil
+                
                 if rsi <= rsi_limit:
                     call_score += 30
                     call_reasons.append(f"RSI {rsi:.1f} (Límite {rsi_limit})")
@@ -109,19 +114,22 @@ class BollingerRSIStrategy:
                     call_score = 0
             
             if call_score > 0:
-                # 3. Vela de confirmación (OBLIGATORIO)
-                # Debe ser alcista y haber cerrado arriba del mínimo previo
+                # 3. Vela de confirmación
+                # En MODO ÉLITE (>80), es OBLIGATORIO que la vela sea verde
                 candle_is_bullish = last_candle['close'] > last_candle['open']
                 if candle_is_bullish:
                     call_score += 25
                     call_reasons.append("Confirmación Alcista")
+                elif min_confidence < 75: # En modo aprendizaje, permitimos entrar con mecha aunque no sea verde
+                    call_score += 10
+                    call_reasons.append("Continuación bajista con mecha (Modo Aprendizaje)")
                 else:
                     call_score = 0
             
             if call_score > 0:
                 # 4. Rechazo (Mecha inferior)
                 lower_wick = min(last_candle['open'], last_candle['close']) - last_candle['low']
-                if last_candle_range > 0 and (lower_wick / last_candle_range) > 0.4:
+                if last_candle_range > 0 and (lower_wick / last_candle_range) > 0.35:
                     call_score += 15
                     call_reasons.append("Rechazo fuerte (mecha)")
                 
@@ -140,7 +148,8 @@ class BollingerRSIStrategy:
             put_reasons = []
             
             # 1. Precio tocó/perforó banda superior (OBLIGATORIO)
-            touched_upper = last_candle['high'] >= bb_high * 0.9998
+            tolerance = 0.9995 if min_confidence < 70 else 0.9998
+            touched_upper = last_candle['high'] >= bb_high * tolerance
             if touched_upper:
                 put_score += 20
                 put_reasons.append(f"Toque Banda Superior")
@@ -149,7 +158,8 @@ class BollingerRSIStrategy:
             
             if put_score > 0:
                 # 2. RSI en sobrecompra EXTREMA (OBLIGATORIO)
-                rsi_limit = 75 if last_candle_range > current_atr else 70
+                rsi_limit = 70
+                if last_candle_range > current_atr: rsi_limit = 75
                 if rsi >= rsi_limit:
                     put_score += 30
                     put_reasons.append(f"RSI {rsi:.1f} (Límite {rsi_limit})")
@@ -157,18 +167,21 @@ class BollingerRSIStrategy:
                     put_score = 0
             
             if put_score > 0:
-                # 3. Vela de confirmación (OBLIGATORIO)
+                # 3. Vela de confirmación
                 candle_is_bearish = last_candle['close'] < last_candle['open']
                 if candle_is_bearish:
                     put_score += 25
                     put_reasons.append("Confirmación Bajista")
+                elif min_confidence < 75:
+                    put_score += 10
+                    put_reasons.append("Continuación alcista con mecha (Modo Aprendizaje)")
                 else:
                     put_score = 0
             
             if put_score > 0:
                 # 4. Rechazo (Mecha superior)
                 upper_wick = last_candle['high'] - max(last_candle['open'], last_candle['close'])
-                if last_candle_range > 0 and (upper_wick / last_candle_range) > 0.4:
+                if last_candle_range > 0 and (upper_wick / last_candle_range) > 0.35:
                     put_score += 15
                     put_reasons.append("Rechazo fuerte (mecha)")
                 
@@ -183,7 +196,8 @@ class BollingerRSIStrategy:
                     put_reasons.append("MACD OK")
             
             # --- DECISIÓN FINAL ---
-            final_threshold = 85
+            final_threshold = min_confidence
+
             
             if call_score >= final_threshold and call_score > put_score:
                 return {

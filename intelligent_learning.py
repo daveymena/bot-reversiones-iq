@@ -127,7 +127,8 @@ class IntelligentLearningSystem:
                 timing_analysis = self.analyze_timing_patterns(df, asset)
                 
                 # 🎯 ANÁLISIS PRIORITARIO: Bollinger+RSI (Patrón Real)
-                bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df)
+                current_threshold = self.get_adaptive_threshold()
+                bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df, min_confidence=current_threshold)
                 
                 # Depuración: mostrar score siempre si está cerca del umbral
                 if bollinger_rsi_analysis['confidence'] > 50:
@@ -264,34 +265,41 @@ class IntelligentLearningSystem:
     
     def get_adaptive_threshold(self):
         """
-        Calcula un umbral de confianza adaptativo basado en el rendimiento reciente
+        Calcula un umbral de confianza adaptativo basado en fases de aprendizaje:
+        1. FASE APRENDIZAJE (<30 ops): Umbral bajo (60%) para recolectar datos.
+        2. FASE OPTIMIZACIÓN (30-100 ops): Umbral medio (70%) ajustado por WR.
+        3. FASE ÉLITE (>100 ops): Umbral alto (85%) para máxima precisión.
         """
         ops = self.learning_database.get('operations', [])
-        # Solo operaciones con resultado real para el cálculo del WR
         history = [o for o in ops if o.get('result') in ['win', 'loose']]
+        total_ops = len(history)
         
-        if len(history) < 10:
-            return 70.0  
-
-        recent_ops = history[-15:]
-        wins = len([o for o in recent_ops if o.get('result') == 'win'])
-        total = len(recent_ops)
-        win_rate = wins / total
-
-        base = 70.0
-
-        if win_rate < 0.48:
-            # Rendimiento pobre, subir exigencia drásticamente
-            adjustment = 10.0
-            print(f"⚠️ RENDIMIENTO DEFENSIVO ({win_rate*100:.0f}% WR). Subiendo umbral a {base + adjustment}%")
-        elif win_rate < 0.60:
-            adjustment = 5.0
-        else:
-            adjustment = 0
+        # --- FASE 1: APRENDIZAJE (Mucha frecuencia) ---
+        if total_ops < 30:
+            print(f"   🧠 MODO APRENDIZAJE ({total_ops}/30 ops): Operando con alta frecuencia para recolectar datos.")
+            return 60.0
             
-        final_threshold = max(55.0, min(80.0, base + adjustment))
-        print(f"🧠 AJUSTE INTELIGENTE: Umbral adaptativo optimizado en {final_threshold}%")
-        return final_threshold
+        # Calcular Win Rate reciente
+        recent_ops = history[-20:]
+        wins = len([o for o in recent_ops if o.get('result') == 'win'])
+        win_rate = wins / len(recent_ops) if recent_ops else 0
+        
+        # --- FASE 2: OPTIMIZACIÓN ---
+        if total_ops < 100:
+            base = 70.0
+            if win_rate < 0.50:
+                adjustment = 10.0
+                print(f"   ⚠️ APRENDIZAJE DEFENSIVO: WR bajo ({win_rate*100:.0f}%). Subiendo exigencia.")
+            else:
+                adjustment = 0.0
+            return base + adjustment
+            
+        # --- FASE 3: ÉLITE (Máxima selectividad) ---
+        print(f"   🏆 MODO ÉLITE ACTIVADO ({total_ops} ops): Máxima selectividad para proteger capital.")
+        if win_rate < 0.60:
+            return 85.0 
+        return 80.0
+
     
     def analyze_movements(self, df, asset):
         """
