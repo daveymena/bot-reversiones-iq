@@ -184,7 +184,7 @@ class MarketObserver:
             # Aplicar filtros de rentabilidad
             if recommended_action != "⏸️ ESPERAR":
                 action_code = 1 if "CALL" in recommended_action else 2
-                filter_result = self.filters.apply_all_filters(df, action_code)
+                filter_result = self.filters.apply_all_filters(df, action_code, asset=asset)
                 
                 print(f"\n🔍 FILTROS DE RENTABILIDAD:")
                 print(f"   Score: {filter_result['score']:.0f}/100")

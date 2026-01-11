@@ -57,6 +57,7 @@ class IntelligentLearningSystem:
         # Archivo de aprendizaje
         self.learning_file = Path("data/learning_database.json")
         self.active_trades = {}
+        self.knowledge_optimizer = KnowledgeOptimizer() # 🧠 Optimizador avanzado
         self.llm = LLMClient() if config.Config.USE_LLM else None
         self.load_learning_database()
     
@@ -157,38 +158,51 @@ class IntelligentLearningSystem:
 
     def apply_learned_filters(self, result):
         """
-        Refina la confianza de la estrategia basándose en los patrones aprendidos
+        Refina la confianza de la estrategia basándose en patrones de aprendizaje profundo
         """
-        patterns = self.learning_database.get('patterns_found', {})
-        if not patterns:
-            return result
-
         asset = result['asset']
         strategy = result['strategy']
-        volatility = result['movement'].get('volatility_pct', 0)
         
-        # 1. Filtro de Volatilidad Mínima (Ultra-permisivo para OTC)
-        # Bajamos a 0.01 para asegurar que no se pierda ninguna oportunidad por falta de 'ruido'
-        min_vol = 0.01
+        # Obtener refinamientos del optimizador
+        refinements = self.knowledge_optimizer.get_refinements_for_asset(asset)
         
-        if volatility < min_vol:
-            strategy['confidence'] *= 0.9 # Solo una pequeña quita
-            strategy['reason'] += f" (Vol. baja: {volatility:.3f}%)"
+        # 1. Filtro de Activo Tóxico (Rigurosidad Extrema)
+        if refinements['is_toxic']:
+            strategy['confidence'] *= 0.7  # Penalización del 30%
+            strategy['reason'] += " (⚠️ ACTIVO TÓXICO: Historial negativo)"
+            print(f"   ⚠️ Penalización por Activo Tóxico en {asset}")
 
         # 2. Bono por Activo Estrella
-        best_assets = patterns.get('best_assets', {})
-        if asset in best_assets and best_assets[asset] > 0:
-            # Si el activo ha sido rentable, subimos la confianza
-            strategy['confidence'] *= 1.1
-            strategy['reason'] += " (Activo Rentable)"
+        if refinements['is_star']:
+            strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
+            strategy['reason'] += " (🌟 ACTIVO ESTRELLA)"
 
-        # 3. Penalización por Estrategia Débil
-        strat_perf = patterns.get('strategy_performance', {})
-        strat_name = strategy.get('strategy')
-        if strat_name in strat_perf and strat_perf[strat_name] < 0.3:
-            # Penalización más suave para permitir exploración
-            strategy['confidence'] *= 0.9
-            strategy['reason'] += f" (Ajuste por historial: {strat_perf[strat_name]*100:.0f}%)"
+        # 3. Comprobación de Umbrales RSI Adaptativos
+        # Si hemos perdido operaciones CALL con RSI > 30, el sistema sugiere bajar el umbral
+        rsi_adjusts = refinements.get('rsi_adjust', {})
+        current_rsi = result['all_strategies']['reversal']['details'].get('rsi', 50)
+        action = strategy['action']
+        
+        if action == 'CALL':
+            safe_rsi = rsi_adjusts.get('CALL')
+            if safe_rsi and current_rsi > safe_rsi:
+                penalty = 0.8
+                strategy['confidence'] *= penalty
+                strategy['reason'] += f" (⚠️ RSI {current_rsi:.1f} > Seguro {safe_rsi:.1f})"
+                
+        elif action == 'PUT':
+            safe_rsi = rsi_adjusts.get('PUT')
+            if safe_rsi and current_rsi < safe_rsi:
+                penalty = 0.8
+                strategy['confidence'] *= penalty
+                strategy['reason'] += f" (⚠️ RSI {current_rsi:.1f} < Seguro {safe_rsi:.1f})"
+
+        # 4. Filtro de Horario Peligroso
+        current_hour = datetime.utcnow().hour
+        dangerous_hours = self.knowledge_optimizer.db.get('patterns_found', {}).get('dangerous_hours', [])
+        if current_hour in dangerous_hours:
+            strategy['confidence'] *= 0.85
+            strategy['reason'] += f" (⚠️ Horario difícil {current_hour}:00)"
 
         # Asegurar límites
         strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)

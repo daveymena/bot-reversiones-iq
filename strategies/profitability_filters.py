@@ -5,11 +5,12 @@ Solo opera cuando las condiciones son ÓPTIMAS
 import pandas as pd
 import numpy as np
 from datetime import datetime, time
+from optimize_knowledge import KnowledgeOptimizer
 
 class ProfitabilityFilters:
     """
     Filtros profesionales para aumentar win rate y rentabilidad
-    Basados en principios de trading institucional
+    Basados en principios de trading institucional y aprendizaje histórico
     """
     
     def __init__(self):
@@ -18,6 +19,10 @@ class ProfitabilityFilters:
         self.max_volatility_ratio = 2.5  # No operar en volatilidad extrema
         self.min_volatility_ratio = 0.5  # No operar en mercado muerto
         self.min_volume_ratio = 0.8  # Volumen debe ser significativo
+        
+        # Conectar con la base de conocimiento para filtros históricos
+        self.optimizer = KnowledgeOptimizer()
+        self.optimizer.analyze_patterns()  # Actualizar patrones al iniciar
         
         # Horarios óptimos (UTC) - Sesiones de mayor liquidez (más flexible)
         self.optimal_hours = [
@@ -30,7 +35,7 @@ class ProfitabilityFilters:
         self.support_zones = []
         self.resistance_zones = []
         
-    def apply_all_filters(self, df, proposed_action):
+    def apply_all_filters(self, df, proposed_action, asset="UNKNOWN"):
         """
         Aplica TODOS los filtros de rentabilidad
         
@@ -62,6 +67,7 @@ class ProfitabilityFilters:
             self._filter_time_of_day(),
             self._filter_confluence(df, proposed_action),
             self._filter_risk_reward(df, proposed_action),
+            self._filter_historical_performance(df, asset, proposed_action)  # 🆕 Nuevo filtro de aprendizaje
         ]
         
         # Calcular score total
@@ -476,3 +482,63 @@ class ProfitabilityFilters:
         
         nearest = min(levels, key=lambda x: abs(x - price))
         return nearest
+
+    def _filter_historical_performance(self, df, asset, action):
+        """
+        Filtro 8 (Aprendizaje): Rigurosidad basada en historial
+        """
+        result = {
+            'score': 0,
+            'max_score': 20,
+            'reasons': [],
+            'warnings': []
+        }
+        
+        refinements = self.optimizer.get_refinements_for_asset(asset)
+        
+        # 1. Chequeo de Activo Tóxico
+        if refinements['is_toxic']:
+            result['warnings'].append(f"⚠️ ACTIVO TÓXICO ({asset}): Historial negativo. Se requiere extrema precaución.")
+            # Penalización fuerte: solo pasa si todo lo demás es perfecto
+            result['score'] = -50 
+            return result
+            
+        # 2. Chequeo de Activo Estrella
+        if refinements['is_star']:
+            result['score'] += 10
+            result['reasons'].append(f"✅ ACTIVO ESTRELLA ({asset}): Historial muy positivo (+10 pts)")
+        
+        # 3. Chequeo de Horario Peligroso
+        current_hour = datetime.utcnow().hour
+        dangerous_hours = self.optimizer.db.get('patterns_found', {}).get('dangerous_hours', [])
+        if current_hour in dangerous_hours:
+            result['warnings'].append(f"⚠️ HORARIO PELIGROSO ({current_hour}:00): Historial de pérdidas en esta hora.")
+            result['score'] -= 10
+        
+        # 4. Chequeo de Umbral RSI Específico (Rigurosidad Adaptativa)
+        rsi_thresholds = refinements.get('rsi_adjust', {})
+        current_rsi = df.iloc[-1]['rsi'] if 'rsi' in df.columns else 50
+        
+        if action == 1:  # CALL
+            min_rsi = rsi_thresholds.get('CALL')
+            if min_rsi and current_rsi > min_rsi:
+                result['warnings'].append(f"❌ RSI Insuficiente para CALL ({current_rsi:.1f} > {min_rsi:.1f}). Historial sugiere entrar más abajo.")
+                result['score'] -= 20 # Penalización fuerte
+            elif min_rsi:
+                result['score'] += 5
+                result['reasons'].append(f"✅ RSI cumple criterio estricto (<{min_rsi:.1f})")
+                
+        elif action == 2:  # PUT
+            max_rsi = rsi_thresholds.get('PUT')
+            if max_rsi and current_rsi < max_rsi:
+                result['warnings'].append(f"❌ RSI Insuficiente para PUT ({current_rsi:.1f} < {max_rsi:.1f}). Historial sugiere entrar más arriba.")
+                result['score'] -= 20
+            elif max_rsi:
+                result['score'] += 5
+                result['reasons'].append(f"✅ RSI cumple criterio estricto (>{max_rsi:.1f})")
+        
+        # Si no cayó en ninguna trampa histórica
+        if result['score'] >= 0:
+            result['score'] += 5
+            
+        return result

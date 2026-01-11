@@ -1,79 +1,137 @@
 
 import json
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from datetime import datetime
 
 class KnowledgeOptimizer:
+    """
+    Optimizador avanzado que aprende de los errores para mejorar la precisión.
+    Clasifica operaciones y ajusta rigurosidad basándose en resultados reales.
+    """
     def __init__(self, db_path="data/learning_database.json"):
         self.db_path = Path(db_path)
-        with open(self.db_path, 'r', encoding='utf-8') as f:
-            self.db = json.load(f)
+        self.load_db()
+
+    def load_db(self):
+        if self.db_path.exists():
+            with open(self.db_path, 'r', encoding='utf-8') as f:
+                self.db = json.load(f)
+        else:
+            self.db = {'operations': [], 'patterns_found': {}}
 
     def analyze_patterns(self):
         ops = self.db.get('operations', [])
         if not ops:
             return "No hay operaciones para analizar."
 
-        # Convertir a DataFrame para análisis fácil
+        # Convertir a DataFrame
         records = []
         for op in ops:
-            # Manejar diferentes formatos de grabación
+            if not op.get('executed'): continue
+            
             strat = op.get('strategy', {})
-            move = op.get('movement', {})
+            details = strat.get('details', {})
             
             record = {
+                'id': op.get('id'),
                 'asset': op.get('asset'),
+                'result': op.get('result', 'unknown'),
+                'strategy': strat.get('strategy'),
                 'action': strat.get('action'),
-                'strategy_name': strat.get('strategy'),
                 'confidence': strat.get('confidence'),
-                'executed': op.get('executed', False),
-                'result': op.get('result'),
-                'profit': op.get('profit', 0),
-                'volatility': move.get('volatility_pct', 0),
-                'trend': move.get('trend', 'LATERAL'),
-                'adx': strat.get('details', {}).get('adx', 0)
+                'rsi': details.get('rsi', 50),
+                'hour': datetime.fromisoformat(op['timestamp']).hour,
+                'profit': op.get('profit', 0)
             }
             records.append(record)
 
+        if not records:
+            return "No hay operaciones ejecutadas."
+
         df = pd.DataFrame(records)
-        executed_df = df[df['executed'] == True].copy()
         
         patterns = {
             'best_assets': {},
-            'volatility_correlation': {},
-            'strategy_performance': {},
+            'dangerous_hours': [],
+            'rsi_thresholds': {},
+            'forbidden_strategies': [],
             'last_update': datetime.now().isoformat()
         }
 
-        if not executed_df.empty:
-            # Rendimiento por activo
-            asset_perf = executed_df.groupby('asset')['profit'].sum().to_dict()
-            patterns['best_assets'] = asset_perf
-
-            # Rendimiento por estrategia
-            strat_perf = executed_df.groupby('strategy_name').apply(
-                lambda x: (x['result'] == 'win').sum() / len(x) if len(x) > 0 else 0
-            ).to_dict()
-            patterns['strategy_performance'] = strat_perf
-
-            # Analizar correlación de volatilidad
-            wins = executed_df[executed_df['result'] == 'win']
-            if not wins.empty:
-                patterns['volatility_correlation']['avg_win_volatility'] = wins['volatility'].mean()
-                patterns['volatility_correlation']['min_win_volatility'] = wins['volatility'].min()
-
-        # Actualizar base de datos
-        self.db['patterns_found'] = patterns
+        # 1. Clasificar Activos: Estrellas vs Tóxicos
+        asset_stats = df.groupby('asset').agg({
+            'result': lambda x: (x == 'win').sum() / len(x),
+            'profit': 'sum',
+            'id': 'count'
+        }).rename(columns={'id': 'count', 'result': 'win_rate'})
         
-        # Guardar cambios
-        with open(self.db_path, 'w', encoding='utf-8') as f:
-            json.dump(self.db, f, indent=2)
+        # Activos con WR < 40% y pérdidas netas son "tóxicos"
+        toxic_assets = asset_stats[(asset_stats['win_rate'] < 0.4) & (asset_stats['profit'] < 0)].index.tolist()
+        patterns['toxic_assets'] = toxic_assets
+        
+        # Activos Estrellas (WR > 60%)
+        star_assets = asset_stats[asset_stats['win_rate'] > 0.6].index.tolist()
+        patterns['best_assets'] = star_assets
 
+        # 2. Análisis de Rigurosidad por Estrategia (RSI)
+        # Si perdemos mucho en reversiones, ajustamos el RSI de entrada
+        reversals = df[df['strategy'].str.contains('Reversal', na=False)]
+        if not reversals.empty:
+            # Analizar CALLs perdidos (reversión alcista)
+            failed_calls = reversals[(reversals['action'] == 'CALL') & (reversals['result'] == 'loose')]
+            if not failed_calls.empty:
+                # El RSI promedio de las fallas nos dice dónde NO entrar
+                avg_fail_rsi = failed_calls['rsi'].mean()
+                # Sugerimos ser más estrictos: entrar más abajo
+                safe_rsi_call = avg_fail_rsi - 5
+                patterns['rsi_thresholds']['CALL'] = max(20, safe_rsi_call)
+            
+            # Analizar PUTs perdidos (reversión bajista)
+            failed_puts = reversals[(reversals['action'] == 'PUT') & (reversals['result'] == 'loose')]
+            if not failed_puts.empty:
+                avg_fail_rsi = failed_puts['rsi'].mean()
+                safe_rsi_put = avg_fail_rsi + 5
+                patterns['rsi_thresholds']['PUT'] = min(80, safe_rsi_put)
+
+        # 3. Horarios Peligrosos
+        # Horas donde el WR es < 40%
+        hourly_stats = df.groupby('hour')['result'].apply(lambda x: (x == 'win').sum() / len(x))
+        patterns['dangerous_hours'] = hourly_stats[hourly_stats < 0.4].index.tolist()
+
+        # 4. Estrategias Fallidas
+        # Estrategias con WR global < 35%
+        strat_stats = df.groupby('strategy')['result'].apply(lambda x: (x == 'win').sum() / len(x))
+        patterns['forbidden_strategies'] = strat_stats[strat_stats < 0.35].index.tolist()
+
+        # Guardar insights
+        self.db['patterns_found'] = patterns
+        self.save_db()
+        
         return patterns
 
+    def save_db(self):
+        with open(self.db_path, 'w', encoding='utf-8') as f:
+            json.dump(self.db, f, indent=2, default=str)
+
+    def get_refinements_for_asset(self, asset):
+        """Devuelve ajustes específicos para un activo"""
+        patterns = self.db.get('patterns_found', {})
+        
+        refinements = {
+            'is_toxic': asset in patterns.get('toxic_assets', []),
+            'is_star': asset in patterns.get('best_assets', []),
+            'rsi_adjust': patterns.get('rsi_thresholds', {}),
+            'caution_mode': False
+        }
+        
+        if refinements['is_toxic']:
+            refinements['caution_mode'] = True
+            
+        return refinements
+
 if __name__ == "__main__":
-    optimizer = KnowledgeOptimizer()
-    results = optimizer.analyze_patterns()
-    print("✅ Patrones analizados y base de datos actualizada.")
-    print(json.dumps(results, indent=2))
+    opt = KnowledgeOptimizer()
+    res = opt.analyze_patterns()
+    print(json.dumps(res, indent=2))
