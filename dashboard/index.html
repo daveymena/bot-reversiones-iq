@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antigravity Trading System | Neural Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/umd/lucide.min.js"></script>
 </head>
+
 <body class="dark-theme">
     <div class="app-container">
         <!-- Sidebar -->
@@ -168,13 +172,41 @@
                     <div class="terminal-body" id="bot-logs">
                         <div class="log-entry info"> [SYSTEM] Bot inicializado en MODO APRENDIZAJE...</div>
                         <div class="log-entry info"> [MARKET] Analizando EURUSD-OTC...</div>
-                        <div class="log-entry warning"> [AI] Señal detectada en GBPUSD-OTC (57.8%). Esperando umbral 60%...</div>
+                        <div class="log-entry warning"> [AI] Señal detectada en GBPUSD-OTC (57.8%). Esperando umbral
+                            60%...</div>
                         <div class="log-entry info"> [LEARNING] Filtro de activo tóxico aplicado a EURJPY-OTC.</div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- SaaS Auth Overlay -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <div class="logo-container">
+                <div class="logo-hex"><i data-lucide="brain-circuit"></i></div>
+                <h2>NeuroTrader SaaS</h2>
+            </div>
+            <p>Inicia sesión para acceder a tu panel de inteligencia.</p>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="email-input" required placeholder="tu@email.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="pass-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">ACCEDER AL SISTEMA</button>
+            </form>
+            <div class="auth-footer">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
+
 </html>

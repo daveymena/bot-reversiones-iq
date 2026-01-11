@@ -1,3 +1,6 @@
+// SaaS Multi-user State
+let currentUserId = localStorage.getItem('user_id');
+
 // Chart Configuration
 const ctx = document.getElementById('mainMarketChart').getContext('2d');
 let marketChart;
@@ -38,8 +41,10 @@ function initChart() {
 
 // Fetch Real Data from API Bridge
 async function fetchBotStatus() {
+    if (!currentUserId) return;
+
     try {
-        const response = await fetch('/status');
+        const response = await fetch(`/status/${currentUserId}`);
         const data = await response.json();
 
         // Update Stats
@@ -107,10 +112,42 @@ function renderTrades(trades) {
     `).join('');
 }
 
+// SaaS Auth UI Control
+function showAuthModal() {
+    if (!currentUserId) {
+        document.getElementById('auth-overlay').style.display = 'flex';
+    }
+}
+
+async function handleLogin(e) {
+    if (e) e.preventDefault();
+    const email = document.getElementById('email-input').value;
+    const pass = document.getElementById('pass-input').value;
+
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            body: JSON.stringify({ email: email, password: pass })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            currentUserId = data.user_id;
+            localStorage.setItem('user_id', data.user_id);
+            document.getElementById('auth-overlay').style.display = 'none';
+            fetchBotStatus();
+        } else {
+            alert('Error en login');
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 // Start polling
 document.addEventListener('DOMContentLoaded', () => {
     initChart();
     lucide.createIcons();
-    setInterval(fetchBotStatus, 2000); // Cada 2 segundos
+    showAuthModal();
+    setInterval(fetchBotStatus, 2000);
 });
 
