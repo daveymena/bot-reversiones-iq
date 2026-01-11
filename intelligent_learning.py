@@ -16,6 +16,7 @@ from strategies.smart_reversal import SmartReversalStrategy
 from strategies.trend_following import TrendFollowingStrategy
 from strategies.trap_detector import TrapDetector
 from strategies.multi_timeframe import MultiTimeframeAnalyzer
+from strategies.bollinger_rsi_real import BollingerRSIStrategy
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -27,6 +28,9 @@ class IntelligentLearningSystem:
     
     def __init__(self):
         self.observer = MarketObserver()
+        # 🎯 ESTRATEGIA PRIORITARIA (basada en patrones reales)
+        self.bollinger_rsi_strategy = BollingerRSIStrategy()
+        # Estrategias secundarias
         self.breakout_strategy = BreakoutMomentumStrategy()
         self.reversal_strategy = SmartReversalStrategy()
         self.trend_strategy = TrendFollowingStrategy()
@@ -119,28 +123,52 @@ class IntelligentLearningSystem:
                 # Análisis de timing
                 timing_analysis = self.analyze_timing_patterns(df, asset)
                 
-                # Análisis de múltiples estrategias
-                breakout_analysis = self.breakout_strategy.analyze(df)
-                reversal_analysis = self.reversal_strategy.analyze(df)
-                trend_analysis = self.trend_strategy.analyze(df)
+                # 🎯 ANÁLISIS PRIORITARIO: Bollinger+RSI (Patrón Real)
+                bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df)
                 
-                # Elegir la mejor señal
-                strategies = [breakout_analysis, reversal_analysis, trend_analysis]
-                best_strat = max(strategies, key=lambda x: x['confidence'])
-                
-                result = {
-                    'asset': asset,
-                    'timestamp': datetime.now(),
-                    'movement': movement_analysis,
-                    'timing': timing_analysis,
-                    'strategy': best_strat,
-                    'all_strategies': {
-                        'breakout': breakout_analysis,
-                        'reversal': reversal_analysis,
-                        'trend': trend_analysis
-                    },
-                    'current_price': df.iloc[-1]['close']
-                }
+                # Si Bollinger+RSI da señal fuerte (≥75), usarla directamente
+                if bollinger_rsi_analysis['confidence'] >= 75:
+                    print(f"   🎯 PATRÓN REAL DETECTADO: {bollinger_rsi_analysis['action']} - Confianza: {bollinger_rsi_analysis['confidence']}%")
+                    print(f"   📝 {bollinger_rsi_analysis['reason']}")
+                    
+                    result = {
+                        'asset': asset,
+                        'timestamp': datetime.now(),
+                        'movement': movement_analysis,
+                        'timing': timing_analysis,
+                        'strategy': bollinger_rsi_analysis,
+                        'all_strategies': {
+                            'bollinger_rsi': bollinger_rsi_analysis,
+                            'breakout': {'action': 'WAIT', 'confidence': 0},
+                            'reversal': {'action': 'WAIT', 'confidence': 0},
+                            'trend': {'action': 'WAIT', 'confidence': 0}
+                        },
+                        'current_price': df.iloc[-1]['close']
+                    }
+                else:
+                    # Si no hay patrón real, usar estrategias secundarias
+                    breakout_analysis = self.breakout_strategy.analyze(df)
+                    reversal_analysis = self.reversal_strategy.analyze(df)
+                    trend_analysis = self.trend_strategy.analyze(df)
+                    
+                    # Elegir la mejor señal
+                    strategies = [breakout_analysis, reversal_analysis, trend_analysis]
+                    best_strat = max(strategies, key=lambda x: x['confidence'])
+                    
+                    result = {
+                        'asset': asset,
+                        'timestamp': datetime.now(),
+                        'movement': movement_analysis,
+                        'timing': timing_analysis,
+                        'strategy': best_strat,
+                        'all_strategies': {
+                            'bollinger_rsi': bollinger_rsi_analysis,
+                            'breakout': breakout_analysis,
+                            'reversal': reversal_analysis,
+                            'trend': trend_analysis
+                        },
+                        'current_price': df.iloc[-1]['close']
+                    }
                 
                 # Aplicar aprendizaje dinámico
                 result = self.apply_learned_filters(result)
