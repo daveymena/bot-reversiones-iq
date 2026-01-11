@@ -14,6 +14,7 @@ from observe_market import MarketObserver
 from strategies.breakout_momentum import BreakoutMomentumStrategy
 from strategies.smart_reversal import SmartReversalStrategy
 from strategies.trend_following import TrendFollowingStrategy
+from strategies.trap_detector import TrapDetector
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -28,6 +29,7 @@ class IntelligentLearningSystem:
         self.breakout_strategy = BreakoutMomentumStrategy()
         self.reversal_strategy = SmartReversalStrategy()
         self.trend_strategy = TrendFollowingStrategy()
+        self.trap_detector = TrapDetector()  # 🚨 Detector de trampas
         
         # Priorizar EUR/USD (más líquido y predecible)
         self.priority_assets = [
@@ -448,6 +450,24 @@ class IntelligentLearningSystem:
                             else:
                                 print(f"✅ IA CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
                                 strategy['confidence'] = min(99.0, strategy['confidence'] + 5) # Bono por confirmación IA
+
+                        # --- 🚨 DETECTOR DE TRAMPAS DEL MERCADO ---
+                        print(f"🚨 Verificando trampas del mercado en {asset}...")
+                        trap_advice = self.trap_detector.get_trap_advice(df, strategy['action'])
+                        
+                        if not trap_advice['is_safe']:
+                            print(f"   ⚠️ {trap_advice['advice']}")
+                            
+                            if trap_advice['action'] == 'WAIT':
+                                print(f"   ❌ OPERACIÓN CANCELADA por trampa: {trap_advice['trap_detected']}")
+                                continue
+                            elif trap_advice.get('inverted', False):
+                                print(f"   🔄 INVIRTIENDO OPERACIÓN: {strategy['action']} → {trap_advice['action']}")
+                                strategy['action'] = trap_advice['action']
+                                strategy['confidence'] = min(strategy['confidence'], 75)  # Reducir confianza en inversión
+                        else:
+                            print(f"   ✅ {trap_advice['advice']}")
+
 
                         # --- EJECUCIÓN UNIFICADA (Digital -> Binaria) ---
                         action = strategy['action'].lower()

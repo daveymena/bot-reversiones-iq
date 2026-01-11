@@ -1,0 +1,306 @@
+"""
+🚨 DETECTOR DE TRAMPAS DEL MERCADO
+Identifica patrones engañosos que parecen oportunidades pero son trampas para perder dinero.
+"""
+import pandas as pd
+import numpy as np
+
+class TrapDetector:
+    """
+    Detecta trampas comunes del mercado:
+    1. Bull Trap: Falsa ruptura al alza que luego cae
+    2. Bear Trap: Falsa ruptura a la baja que luego sube
+    3. Fakeout: Movimiento rápido que invierte inmediatamente
+    4. Whipsaw: Volatilidad extrema sin dirección clara
+    5. Manipulación de volumen: Movimientos artificiales
+    """
+    
+    def __init__(self):
+        self.trap_history = []
+    
+    def detect_bull_trap(self, df):
+        """
+        Bull Trap: Precio rompe resistencia pero NO hay fuerza real
+        Señales:
+        - Ruptura de resistencia con vela pequeña (sin convicción)
+        - RSI ya en sobrecompra antes de la ruptura
+        - Volumen bajo en la ruptura
+        - Mechas superiores largas (rechazo)
+        """
+        if len(df) < 30:
+            return False, 0
+        
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+        recent = df.tail(20)
+        
+        # Encontrar resistencia reciente
+        resistance = recent['high'].iloc[:-1].max()
+        
+        # ¿Rompió la resistencia?
+        broke_resistance = last['close'] > resistance
+        
+        if not broke_resistance:
+            return False, 0
+        
+        trap_score = 0
+        reasons = []
+        
+        # 1. Vela de ruptura débil (cuerpo pequeño)
+        candle_body = abs(last['close'] - last['open'])
+        candle_range = last['high'] - last['low']
+        if candle_range > 0 and candle_body / candle_range < 0.4:
+            trap_score += 30
+            reasons.append("Vela de ruptura débil")
+        
+        # 2. RSI ya en sobrecompra (>70)
+        if last.get('rsi', 50) > 70:
+            trap_score += 25
+            reasons.append("RSI sobrecomprado antes de ruptura")
+        
+        # 3. Mecha superior larga (rechazo inmediato)
+        upper_wick = last['high'] - max(last['open'], last['close'])
+        if candle_range > 0 and upper_wick / candle_range > 0.5:
+            trap_score += 30
+            reasons.append("Rechazo con mecha superior larga")
+        
+        # 4. Divergencia: Precio sube pero momentum baja
+        if 'macd' in df.columns:
+            macd_trend = df['macd'].tail(5).diff().mean()
+            if macd_trend < 0:  # MACD bajando mientras precio sube
+                trap_score += 15
+                reasons.append("Divergencia bajista en MACD")
+        
+        is_trap = trap_score >= 50
+        
+        if is_trap:
+            print(f"   🚨 BULL TRAP DETECTADO (Score: {trap_score})")
+            for r in reasons:
+                print(f"      - {r}")
+        
+        return is_trap, trap_score
+    
+    def detect_bear_trap(self, df):
+        """
+        Bear Trap: Precio rompe soporte pero NO hay fuerza real
+        Señales:
+        - Ruptura de soporte con vela pequeña
+        - RSI ya en sobreventa antes de la ruptura
+        - Volumen bajo
+        - Mechas inferiores largas (rechazo)
+        """
+        if len(df) < 30:
+            return False, 0
+        
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+        recent = df.tail(20)
+        
+        # Encontrar soporte reciente
+        support = recent['low'].iloc[:-1].min()
+        
+        # ¿Rompió el soporte?
+        broke_support = last['close'] < support
+        
+        if not broke_support:
+            return False, 0
+        
+        trap_score = 0
+        reasons = []
+        
+        # 1. Vela de ruptura débil
+        candle_body = abs(last['close'] - last['open'])
+        candle_range = last['high'] - last['low']
+        if candle_range > 0 and candle_body / candle_range < 0.4:
+            trap_score += 30
+            reasons.append("Vela de ruptura débil")
+        
+        # 2. RSI ya en sobreventa (<30)
+        if last.get('rsi', 50) < 30:
+            trap_score += 25
+            reasons.append("RSI sobrevendido antes de ruptura")
+        
+        # 3. Mecha inferior larga (rechazo inmediato)
+        lower_wick = min(last['open'], last['close']) - last['low']
+        if candle_range > 0 and lower_wick / candle_range > 0.5:
+            trap_score += 30
+            reasons.append("Rechazo con mecha inferior larga")
+        
+        # 4. Divergencia: Precio baja pero momentum sube
+        if 'macd' in df.columns:
+            macd_trend = df['macd'].tail(5).diff().mean()
+            if macd_trend > 0:  # MACD subiendo mientras precio baja
+                trap_score += 15
+                reasons.append("Divergencia alcista en MACD")
+        
+        is_trap = trap_score >= 50
+        
+        if is_trap:
+            print(f"   🚨 BEAR TRAP DETECTADO (Score: {trap_score})")
+            for r in reasons:
+                print(f"      - {r}")
+        
+        return is_trap, trap_score
+    
+    def detect_fakeout(self, df):
+        """
+        Fakeout: Movimiento rápido que invierte inmediatamente
+        Señales:
+        - Vela con mechas muy largas en ambos lados
+        - Cierre cerca del precio de apertura (indecisión)
+        - Volatilidad extrema sin seguimiento
+        """
+        if len(df) < 10:
+            return False, 0
+        
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+        
+        trap_score = 0
+        reasons = []
+        
+        candle_body = abs(last['close'] - last['open'])
+        candle_range = last['high'] - last['low']
+        upper_wick = last['high'] - max(last['open'], last['close'])
+        lower_wick = min(last['open'], last['close']) - last['low']
+        
+        # 1. Mechas largas en ambos lados (indecisión)
+        if candle_range > 0:
+            upper_ratio = upper_wick / candle_range
+            lower_ratio = lower_wick / candle_range
+            
+            if upper_ratio > 0.3 and lower_ratio > 0.3:
+                trap_score += 40
+                reasons.append("Mechas largas en ambos lados (indecisión)")
+        
+        # 2. Cuerpo muy pequeño (doji o spinning top)
+        if candle_range > 0 and candle_body / candle_range < 0.2:
+            trap_score += 30
+            reasons.append("Cuerpo muy pequeño (indecisión)")
+        
+        # 3. Volatilidad extrema sin seguimiento
+        recent_volatility = df['close'].tail(10).std()
+        avg_volatility = df['close'].tail(50).std()
+        
+        if recent_volatility > avg_volatility * 2:
+            trap_score += 20
+            reasons.append("Volatilidad extrema sin tendencia clara")
+        
+        is_trap = trap_score >= 50
+        
+        if is_trap:
+            print(f"   🚨 FAKEOUT DETECTADO (Score: {trap_score})")
+            for r in reasons:
+                print(f"      - {r}")
+        
+        return is_trap, trap_score
+    
+    def detect_whipsaw(self, df):
+        """
+        Whipsaw: Cambios rápidos de dirección (mercado errático)
+        Señales:
+        - Múltiples reversiones en corto tiempo
+        - Sin tendencia clara
+        - Velas alternando colores constantemente
+        """
+        if len(df) < 15:
+            return False, 0
+        
+        recent = df.tail(10)
+        
+        trap_score = 0
+        reasons = []
+        
+        # Contar cambios de dirección
+        reversals = 0
+        for i in range(1, len(recent)):
+            curr_bullish = recent.iloc[i]['close'] > recent.iloc[i]['open']
+            prev_bullish = recent.iloc[i-1]['close'] > recent.iloc[i-1]['open']
+            if curr_bullish != prev_bullish:
+                reversals += 1
+        
+        # Si hay muchas reversiones, es whipsaw
+        if reversals >= 6:  # 6+ cambios en 10 velas
+            trap_score += 60
+            reasons.append(f"Demasiadas reversiones ({reversals} en 10 velas)")
+        
+        # Rango de precios muy estrecho (lateral)
+        price_range = recent['high'].max() - recent['low'].min()
+        avg_price = recent['close'].mean()
+        
+        if avg_price > 0 and (price_range / avg_price) < 0.002:  # <0.2%
+            trap_score += 30
+            reasons.append("Mercado lateral sin dirección")
+        
+        is_trap = trap_score >= 50
+        
+        if is_trap:
+            print(f"   🚨 WHIPSAW DETECTADO (Score: {trap_score})")
+            for r in reasons:
+                print(f"      - {r}")
+        
+        return is_trap, trap_score
+    
+    def detect_all_traps(self, df, proposed_action):
+        """
+        Ejecuta todos los detectores y retorna si hay alguna trampa
+        
+        Returns:
+            tuple: (is_trap, trap_type, trap_score, should_inverse)
+        """
+        bull_trap, bull_score = self.detect_bull_trap(df)
+        bear_trap, bear_score = self.detect_bear_trap(df)
+        fakeout, fakeout_score = self.detect_fakeout(df)
+        whipsaw, whipsaw_score = self.detect_whipsaw(df)
+        
+        # Si detectamos una trampa relevante a la acción propuesta
+        if proposed_action == 'CALL' and bull_trap:
+            return True, 'BULL_TRAP', bull_score, True  # Invertir a PUT
+        
+        if proposed_action == 'PUT' and bear_trap:
+            return True, 'BEAR_TRAP', bear_score, True  # Invertir a CALL
+        
+        # Fakeout o Whipsaw: NO operar
+        if fakeout:
+            return True, 'FAKEOUT', fakeout_score, False
+        
+        if whipsaw:
+            return True, 'WHIPSAW', whipsaw_score, False
+        
+        return False, None, 0, False
+    
+    def get_trap_advice(self, df, proposed_action):
+        """
+        Analiza si la acción propuesta cae en una trampa
+        
+        Returns:
+            dict con recomendación
+        """
+        is_trap, trap_type, score, should_inverse = self.detect_all_traps(df, proposed_action)
+        
+        if not is_trap:
+            return {
+                'is_safe': True,
+                'advice': 'No se detectaron trampas',
+                'action': proposed_action
+            }
+        
+        if should_inverse:
+            new_action = 'PUT' if proposed_action == 'CALL' else 'CALL'
+            return {
+                'is_safe': False,
+                'trap_detected': trap_type,
+                'trap_score': score,
+                'advice': f'TRAMPA DETECTADA: {trap_type}. Considera invertir la operación.',
+                'action': new_action,
+                'inverted': True
+            }
+        else:
+            return {
+                'is_safe': False,
+                'trap_detected': trap_type,
+                'trap_score': score,
+                'advice': f'TRAMPA DETECTADA: {trap_type}. NO OPERAR.',
+                'action': 'WAIT',
+                'inverted': False
+            }
