@@ -182,7 +182,22 @@ class IntelligentLearningSystem:
         # 3. Comprobación de Umbrales RSI Adaptativos
         # Si hemos perdido operaciones CALL con RSI > 30, el sistema sugiere bajar el umbral
         rsi_adjusts = refinements.get('rsi_adjust', {})
-        current_rsi = result['all_strategies']['reversal']['details'].get('rsi', 50)
+        
+        # Obtener RSI de forma segura
+        current_rsi = 50  # Valor por defecto
+        try:
+            # Intentar obtener de strategy details
+            if 'details' in strategy:
+                current_rsi = strategy['details'].get('rsi', 50)
+            # Si no, intentar de all_strategies
+            elif 'all_strategies' in result:
+                for strat_name, strat_data in result['all_strategies'].items():
+                    if 'details' in strat_data and 'rsi' in strat_data['details']:
+                        current_rsi = strat_data['details']['rsi']
+                        break
+        except:
+            current_rsi = 50
+        
         action = strategy['action']
         
         if action == 'CALL':
