@@ -240,6 +240,67 @@ class TrapDetector:
                 print(f"      - {r}")
         
         return is_trap, trap_score
+
+    def detect_falling_knife(self, df, action):
+        """
+        Detecta si el precio está en caída libre (Falling Knife) o subida parabólica.
+        Si está en caída libre, NO comprar (CALL).
+        Si está en subida parabólica, NO vender (PUT).
+        """
+        if len(df) < 15:
+            return False, 0
+            
+        recent = df.tail(10)
+        
+        # 1. Fuerza del movimiento bajista
+        price_drop = recent['close'].diff().sum()
+        avg_candle_size = abs(recent['high'] - recent['low']).mean()
+        
+        # Caída libre: Múltiples velas grandes seguidas sin mechas de rebote
+        if action == 'CALL' and price_drop < 0:
+            # Si el precio ha caído más de 3 veces el tamaño promedio de vela en 10 min
+            if abs(price_drop) > avg_candle_size * 4:
+                print(f"   🚨 FALLING KNIFE: Caída demasiado fuerte ({price_drop:.5f}). No intentar comprar.")
+                return True, 85
+        
+        # Subida parabólica
+        if action == 'PUT' and price_drop > 0:
+            if price_drop > avg_candle_size * 4:
+                print(f"   🚨 PARABOLIC ROCKET: Subida demasiado fuerte. No intentar vender.")
+                return True, 85
+                
+        return False, 0
+
+    def detect_exhaustion_failure(self, df, action):
+        """
+        Detecta si un rebote en nivel clave ha fallado (Debilidad).
+        Si el rebote es muy débil, es probable que el nivel se rompa.
+        """
+        if len(df) < 5:
+            return False, 0
+            
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+        
+        # Si intentamos un CALL, y la vela actual es alcista pero MUY pequeña
+        # comparada con la bajista anterior, hay debilidad.
+        if action == 'CALL':
+            if last['close'] > last['open'] and prev['close'] < prev['open']:
+                bull_body = last['close'] - last['open']
+                bear_body = prev['open'] - prev['close']
+                if bull_body < bear_body * 0.3: # Rebote < 30% de la caída
+                    print("   🚨 REBOTE DÉBIL: Compradores sin fuerza. Probable ruptura de soporte.")
+                    return True, 70
+        
+        if action == 'PUT':
+            if last['close'] < last['open'] and prev['close'] > prev['open']:
+                bear_body = last['open'] - last['close']
+                bull_body = prev['close'] - prev['open']
+                if bear_body < bull_body * 0.3:
+                    print("   🚨 RECHAZO DÉBIL: Vendedores sin fuerza. Probable ruptura de resistencia.")
+                    return True, 70
+                    
+        return False, 0
     
     def detect_all_traps(self, df, proposed_action):
         """
@@ -273,6 +334,16 @@ class TrapDetector:
             print(f"      - Esto es una trampa común - el precio probablemente rebote al alza")
             return True, 'WRONG_DIRECTION_PUT', 80, True  # Invertir a CALL
         
+        # 🚨 NUEVA TRAMPA: Falling Knife (Caída libre)
+        falling_knife, knife_score = self.detect_falling_knife(df, proposed_action)
+        if falling_knife:
+            return True, 'FALLING_KNIFE', knife_score, False
+            
+        # 🚨 NUEVA TRAMPA: Exhaustion Failure (Debilidad de rebote)
+        weak_rebound, weak_score = self.detect_exhaustion_failure(df, proposed_action)
+        if weak_rebound:
+            return True, 'WEAK_REBOUND_FAILURE', weak_score, False
+
         # Detectores originales
         bull_trap, bull_score = self.detect_bull_trap(df)
         bear_trap, bear_score = self.detect_bear_trap(df)

@@ -64,6 +64,9 @@ class IntelligentLearningSystem:
         self.learning_file = Path("data/learning_database.json")
         self.active_trades = {}
         self.knowledge_optimizer = KnowledgeOptimizer() # 🧠 Optimizador avanzado
+        self.cooldowns = {} # ⏱️ Cooldowns por activo tras pérdidas
+        self.session_losses = 0
+        self.max_session_losses = 5 # 🛑 Parar si perdemos 5 en una sesión
         self.llm = LLMClient() if config.Config.USE_LLM else None
         self.load_learning_database()
     
@@ -447,7 +450,14 @@ class IntelligentLearningSystem:
                 print(f"🔄 ITERACIÓN #{iteration}")
                 print(f"   Tiempo transcurrido: {(time.time() - start_time) / 60:.1f} minutos")
                 print(f"   Operaciones completadas: {operations_completed}/{operations_target}")
+                print(f"   Pérdidas en sesión: {self.session_losses}/{self.max_session_losses}")
                 print(f"{'='*80}")
+                
+                # 🛑 STOP LOSS DE SESIÓN
+                if self.session_losses >= self.max_session_losses:
+                    print(f"\n🛑 STOP LOSS DE SESIÓN ALCANZADO ({self.max_session_losses} pérdidas).")
+                    print("🛡️ Protección de capital activada. Finalizando sesión...")
+                    break
                 
                 # 1. Verificar resultados de operaciones activas
                 self.check_active_trades_results()
@@ -471,6 +481,13 @@ class IntelligentLearningSystem:
                     current_threshold = self.get_adaptive_threshold()
                     
                     if strategy['confidence'] >= current_threshold:
+                        # --- ⏱️ VERIFICAR COOLDOWN (TRAS PÉRDIDA) ---
+                        current_time = time.time()
+                        if asset in self.cooldowns and current_time < self.cooldowns[asset]:
+                            remaining = (self.cooldowns[asset] - current_time) / 60
+                            print(f"   ⏱️ Omitiendo {asset}: En cooldown tras pérdida ({remaining:.1f} min restantes)")
+                            continue
+
                         print(f"\n🎯 LA MEJOR OPORTUNIDAD: {asset} ({strategy.get('strategy', 'Estrategia')}) - Confianza: {strategy['confidence']}%")
                         
                         # --- VALIDAR SI EL ACTIVO ESTÁ ABIERTO ---
@@ -510,9 +527,9 @@ class IntelligentLearningSystem:
                                 print(f"   🔄 Usando señal Multi-Timeframe (más confiable)")
                         else:
                             print(f"   ⚠️ No hay señal MTF clara - precio no está en nivel clave M30")
-                            # Si no hay señal MTF, podemos rechazar la operación
-                            if strategy.get('strategy', '').startswith('Smart Reversal'):
-                                print(f"   ❌ RECHAZADO: Reversión sin confirmación de nivel M30")
+                            # Si no hay señal MTF, RECHAZAR cualquier estrategia de reversión
+                            if "Reversal" in strategy.get('strategy', ''):
+                                print(f"   ❌ RECHAZADO: Reversión sin nivel fuerte en M30/M15.")
                                 continue
 
                         # --- FILTRO DE AGOTAMIENTO (MECHAS) ---
@@ -652,9 +669,23 @@ class IntelligentLearningSystem:
                 except Exception as e:
                     print(f"   ⚠️ Error verificando resultado: {e}")
 
-        # Limpiar activas
-        for tid in completed:
-            del self.active_trades[tid]
+        # Limpiar activas y actualizar aprendizaje
+        if completed:
+            for tid in completed:
+                # Si se perdió, poner en cooldown el activo (10 minutos)
+                for op in self.learning_database['operations']:
+                    if op.get('id') == tid and op.get('result') == 'loose':
+                        asset = op.get('asset')
+                        self.session_losses += 1 # 🚩 Incrementar pérdidas de sesión
+                        self.cooldowns[asset] = time.time() + (10 * 60) # 10 min de descanso
+                        print(f"   ⏱️ {asset} puesto en recuperación por 10 minutos.")
+                
+                del self.active_trades[tid]
+            
+            # 🧠 Forzar que el optimizador aprenda inmediatamente
+            print("   🧠 Actualizando base de conocimiento...")
+            self.knowledge_optimizer.analyze_patterns()
+            self.save_learning_database()
     
     def find_best_opportunity_from_analysis(self, analysis_results):
         """
@@ -674,10 +705,43 @@ class IntelligentLearningSystem:
         return best
     
     def show_learning_summary(self):
-        """Muestra resumen de todo lo aprendido"""
+        """Muestra resumen de todo lo aprendido visualmente"""
         print(f"\n{'='*80}")
-        print(f"📊 RESUMEN DE APRENDIZAJE")
+        print(f"📊 REPORTE DE INTELIGENCIA DEL BOT (Basado en {len(self.learning_database.get('operations', []))} ops)")
         print(f"{'='*80}")
+        
+        patterns = self.learning_database.get('patterns_found', {})
+        if not patterns:
+            print("   ⚠️ Aún no hay patrones suficientes.")
+            return
+
+        # 1. Rendimiento por Activo
+        print(f"\n   ☣️ ACTIVOS TÓXICOS (Evitados):")
+        toxic = patterns.get('toxic_assets', [])
+        if toxic:
+            for a in toxic: print(f"      - {a}")
+        else: print("      - Ninguno (Mercado saludable)")
+
+        print(f"\n   🌟 ACTIVOS ESTRELLA (Priorizados):")
+        stars = patterns.get('best_assets', [])
+        for a in stars: print(f"      - {a}")
+
+        # 2. Ajustes de Rigurosidad
+        print(f"\n   📉 AJUSTES DE RIGUROSIDAD (RSI):")
+        thresholds = patterns.get('rsi_thresholds', {})
+        if thresholds:
+            if 'CALL' in thresholds: print(f"      - CALL: Ahora exige RSI < {thresholds['CALL']:.1f} (Entra más abajo)")
+            if 'PUT' in thresholds: print(f"      - PUT: Ahora exige RSI > {thresholds['PUT']:.1f} (Entra más arriba)")
+        else: print("      - Usando umbrales estándar (30/70)")
+
+        # 3. Horarios Peligrosos
+        print(f"\n   ⏰ HORAS PROHIBIDAS:")
+        hours = patterns.get('dangerous_hours', [])
+        if hours: print(f"      - Horas (UTC): {hours}")
+        else: print("      - Todo el día estable")
+
+        print(f"\n{'='*80}")
+        sys.stdout.flush()
         
         total_ops = len(self.learning_database['operations'])
         print(f"\nTotal de oportunidades identificadas: {total_ops}")
