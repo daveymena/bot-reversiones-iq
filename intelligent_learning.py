@@ -271,12 +271,25 @@ class IntelligentLearningSystem:
         3. FASE ÉLITE (>100 ops): Umbral alto (85%) para máxima precisión.
         """
         ops = self.learning_database.get('operations', [])
-        history = [o for o in ops if o.get('result') in ['win', 'loose']]
+        
+        # Filtro Inteligente: Solo considerar operaciones de las últimas 24 horas
+        # Esto asegura que el bot entre en Modo Aprendizaje cuando hay cambios de estrategia
+        now = datetime.now()
+        history = []
+        for o in ops:
+            if o.get('result') in ['win', 'loose']:
+                try:
+                    op_date = datetime.fromisoformat(o.get('timestamp'))
+                    if (now - op_date).total_seconds() < 86400: # 24 horas
+                        history.append(o)
+                except:
+                    continue
+                    
         total_ops = len(history)
         
         # --- FASE 1: APRENDIZAJE (Mucha frecuencia) ---
-        if total_ops < 30:
-            print(f"   🧠 MODO APRENDIZAJE ({total_ops}/30 ops): Operando con alta frecuencia para recolectar datos.")
+        if total_ops < 20: # Bajado de 30 a 20 para ser más dinámico
+            print(f"   🧠 MODO APRENDIZAJE ACTIVO ({total_ops}/20 ops recientes): Recolectando datos nuevos...")
             return 60.0
             
         # Calcular Win Rate reciente
