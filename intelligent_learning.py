@@ -129,9 +129,14 @@ class IntelligentLearningSystem:
                 # 🎯 ANÁLISIS PRIORITARIO: Bollinger+RSI (Patrón Real)
                 bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df)
                 
-                # Si Bollinger+RSI da señal fuerte (≥75), usarla directamente
-                if bollinger_rsi_analysis['confidence'] >= 75:
-                    print(f"   🎯 PATRÓN REAL DETECTADO: {bollinger_rsi_analysis['action']} - Confianza: {bollinger_rsi_analysis['confidence']}%")
+                # Depuración: mostrar score siempre si está cerca del umbral
+                if bollinger_rsi_analysis['confidence'] > 50:
+                    print(f"   📊 Bollinger+RSI Analysis ({asset}): {bollinger_rsi_analysis['action']} - Score: {bollinger_rsi_analysis['confidence']}")
+                    print(f"      Reacción: {bollinger_rsi_analysis['reason']}")
+
+                # Si Bollinger+RSI da señal fuerte (≥85), usarla directamente
+                if bollinger_rsi_analysis['confidence'] >= 85:
+                    print(f"   🎯 PATRÓN REAL CONFIRMADO: {bollinger_rsi_analysis['action']} - Confianza: {bollinger_rsi_analysis['confidence']}%")
                     print(f"   📝 {bollinger_rsi_analysis['reason']}")
                     
                     result = {
