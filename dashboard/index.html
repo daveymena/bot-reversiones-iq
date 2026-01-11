@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Trading System | Neural Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/umd/lucide.min.js"></script>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-hex">
+                    <i data-lucide="brain-circuit"></i>
+                </div>
+                <h1>ANTIGRAVITY</h1>
+                <span class="version">v3.0.4 NEURAL</span>
+            </div>
+            <nav class="main-nav">
+                <a href="#" class="nav-item active">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="activity"></i>
+                    <span>Operaciones</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="database"></i>
+                    <span>Conocimiento</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+            <div class="bot-status-card">
+                <div class="pulse-container">
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-dot"></div>
+                </div>
+                <div class="status-info">
+                    <span class="status-text">BOT ACTIVO</span>
+                    <span class="mode-text" id="current-phase">Modo Aprendizaje</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="search-bar">
+                    <i data-lucide="search"></i>
+                    <input type="text" placeholder="Buscar activo...">
+                </div>
+                <div class="user-controls">
+                    <div class="connection-status">
+                        <i data-lucide="wifi"></i>
+                        <span>EXNOVA CONNECTED</span>
+                    </div>
+                    <div class="balance-display">
+                        <span class="label">Balance Real</span>
+                        <span class="amount" id="top-balance">$4,485.27</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Stats Row -->
+                <div class="stat-card winrate">
+                    <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+                    <div class="stat-data">
+                        <span class="stat-label">Win Rate (24h)</span>
+                        <h2 id="winrate-pct">68.5%</h2>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: 68.5%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card profit">
+                    <div class="stat-icon"><i data-lucide="dollar-sign"></i></div>
+                    <div class="stat-data">
+                        <span class="stat-label">Net Profit</span>
+                        <h2 id="net-profit" class="text-positive">+$142.80</h2>
+                        <span class="stat-subtext">Hoy: +$12.50</span>
+                    </div>
+                </div>
+
+                <div class="stat-card neural">
+                    <div class="stat-icon"><i data-lucide="cpu"></i></div>
+                    <div class="stat-data">
+                        <span class="stat-label">Fase Neuronal</span>
+                        <h2 id="ops-count">12 / 20</h2>
+                        <span class="stat-subtext">Modo Aprendizaje activo</span>
+                    </div>
+                </div>
+
+                <!-- Main Chart Area -->
+                <div class="main-chart-container card">
+                    <div class="card-header">
+                        <h3>Análisis en Tiempo Real: <span id="active-asset">GBPUSD-OTC</span></h3>
+                        <div class="chart-actions">
+                            <span class="badge strategy-badge">Bollinger+RSI</span>
+                            <span class="badge confidence-badge" id="current-confidence">57.8% Confidence</span>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="mainMarketChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar Info -->
+                <div class="learning-info-container">
+                    <div class="brain-card card">
+                        <div class="card-header">
+                            <h3>Cerebro del Bot</h3>
+                            <i data-lucide="zap" class="text-warning"></i>
+                        </div>
+                        <ul class="learning-list">
+                            <li>
+                                <div class="li-icon text-danger"><i data-lucide="skull"></i></div>
+                                <div class="li-content">
+                                    <span class="li-title">Activos Tóxicos</span>
+                                    <span class="li-desc" id="toxic-assets">EURJPY-OTC, BTCUSD</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="li-icon text-success"><i data-lucide="star"></i></div>
+                                <div class="li-content">
+                                    <span class="li-title">Activo Estrella</span>
+                                    <span class="li-desc" id="star-asset">GBPUSD-OTC (72% WR)</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="li-icon text-info"><i data-lucide="clock"></i></div>
+                                <div class="li-content">
+                                    <span class="li-title">Mejor Horario</span>
+                                    <span class="li-desc">14:00 - 16:00 UTC</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="active-trades card">
+                        <div class="card-header">
+                            <h3>Operaciones Recientes</h3>
+                        </div>
+                        <div class="trades-list" id="recent-trades">
+                            <!-- JS injected trades -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terminal / AI Logic -->
+                <div class="terminal-card card">
+                    <div class="card-header">
+                        <h3>Lógica Neuronal (Live Logs)</h3>
+                        <div class="ai-status">
+                            <span class="pulse-mini"></span>
+                            AI: GROQ-Llama3.1
+                        </div>
+                    </div>
+                    <div class="terminal-body" id="bot-logs">
+                        <div class="log-entry info"> [SYSTEM] Bot inicializado en MODO APRENDIZAJE...</div>
+                        <div class="log-entry info"> [MARKET] Analizando EURUSD-OTC...</div>
+                        <div class="log-entry warning"> [AI] Señal detectada en GBPUSD-OTC (57.8%). Esperando umbral 60%...</div>
+                        <div class="log-entry info"> [LEARNING] Filtro de activo tóxico aplicado a EURJPY-OTC.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

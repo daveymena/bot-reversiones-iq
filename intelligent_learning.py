@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import os
 import sys
+import requests
 sys.path.insert(0, '.')
 
 from observe_market import MarketObserver
@@ -68,6 +69,7 @@ class IntelligentLearningSystem:
         self.session_losses = 0
         self.max_session_losses = 5 # 🛑 Parar si perdemos 5 en una sesión
         self.llm = LLMClient() if config.Config.USE_LLM else None
+        self.bridge_url = "http://localhost:8080/update"
         self.load_learning_database()
     
     def load_learning_database(self):
@@ -186,6 +188,13 @@ class IntelligentLearningSystem:
                 
                 # Mostrar resumen
                 self.print_asset_summary(result)
+                
+                # Sincronizar con Dashboard
+                self.update_dashboard({
+                    "active_asset": asset,
+                    "confidence": result['strategy']['confidence'],
+                    "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] Analizando {asset}... Confianza: {result['strategy']['confidence']}%"]
+                })
                 
                 time.sleep(1)  # Pausa entre activos
                 
@@ -479,6 +488,20 @@ class IntelligentLearningSystem:
                 print(f"   Pérdidas en sesión: {self.session_losses}/{self.max_session_losses}")
                 print(f"{'='*80}")
                 
+                # Actualizar Dashboard con info básica
+                balance = float(self.observer.market_data.api.get_balance())
+                current_threshold = self.get_adaptive_threshold()
+                total_ops = len(self.learning_database.get('operations', []))
+                wins = len([o for o in self.learning_database.get('operations', []) if o.get('result') == 'win'])
+                wr = (wins / total_ops * 100) if total_ops > 0 else 0
+                
+                self.update_dashboard({
+                    "balance": balance,
+                    "ops_count": f"{operations_completed}/{operations_target}",
+                    "current_phase": "Modo Aprendizaje" if total_ops < 20 else "Modo Élite",
+                    "win_rate": round(wr, 1)
+                })
+
                 # 🛑 STOP LOSS DE SESIÓN
                 if self.session_losses >= self.max_session_losses:
                     print(f"\n🛑 STOP LOSS DE SESIÓN ALCANZADO ({self.max_session_losses} pérdidas).")
@@ -709,9 +732,22 @@ class IntelligentLearningSystem:
                 del self.active_trades[tid]
             
             # 🧠 Forzar que el optimizador aprenda inmediatamente
-            print("   🧠 Actualizando base de conocimiento...")
             self.knowledge_optimizer.analyze_patterns()
             self.save_learning_database()
+            
+            # Sincronizar historial con Dashboard
+            recent = self.learning_database.get('operations', [])[-5:]
+            self.update_dashboard({
+                "recent_trades": [
+                    {
+                        "asset": o.get('asset'),
+                        "action": o.get('strategy', {}).get('action', 'N/A'),
+                        "strategy": o.get('strategy', {}).get('strategy', 'N/A'),
+                        "result": o.get('result', 'pending'),
+                        "profit": o.get('profit', 0)
+                    } for o in recent
+                ]
+            })
     
     def find_best_opportunity_from_analysis(self, analysis_results):
         """
@@ -730,6 +766,24 @@ class IntelligentLearningSystem:
         best = max(opportunities, key=lambda x: x['strategy']['confidence'])
         return best
     
+    def update_dashboard(self, data):
+        """Envía datos al Dashboard API Bridge"""
+        try:
+            requests.post(self.bridge_url, json=data, timeout=1)
+        except:
+            pass
+
+    def send_log_to_dashboard(self, msg, type="info"):
+        """Envía un log al dashboard"""
+        try:
+            data = {
+                "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"]
+            }
+            # El bridge concatena los logs
+            requests.post(self.bridge_url, json=data, timeout=1)
+        except:
+            pass
+
     def show_learning_summary(self):
         """Muestra resumen de todo lo aprendido visualmente"""
         print(f"\n{'='*80}")
