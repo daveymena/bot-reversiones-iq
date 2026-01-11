@@ -9328,26 +9328,27 @@
     }
   ],
   "patterns_found": {
-    "best_assets": {
-      "AUDUSD-OTC": 3.550000000000002,
-      "EURJPY-OTC": -10.78,
-      "EURUSD-OTC": -1.0799999999999983,
-      "GBPUSD-OTC": -5.079999999999998,
-      "USDCAD-OTC": 0.3000000000000016,
-      "USDJPY-OTC": -1.8499999999999983
+    "best_assets": [],
+    "dangerous_hours": [
+      7,
+      9,
+      14,
+      16,
+      18,
+      21
+    ],
+    "rsi_thresholds": {
+      "CALL": 29.118848719220807,
+      "PUT": 71.56213847158595
     },
-    "volatility_correlation": {
-      "avg_win_volatility": 0.006318627373037322,
-      "min_win_volatility": 0.0
-    },
-    "strategy_performance": {
-      "Breakout Momentum (Alcista)": 0.5614035087719298,
-      "Breakout Momentum (Bajista)": 0.36,
-      "Smart Reversal (Alcista)": 0.4888888888888889,
-      "Smart Reversal (Bajista)": 0.3333333333333333,
-      "Trend Following": 0.4444444444444444
-    },
-    "last_update": "2026-01-08T10:26:28.815228"
+    "forbidden_strategies": [
+      "Breakout Momentum (Bajista)",
+      "Smart Reversal (Bajista)"
+    ],
+    "last_update": "2026-01-11T14:40:56.186415",
+    "toxic_assets": [
+      "EURJPY-OTC"
+    ]
   },
   "asset_statistics": {},
   "timing_analysis": {},
