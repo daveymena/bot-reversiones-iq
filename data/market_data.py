@@ -238,18 +238,20 @@ class MarketDataHandler:
                 # Intentar obtener el ID del instrumento digital
                 try:
                     # Esta es una forma indirecta de ver si está abierto sin disparar el error de compra
-                    digital_id = self.api.get_digital_instrument_id(asset)
-                    if not digital_id:
-                        print(f"⚠️ {asset} no disponible para Digital en este momento.")
+                    # Usamos get_digital_payout como proxy de disponibilidad
+                    payout_digital = self.api.get_digital_payout(asset)
+                    
+                    if payout_digital <= 0:
+                        print(f"⚠️ {asset} no disponible para Digital en este momento (Payout: {payout_digital}).")
                     else:
-                        print(f"📦 Intentando operación DIGITAL en {asset}...")
+                        print(f"📦 Intentando operación DIGITAL en {asset} (Payout: {payout_digital}%)...")
                         check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
                         if check:
                             return True, order_id
                         else:
                             print(f"⚠️ Compra Digital rechazada: {order_id}")
                 except Exception as dig_e:
-                    print(f"⚠️ Error al consultar Digital ID: {dig_e}")
+                    print(f"⚠️ Error al consultar Digital Payout: {dig_e}")
 
             except Exception as e:
                 print(f"⚠️ Fallo crítico en Digital: {e}")
