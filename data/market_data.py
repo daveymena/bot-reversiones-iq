@@ -222,32 +222,51 @@ class MarketDataHandler:
     def buy(self, asset, amount, action, duration):
         """
         Ejecuta una operación buscando la mejor vía disponible (Digital -> Binaria).
+        Evita errores de 'underlying key not found' verificando disponibilidad.
         """
         if not self.connected or not self.api:
             return False, "No conectado"
 
         # 1. Intentar Digital (Suele tener mejor payout)
-        try:
-            print(f"📦 Intentando operación DIGITAL en {asset}...")
-            # En iqoption/exnova API, buy_digital_spot devuelve (success, id)
-            check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
-            if check:
-                return True, order_id
-        except Exception as e:
-            print(f"⚠️ Fallo en Digital: {e}")
+        # Solo intentamos si es una de las duraciones estándar (1, 5, 15)
+        if duration in [1, 5, 15]:
+            try:
+                # Verificar si el activo está abierto para Digital antes de intentar
+                # Esto evita el error "underlying key not found" en la librería
+                print(f"📦 Verificando disponibilidad DIGITAL para {asset}...")
+                
+                # Intentar obtener el ID del instrumento digital
+                try:
+                    # Esta es una forma indirecta de ver si está abierto sin disparar el error de compra
+                    digital_id = self.api.get_digital_instrument_id(asset)
+                    if not digital_id:
+                        print(f"⚠️ {asset} no disponible para Digital en este momento.")
+                    else:
+                        print(f"📦 Intentando operación DIGITAL en {asset}...")
+                        check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
+                        if check:
+                            return True, order_id
+                        else:
+                            print(f"⚠️ Compra Digital rechazada: {order_id}")
+                except Exception as dig_e:
+                    print(f"⚠️ Error al consultar Digital ID: {dig_e}")
+
+            except Exception as e:
+                print(f"⚠️ Fallo crítico en Digital: {e}")
 
         # 2. Intentar Binaria (Fallback)
         try:
             print(f"📦 Intentando operación BINARIA en {asset}...")
-            # En iqoption/exnova API, buy devuelve solo un booleano (success)
-            # Para obtener el ID de una binaria, hay que consultarlo luego o no es necesario para el seguimiento básico
+            # En iqoption/exnova API, buy devuelve: True/False, order_id o error
             check, order_id = self.api.buy(amount, asset, action, duration)
             if check:
                 return True, order_id
+            else:
+                return False, f"Binaria rechazada: {order_id}"
         except Exception as e:
             print(f"⚠️ Fallo en Binaria: {e}")
 
-        return False, "Error en ejecución"
+        return False, "No se pudo ejecutar en ninguna modalidad"
 
     def disconnect(self):
         """Desconecta del broker"""
