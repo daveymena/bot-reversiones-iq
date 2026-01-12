@@ -386,7 +386,69 @@ class TrapDetector:
                     return True, 70
                     
         return False, 0
-    
+
+    def detect_volatility_explosion(self, df):
+        """
+        Detecta si la volatilidad está explotando (Bandas de Bollinger se ensanchan).
+        Si la volatilidad sube un 40% en 5 velas, es una explosión: NO reversiones.
+        """
+        if len(df) < 20: return False, 0
+        
+        recent_std = df['close'].tail(5).std()
+        prev_std = df['close'].shift(5).tail(20).std()
+        
+        if prev_std > 0 and recent_std > prev_std * 1.4:
+            print(f"   ⚡ EXPLOSIÓN DE VOLATILIDAD: Mercado inestable ({recent_std/prev_std:.2f}x). Peligro reversión.")
+            return True, 90
+        return False, 0
+
+    def detect_momentum_acceleration(self, df, action):
+        """
+        Detecta si el precio está ACELERANDO hacia el nivel (Peligro)
+        o DECELERANDO (Oportunidad de reversión).
+        Analiza el tamaño de los cuerpos de las últimas 3 velas.
+        """
+        if len(df) < 5: return False, 0
+        
+        recent = df.tail(3)
+        bodies = [abs(c['close'] - c['open']) for _, c in recent.iterrows()]
+        
+        # Si cada vela es más grande que la anterior -> ACELERACIÓN
+        if bodies[2] > bodies[1] > bodies[0]:
+            print(f"   🏎️ ACELERACIÓN DE MOMENTUM: Velas creciendo ({bodies[2]/bodies[0]:.2f}x). El muro no aguantará.")
+            return True, 85 # Muy peligroso
+        
+        return False, 0
+
+    def detect_consolidation_on_level(self, df, levels):
+        """
+        Detecta si el precio está 'grinding' o consolidando sobre un nivel.
+        Si el precio pasa más de 5 velas muy cerca del nivel sin rebotar,
+        es una señal de que va a romper.
+        """
+        if len(df) < 10: return False, 0
+        
+        last_price = df.iloc[-1]['close']
+        recent = df.tail(8)
+        
+        # Buscar el nivel más cercano
+        all_levels = levels.get('support', []) + levels.get('resistance', [])
+        if not all_levels: return False, 0
+        
+        nearest = min(all_levels, key=lambda x: abs(x - last_price))
+        
+        # ¿Las últimas 6 velas están todas dentro del 0.03% del nivel?
+        consolidating_candles = 0
+        for _, row in recent.iterrows():
+            if abs(row['close'] - nearest) / nearest < 0.0003:
+                consolidating_candles += 1
+        
+        if consolidating_candles >= 5:
+            print(f"   🧱 CONSOLIDACIÓN EN NIVEL: El precio está acumulando sobre {nearest:.5f}. Probable ruptura.")
+            return True, 80
+            
+        return False, 0
+
     def detect_all_traps(self, df, proposed_action):
         """
         Ejecuta todos los detectores y retorna si hay alguna trampa
@@ -431,6 +493,25 @@ class TrapDetector:
 
         if weak_rebound:
             return True, 'WEAK_REBOUND_FAILURE', weak_score, False
+
+        # 🚨 NUEVA TRAMPA: Explosión de Volatilidad (Fase de ruptura violenta)
+        vol_explosion, vol_score = self.detect_volatility_explosion(df)
+        if vol_explosion:
+            return True, 'VOLATILITY_EXPLOSION', vol_score, False
+
+        # 🚨 NUEVA TRAMPA: Aceleración (Velas cada vez más grandes)
+        acceleration, acc_score = self.detect_momentum_acceleration(df, proposed_action)
+        if acceleration:
+            return True, 'MOMENTUM_ACCELERATION_TRAP', acc_score, False
+
+        # 🚨 NUEVA TRAMPA: Consolidación (Acumulación sobre nivel)
+        # Necesitamos los niveles para este detector
+        # Note: Esta función detect_all_traps no recibe levels, por lo que usaremos
+        # el soporte/resistencia calculado localmente (recent high/low)
+        local_levels = {'support': [support], 'resistance': [resistance]}
+        consolidating, cons_score = self.detect_consolidation_on_level(df, local_levels)
+        if consolidating:
+            return True, 'CONSOLIDATION_BREAKOUT_TRAP', cons_score, False
 
         # 🚨 NUEVA TRAMPA: Price Discovery (Cazar el techo/suelo)
         discovery = self.detect_price_discovery(df)

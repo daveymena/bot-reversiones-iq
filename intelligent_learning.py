@@ -298,8 +298,32 @@ class IntelligentLearningSystem:
                 penalty = 0.6 if strength == 'STRONG' else 0.8
                 strategy['confidence'] *= penalty
                 strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
+
+        # --- NUEVO: FILTRO DE RIGUROSIDAD INTEGRAL (Acción del Precio) ---
+        # 4.1 Filtro de Fuerza de Tendencia HTF (ADX)
+        if mtf and mtf.get('adx_m30', 0) > 35:
+            # Si el ADX es muy alto, el mercado está en modo "Apisonadora"
+            # Ignorar niveles de soporte/resistencia
+            if 'Reversal' in strategy.get('strategy', ''):
+                strategy['confidence'] *= 0.6
+                strategy['reason'] += " (🛑 TENDENCIA HTF IMPARABLE: ADX > 35)"
+
+        # 4.2 Filtro de Aceleración de Momentum (Trap Detector)
+        is_accelerating, acc_score = self.trap_detector.detect_momentum_acceleration(df, action)
+        if is_accelerating:
+            strategy['confidence'] *= 0.5  # Penalización masiva
+            strategy['reason'] += " (🏎️ ACELERACIÓN: El precio viene con demasiada fuerza)"
+
+        # 4.3 Filtro de Explosión de Volatilidad
+        is_explosive, vol_score = self.trap_detector.detect_volatility_explosion(df)
+        if is_explosive:
+            strategy['confidence'] *= 0.5
+            strategy['reason'] += " (⚡ MERCADO INESTABLE: Explosión de Volatilidad)"
             
-            # Si ambas temporalidades (M30 y M15) están alineadas contra nosotros
+        # 4.4 Muro de Tendencia HTF (Alineación M30/M15)
+        if mtf:
+            trend_m30 = mtf.get('trend_m30')
+            trend_m15 = mtf.get('trend_m15')
             if trend_m30 == trend_m15 and trend_m30 != 'SIDEWAYS':
                 if (action == 'CALL' and trend_m30 == 'DOWNTREND') or (action == 'PUT' and trend_m30 == 'UPTREND'):
                     strategy['confidence'] *= 0.8  # Penalización adicional por 'muro de tendencia'
