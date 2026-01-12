@@ -92,148 +92,117 @@ class BollingerRSIStrategy:
             call_score = 0
             call_reasons = []
             
-            # 1. Precio tocó/perforó banda inferior (OBLIGATORIO)
-            # En modo aprendizaje, tolerancia un poco mayor
-            tolerance = 1.0005 if min_confidence < 70 else 1.0002
-            touched_lower = last_candle['low'] <= bb_low * tolerance
-            if touched_lower:
-                call_score += 20
-                call_reasons.append(f"Toque Banda Inferior")
+            # 1. Agotamiento Extremo (OBLIGATORIO)
+            # Ya no entramos en 30, buscamos el "máximo dolor" del mercado (RSI < 25)
+            extreme_rsi_limit = 25
+            if rsi <= extreme_rsi_limit:
+                call_score += 40
+                call_reasons.append(f"Agotamiento RSI Extremo ({rsi:.1f})")
             else:
                 call_score = 0
             
             if call_score > 0:
-                # 2. RSI en sobreventa EXTREMA (OBLIGATORIO)
-                rsi_limit = 30 # Estándar
-                if last_candle_range > current_atr: rsi_limit = 25 # Volátil
+                # 2. Perforación y Rechazo de Banda Inferior (OBLIGATORIO)
+                # El precio debe haber perforado la banda y mostrado rechazo (mecha)
+                lower_wick = min(last_candle['open'], last_candle['close']) - last_candle['low']
+                wick_pct = (lower_wick / last_candle_range) if last_candle_range > 0 else 0
                 
-                if rsi <= rsi_limit:
-                    call_score += 30
-                    call_reasons.append(f"RSI {rsi:.1f} (Límite {rsi_limit})")
+                # Exigimos que el mínimo de la vela esté REALMENTE abajo de la banda
+                if last_candle['low'] < bb_low:
+                    call_score += 20
+                    call_reasons.append("Perforación de Banda")
+                    
+                    # Bonus por mecha de rechazo larga (Spring)
+                    if wick_pct > 0.45:
+                        call_score += 20
+                        call_reasons.append(f"Rechazo Spring ({wick_pct*100:.0f}%)")
+                    elif min_confidence > 80: # En modo élite, la mecha es obligatoria
+                        call_score = 0
                 else:
                     call_score = 0
-            
+
             if call_score > 0:
-                # 3. Vela de confirmación
-                # En MODO ÉLITE (>80), es OBLIGATORIO que la vela sea verde
+                # 3. Confirmación de Giro (Vela Verde)
+                # No intentamos atrapar un cuchillo que cae, esperamos a que la primera vela verde cierre
                 candle_is_bullish = last_candle['close'] > last_candle['open']
                 if candle_is_bullish:
-                    call_score += 25
-                    call_reasons.append("Confirmación Alcista")
-                elif min_confidence < 75: # En modo aprendizaje, permitimos entrar con mecha aunque no sea verde
-                    call_score += 10
-                    call_reasons.append("Continuación bajista con mecha (Modo Aprendizaje)")
+                    call_score += 20
+                    call_reasons.append("Confirmación de Giro (Verde)")
                 else:
-                    call_score = 0
-            
-            if call_score > 0:
-                # 4. Rechazo (Mecha inferior)
-                lower_wick = min(last_candle['open'], last_candle['close']) - last_candle['low']
-                if last_candle_range > 0 and (lower_wick / last_candle_range) > 0.35:
-                    call_score += 15
-                    call_reasons.append("Rechazo fuerte (mecha)")
-                
-                # 5. Tendencia
-                if trend_up:
-                    call_score += 10
-                    call_reasons.append("Tendencia SMA100 Alcista")
-                
-                # Bonus MACD
-                if last_candle['macd'] > last_candle['macd_signal']:
-                    call_score += 5
-                    call_reasons.append("MACD OK")
+                    # Si la vela es roja pero tiene un RSI bajísimo (< 15), es un "climax"
+                    if rsi < 15:
+                        call_score += 10
+                        call_reasons.append("Clímax de Venta")
+                    else:
+                        call_score = 0 # Esperar a la vela verde
 
             # --- ANÁLISIS PARA PUT (Venta en Banda Superior) ---
             put_score = 0
             put_reasons = []
             
-            # 1. Precio tocó/perforó banda superior (OBLIGATORIO)
-            tolerance = 0.9995 if min_confidence < 70 else 0.9998
-            touched_upper = last_candle['high'] >= bb_high * tolerance
-            if touched_upper:
-                put_score += 20
-                put_reasons.append(f"Toque Banda Superior")
+            # 1. Agotamiento Extremo (OBLIGATORIO) 
+            # Ya no entramos en 70, buscamos el agotamiento total (RSI > 75)
+            extreme_rsi_limit_put = 75
+            if rsi >= extreme_rsi_limit_put:
+                put_score += 40
+                put_reasons.append(f"Agotamiento RSI Extremo ({rsi:.1f})")
             else:
                 put_score = 0
             
             if put_score > 0:
-                # 2. RSI en sobrecompra EXTREMA (OBLIGATORIO)
-                rsi_limit = 70
-                if last_candle_range > current_atr: rsi_limit = 75
-                if rsi >= rsi_limit:
-                    put_score += 30
-                    put_reasons.append(f"RSI {rsi:.1f} (Límite {rsi_limit})")
+                # 2. Perforación y Rechazo de Banda Superior (OBLIGATORIO)
+                upper_wick = last_candle['high'] - max(last_candle['open'], last_candle['close'])
+                wick_pct = (upper_wick / last_candle_range) if last_candle_range > 0 else 0
+                
+                if last_candle['high'] > bb_high:
+                    put_score += 20
+                    put_reasons.append("Perforación de Banda")
+                    
+                    # Bonus por mecha de rechazo larga (Upthrust)
+                    if wick_pct > 0.45:
+                        put_score += 20
+                        put_reasons.append(f"Rechazo Upthrust ({wick_pct*100:.0f}%)")
+                    elif min_confidence > 80:
+                        put_score = 0
                 else:
                     put_score = 0
-            
+
             if put_score > 0:
-                # 3. Vela de confirmación
+                # 3. Confirmación de Giro (Vela Roja)
                 candle_is_bearish = last_candle['close'] < last_candle['open']
                 if candle_is_bearish:
-                    put_score += 25
-                    put_reasons.append("Confirmación Bajista")
-                elif min_confidence < 75:
-                    put_score += 10
-                    put_reasons.append("Continuación alcista con mecha (Modo Aprendizaje)")
+                    put_score += 20
+                    put_reasons.append("Confirmación de Giro (Roja)")
                 else:
-                    put_score = 0
-            
-            if put_score > 0:
-                # 4. Rechazo (Mecha superior)
-                upper_wick = last_candle['high'] - max(last_candle['open'], last_candle['close'])
-                if last_candle_range > 0 and (upper_wick / last_candle_range) > 0.35:
-                    put_score += 15
-                    put_reasons.append("Rechazo fuerte (mecha)")
-                
-                # 5. Tendencia
-                if not trend_up:
-                    put_score += 10
-                    put_reasons.append("Tendencia SMA100 Bajista")
-                
-                # Bonus MACD
-                if last_candle['macd'] < last_candle['macd_signal']:
-                    put_score += 5
-                    put_reasons.append("MACD OK")
+                    if rsi > 85:
+                        put_score += 10
+                        put_reasons.append("Clímax de Compra")
+                    else:
+                        put_score = 0 # Esperar a la vela roja
             
             # --- DECISIÓN FINAL ---
-            final_threshold = min_confidence
-
+            final_threshold = max(75, min_confidence)
             
-            if call_score >= final_threshold and call_score > put_score:
+            if call_score >= final_threshold and call_score >= put_score:
                 return {
                     'action': 'CALL',
-                    'confidence': min(call_score, 95),
-                    'strategy': 'Bollinger+RSI Reversal (Alcista)',
+                    'confidence': min(call_score, 99),
+                    'strategy': 'Bollinger+RSI Rigorous Reversal',
                     'reason': ' | '.join(call_reasons),
-                    'details': {
-                        'price': current_price,
-                        'rsi': rsi,
-                        'bb_low': bb_low,
-                        'bb_mid': bb_mid,
-                        'bb_high': bb_high,
-                        'macd': last_candle['macd'],
-                        'score': call_score
-                    },
-                    'expiration': 180  # 3 minutos
+                    'details': {'price': current_price, 'rsi': rsi, 'score': call_score},
+                    'expiration': 180
                 }
             
-            elif put_score >= 75 and put_score > call_score:
+            elif put_score >= final_threshold and put_score > call_score:
                 return {
                     'action': 'PUT',
-                    'confidence': min(put_score, 95),
-                    'strategy': 'Bollinger+RSI Reversal (Bajista)',
+                    'confidence': min(put_score, 99),
+                    'strategy': 'Bollinger+RSI Rigorous Reversal',
                     'reason': ' | '.join(put_reasons),
-                    'details': {
-                        'price': current_price,
-                        'rsi': rsi,
-                        'bb_low': bb_low,
-                        'bb_mid': bb_mid,
-                        'bb_high': bb_high,
-                        'macd': last_candle['macd'],
-                        'score': put_score
-                    },
-                    'expiration': 180  # 3 minutos
+                    'details': {'price': current_price, 'rsi': rsi, 'score': put_score},
+                    'expiration': 180
                 }
+
             
             else:
                 # No cumple las condiciones mínimas
