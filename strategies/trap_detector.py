@@ -241,6 +241,91 @@ class TrapDetector:
         
         return is_trap, trap_score
 
+        return is_trap, trap_score
+
+    def detect_liquidity_sweep(self, df, action, levels):
+        """
+        Detecta tomas de liquidez (Liquidity Sweep).
+        El precio perfora un nivel clave (limpia stops) y regresa rápidamente con fuerza.
+        """
+        if len(df) < 5: return False, 0
+        
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+        
+        # Para un CALL (buscando reversión alcista)
+        if action == 'CALL':
+            for support in levels.get('support', []):
+                # Si la vela anterior o actual perforó el soporte pero cerró por encima
+                was_below = prev['low'] < support and prev['close'] > support
+                is_below = last['low'] < support and last['close'] > support
+                
+                # Y la vela actual es alcista con fuerza (volumen o tamaño)
+                if (was_below or is_below) and last['close'] > last['open']:
+                    print(f"   🌊 LIQUIDITY SWEEP (Soporte {support:.5f}): Stops limpiados. Potencial entrada fuerte.")
+                    return True, 85
+                    
+        # Para un PUT (buscando reversión bajista)
+        if action == 'PUT':
+            for resistance in levels.get('resistance', []):
+                was_above = prev['high'] > resistance and prev['close'] < resistance
+                is_above = last['high'] > resistance and last['close'] < resistance
+                
+                if (was_above or is_above) and last['close'] < last['open']:
+                    print(f"   🌊 LIQUIDITY SWEEP (Resistencia {resistance:.5f}): Liquidez tomada. Potencial entrada fuerte.")
+                    return True, 85
+                    
+        return False, 0
+
+    def detect_level_exhaustion(self, df, levels):
+        """
+        Detecta si un nivel está exhausto (demasiados toques).
+        Regla: Un nivel tocado más de 3 veces en 100 velas es probable que rompa.
+        """
+        last_price = df.iloc[-1]['close']
+        recent_df = df.tail(100)
+        
+        exhausted_levels = {'support': [], 'resistance': []}
+        
+        # Analizar soportes
+        for s in levels.get('support', []):
+            touches = ((recent_df['low'] - s).abs() / s < 0.0005).sum()
+            if touches >= 3:
+                exhausted_levels['support'].append(s)
+                
+        # Analizar resistencias
+        for r in levels.get('resistance', []):
+            touches = ((recent_df['high'] - r).abs() / r < 0.0005).sum()
+            if touches >= 3:
+                exhausted_levels['resistance'].append(r)
+                
+        return exhausted_levels
+
+    def detect_price_discovery(self, df):
+        """
+        Detecta si el precio está en 'Descubrimiento de Precio' (buscando nuevos máximos/mínimos).
+        Si el precio rompe el máximo/mínimo de las últimas 200 velas con fuerza, NO intentar reversión.
+        """
+        if len(df) < 200: return False
+        
+        historical = df.iloc[:-10]
+        recent = df.tail(10)
+        
+        h_max = historical['high'].max()
+        h_min = historical['low'].min()
+        
+        curr_max = recent['high'].max()
+        curr_min = recent['low'].min()
+        
+        if curr_max > h_max:
+            print("   🚀 PRICE DISCOVERY (ALCISTA): El precio busca nuevos máximos. Peligro vender.")
+            return 'BULL_DISCOVERY'
+        if curr_min < h_min:
+            print("   🚀 PRICE DISCOVERY (BAJISTA): El precio busca nuevos mínimos. Peligro comprar.")
+            return 'BEAR_DISCOVERY'
+            
+        return None
+
     def detect_falling_knife(self, df, action):
         """
         Detecta si el precio está en caída libre (Falling Knife) o subida parabólica.
@@ -344,11 +429,23 @@ class TrapDetector:
         if weak_rebound:
             return True, 'WEAK_REBOUND_FAILURE', weak_score, False
 
+        if weak_rebound:
+            return True, 'WEAK_REBOUND_FAILURE', weak_score, False
+
+        # 🚨 NUEVA TRAMPA: Price Discovery (Cazar el techo/suelo)
+        discovery = self.detect_price_discovery(df)
+        if (discovery == 'BULL_DISCOVERY' and proposed_action == 'PUT') or \
+           (discovery == 'BEAR_DISCOVERY' and proposed_action == 'CALL'):
+            return True, 'PRICE_DISCOVERY_TRAP', 90, False
+
         # Detectores originales
         bull_trap, bull_score = self.detect_bull_trap(df)
         bear_trap, bear_score = self.detect_bear_trap(df)
         fakeout, fakeout_score = self.detect_fakeout(df)
         whipsaw, whipsaw_score = self.detect_whipsaw(df)
+        
+        # 🚨 TOMA DE LIQUIDEZ (Esto NO es trampa, es OPORTUNIDAD, pero la marcamos para invertir lógica si es necesario)
+        # Por ahora, si es sweep, reducimos probabilidad de que sea trampa de ruptura
         
         # Si detectamos una trampa relevante a la acción propuesta
         if proposed_action == 'CALL' and bull_trap:

@@ -165,6 +165,7 @@ class IntelligentLearningSystem:
                         'movement': movement_analysis,
                         'timing': timing_analysis,
                         'mtf_context': mtf_context,
+                        'mtf_data': mtf_data,
                         'strategy': bollinger_rsi_analysis,
                         'all_strategies': {
                             'bollinger_rsi': bollinger_rsi_analysis,
@@ -190,6 +191,7 @@ class IntelligentLearningSystem:
                         'movement': movement_analysis,
                         'timing': timing_analysis,
                         'mtf_context': mtf_context,
+                        'mtf_data': mtf_data,
                         'strategy': best_strat,
                         'all_strategies': {
                             'bollinger_rsi': bollinger_rsi_analysis,
@@ -307,6 +309,32 @@ class IntelligentLearningSystem:
         # Solo para reversiones: verificar si la zona donde estamos ha sido VALIDADA por el supervisor
         if 'Reversal' in strategy.get('strategy', ''):
             price = strategy.get('details', {}).get('price', 0)
+            
+            # 5.1 ¿El nivel está agotado (exhausto)?
+            key_levels = mtf.get('key_levels', {}) if 'key_levels' in mtf else {}
+            # Necesitamos los niveles reales para el detector de trampas
+            if not key_levels and 'mtf_data' in result:
+                key_levels = result['mtf_data'].get('key_levels', {})
+
+            exhaustion = self.trap_detector.detect_level_exhaustion(df, key_levels)
+            is_exhausted = False
+            if action == 'CALL' and any(abs(price - s)/price < 0.0005 for s in exhaustion['support']):
+                is_exhausted = True
+            elif action == 'PUT' and any(abs(price - r)/price < 0.0005 for r in exhaustion['resistance']):
+                is_exhausted = True
+                
+            if is_exhausted:
+                strategy['confidence'] *= 0.4
+                strategy['reason'] += " (🛑 NIVEL EXHAUSTO: Probable Ruptura)"
+                return result # Salir con penalización fuerte
+            
+            # 5.2 ¿Es una toma de liquidez (Liquidity Sweep)?
+            is_sweep, sweep_score = self.trap_detector.detect_liquidity_sweep(df, action, key_levels)
+            if is_sweep:
+                strategy['confidence'] = min(99.0, strategy['confidence'] + 15)
+                strategy['reason'] += " (🌊 LIQUIDITY SWEEP DETECTADO)"
+
+            # 5.3 Validación del Supervisor original
             is_valid = self.is_zone_validated(asset, price, action)
             if not is_valid:
                 strategy['confidence'] *= 0.5 # Penalización masiva por zona no probada
