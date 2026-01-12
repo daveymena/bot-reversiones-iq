@@ -128,6 +128,15 @@ class IntelligentLearningSystem:
                 # Análisis de timing
                 timing_analysis = self.analyze_timing_patterns(df, asset)
                 
+                # 🎯 ANÁLISIS MULTI-TIMEFRAME (M15, M30)
+                mtf_context = {}
+                try:
+                    mtf_data = self.mtf_analyzer.analyze_asset(asset)
+                    if mtf_data:
+                        mtf_context = mtf_data.get('current_context', {})
+                except Exception as mtf_e:
+                    print(f"      ⚠️ Error MTF en {asset}: {mtf_e}")
+
                 # 🎯 ANÁLISIS PRIORITARIO: Bollinger+RSI (Patrón Real)
                 current_threshold = self.get_adaptive_threshold()
                 bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df, min_confidence=current_threshold)
@@ -147,6 +156,7 @@ class IntelligentLearningSystem:
                         'timestamp': datetime.now(),
                         'movement': movement_analysis,
                         'timing': timing_analysis,
+                        'mtf_context': mtf_context,
                         'strategy': bollinger_rsi_analysis,
                         'all_strategies': {
                             'bollinger_rsi': bollinger_rsi_analysis,
@@ -171,6 +181,7 @@ class IntelligentLearningSystem:
                         'timestamp': datetime.now(),
                         'movement': movement_analysis,
                         'timing': timing_analysis,
+                        'mtf_context': mtf_context,
                         'strategy': best_strat,
                         'all_strategies': {
                             'bollinger_rsi': bollinger_rsi_analysis,
@@ -260,7 +271,31 @@ class IntelligentLearningSystem:
                 strategy['confidence'] *= penalty
                 strategy['reason'] += f" (⚠️ RSI {current_rsi:.1f} < Seguro {safe_rsi:.1f})"
 
-        # 4. Filtro de Horario Peligroso
+        # 4. Filtro de Alineación con Temporalidad Mayor (M30/M15)
+        mtf = result.get('mtf_context', {})
+        if mtf:
+            trend_m30 = mtf.get('trend_m30')
+            trend_m15 = mtf.get('trend_m15')
+            strength = mtf.get('trend_strength', 'WEAK')
+            
+            # Si operamos contra la tendencia de M30
+            if action == 'CALL' and trend_m30 == 'DOWNTREND':
+                penalty = 0.6 if strength == 'STRONG' else 0.8
+                strategy['confidence'] *= penalty
+                strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
+                
+            elif action == 'PUT' and trend_m30 == 'UPTREND':
+                penalty = 0.6 if strength == 'STRONG' else 0.8
+                strategy['confidence'] *= penalty
+                strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
+            
+            # Si ambas temporalidades (M30 y M15) están alineadas contra nosotros
+            if trend_m30 == trend_m15 and trend_m30 != 'SIDEWAYS':
+                if (action == 'CALL' and trend_m30 == 'DOWNTREND') or (action == 'PUT' and trend_m30 == 'UPTREND'):
+                    strategy['confidence'] *= 0.8  # Penalización adicional por 'muro de tendencia'
+                    strategy['reason'] += " (🛑 MURO DE TENDENCIA HTF)"
+
+        # 5. Filtro de Horario Peligroso
         current_hour = datetime.utcnow().hour
         dangerous_hours = self.knowledge_optimizer.db.get('patterns_found', {}).get('dangerous_hours', [])
         if current_hour in dangerous_hours:
@@ -441,6 +476,13 @@ class IntelligentLearningSystem:
             print(f"      Tipo: {strategy.get('strategy', 'N/A')}")
             print(f"      Confianza: {strategy.get('confidence', 0)}%")
             print(f"      Razón: {strategy.get('reason', 'N/A')}")
+            
+        mtf = result.get('mtf_context', {})
+        if mtf:
+            print(f"\n   🌍 CONTEXTO MACRO (HTF):")
+            print(f"      Tendencia M30: {mtf.get('trend_m30')} ({mtf.get('trend_strength')})")
+            print(f"      Tendencia M15: {mtf.get('trend_m15')}")
+            print(f"      Nivel más cercano: {mtf.get('nearest_level'):.5f} ({mtf.get('position')})")
     
     def continuous_learning_session(self, duration_minutes=60, operations_target=20):
         """
@@ -727,6 +769,15 @@ class IntelligentLearningSystem:
                         asset = op.get('asset')
                         self.session_losses += 1 # 🚩 Incrementar pérdidas de sesión
                         self.cooldowns[asset] = time.time() + (10 * 60) # 10 min de descanso
+                        
+                        # --- ANÁLISIS FORENSE DE PÉRDIDO ---
+                        mtf = op.get('mtf_context', {})
+                        if mtf:
+                            trend = mtf.get('trend_m30', 'DESCONOCIDA')
+                            diag = f"🛑 DIAGNÓSTICO: Pérdida en {asset} contra tendencia M30 ({trend})." if (op.get('strategy', {}).get('action') == 'CALL' and trend == 'DOWNTREND') or (op.get('strategy', {}).get('action') == 'PUT' and trend == 'UPTREND') else f"🛑 DIAGNÓSTICO: Pérdida en {asset} por volatilidad/ruido (Tendencia M30: {trend})."
+                            print(f"   {diag}")
+                            self.send_log_to_dashboard(diag, "warning")
+
                         print(f"   ⏱️ {asset} puesto en recuperación por 10 minutos.")
                 
                 del self.active_trades[tid]

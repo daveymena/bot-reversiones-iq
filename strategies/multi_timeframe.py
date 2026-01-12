@@ -129,11 +129,24 @@ class MultiTimeframeAnalyzer:
     
     def _analyze_context(self, df_m15, df_m30, current_price, key_levels):
         """
-        Analiza el contexto del mercado en temporalidades mayores
+        Analiza el contexto del mercado en temporalidades mayores (M15, M30)
+        Detecta la 'fuerza real' y dirección del precio
         """
-        # Tendencia en M30
+        # --- TENDENCIA M30 ---
         sma_20_m30 = df_m30['close'].rolling(20).mean().iloc[-1]
         sma_50_m30 = df_m30['close'].rolling(50).mean().iloc[-1] if len(df_m30) >= 50 else sma_20_m30
+        
+        # ADX M30 para ver fuerza
+        def get_adx(df):
+            plus_dm = df['high'].diff().where(lambda x: (x > 0) & (x > df['low'].diff().abs()), 0).rolling(14).mean()
+            minus_dm = df['low'].diff().abs().where(lambda x: (x > 0) & (x > df['high'].diff()), 0).rolling(14).mean()
+            tr = pd.concat([df['high'] - df['low'], (df['high'] - df['close'].shift()).abs(), (df['low'] - df['close'].shift()).abs()], axis=1).max(axis=1).rolling(14).mean()
+            plus_di = 100 * (plus_dm / tr)
+            minus_di = 100 * (minus_dm / tr)
+            dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di)
+            return dx.rolling(14).mean().iloc[-1], plus_di.iloc[-1], minus_di.iloc[-1]
+            
+        adx_m30, di_plus_m30, di_minus_m30 = get_adx(df_m30)
         
         if sma_20_m30 > sma_50_m30 and current_price > sma_20_m30:
             trend_m30 = "UPTREND"
@@ -141,33 +154,41 @@ class MultiTimeframeAnalyzer:
             trend_m30 = "DOWNTREND"
         else:
             trend_m30 = "SIDEWAYS"
+
+        # --- TENDENCIA M15 ---
+        sma_20_m15 = df_m15['close'].rolling(20).mean().iloc[-1]
+        if current_price > sma_20_m15:
+            trend_m15 = "UPTREND"
+        elif current_price < sma_20_m15:
+            trend_m15 = "DOWNTREND"
+        else:
+            trend_m15 = "SIDEWAYS"
         
         # Encontrar nivel más cercano
         all_levels = key_levels['support'] + key_levels['resistance']
+        distance = 1.0 # Valor por defecto
         if all_levels:
             nearest_level = min(all_levels, key=lambda x: abs(x - current_price))
             distance = abs(current_price - nearest_level) / current_price
             
             # ¿Está en soporte o resistencia?
-            if nearest_level in key_levels['support']:
-                level_type = "SUPPORT"
-            else:
-                level_type = "RESISTANCE"
+            level_type = "SUPPORT" if nearest_level in key_levels['support'] else "RESISTANCE"
             
             # ¿Está cerca del nivel? (dentro del 0.2%)
-            if distance < 0.002:
-                position = f"AT_{level_type}"
-            else:
-                position = "BETWEEN_LEVELS"
+            position = f"AT_{level_type}" if distance < 0.002 else "BETWEEN_LEVELS"
         else:
             position = "NO_CLEAR_LEVEL"
             nearest_level = None
         
         return {
             'trend_m30': trend_m30,
+            'trend_m15': trend_m15,
+            'adx_m30': adx_m30,
+            'trend_strength': "STRONG" if adx_m30 > 25 else "WEAK",
             'position': position,
             'nearest_level': nearest_level,
-            'distance_to_level': distance if nearest_level else None
+            'distance_to_level': distance if nearest_level else None,
+            'is_aligned': (trend_m30 == trend_m15)
         }
     
     def _find_entry_signal(self, df_m1, key_levels, context):

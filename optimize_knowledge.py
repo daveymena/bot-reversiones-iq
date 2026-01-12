@@ -101,9 +101,29 @@ class KnowledgeOptimizer:
         patterns['dangerous_hours'] = hourly_stats[hourly_stats < 0.4].index.tolist()
 
         # 4. Estrategias Fallidas
-        # Estrategias con WR global < 35%
         strat_stats = df.groupby('strategy')['result'].apply(lambda x: (x == 'win').sum() / len(x))
         patterns['forbidden_strategies'] = strat_stats[strat_stats < 0.35].index.tolist()
+
+        # 5. Análisis Post-Mortem de Tendencia (HTF Failure Analysis)
+        # Analizar si las pérdidas ocurren sistemáticamente contra la tendencia mayor
+        post_mortem_records = []
+        for op in ops:
+            if op.get('result') == 'loose' and 'mtf_context' in op:
+                mtf = op['mtf_context']
+                action = op.get('strategy', {}).get('action')
+                trend_m30 = mtf.get('trend_m30')
+                
+                # ¿Fue contra-tendencia?
+                is_counter = (action == 'CALL' and trend_m30 == 'DOWNTREND') or \
+                             (action == 'PUT' and trend_m30 == 'UPTREND')
+                
+                if is_counter:
+                    post_mortem_records.append(1)
+        
+        # Si más del 50% de las pérdidas recientes son por contra-tendencia, activar filtro estricto
+        patterns['strict_trend_filter'] = len(post_mortem_records) > 5
+        if patterns['strict_trend_filter']:
+            patterns['forbidden_strategies'].append("Counter-Trend Operations")
 
         # Guardar insights
         self.db['patterns_found'] = patterns
