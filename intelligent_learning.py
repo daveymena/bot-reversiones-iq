@@ -70,6 +70,7 @@ class IntelligentLearningSystem:
         self.max_session_losses = 5 # 🛑 Parar si perdemos 5 en una sesión
         self.llm = LLMClient() if config.Config.USE_LLM else None
         self.bridge_url = "http://localhost:8080/update"
+        self.zone_validation = {} # 🛡️ Registro de zonas que están respetando el precio
         self.load_learning_database()
     
     def load_learning_database(self):
@@ -124,6 +125,13 @@ class IntelligentLearningSystem:
                 
                 # Análisis de movimientos
                 movement_analysis = self.analyze_movements(df, asset)
+                
+                # 🟢 MODO SUPERVISOR: Validar si el activo está respetando zonas
+                if asset not in self.zone_validation:
+                    self.zone_validation[asset] = {'validated_supports': [], 'validated_resistances': [], 'last_observation': None}
+                
+                # Actualizar validación de zonas (mirar si rebotó en los últimos 20 periodos)
+                self.supervise_zones(df, asset)
                 
                 # Análisis de timing
                 timing_analysis = self.analyze_timing_patterns(df, asset)
@@ -295,18 +303,77 @@ class IntelligentLearningSystem:
                     strategy['confidence'] *= 0.8  # Penalización adicional por 'muro de tendencia'
                     strategy['reason'] += " (🛑 MURO DE TENDENCIA HTF)"
 
-        # 5. Filtro de Horario Peligroso
+        # 5. Filtro de Validación de Zona (Supervisor)
+        # Solo para reversiones: verificar si la zona donde estamos ha sido VALIDADA por el supervisor
+        if 'Reversal' in strategy.get('strategy', ''):
+            price = strategy.get('details', {}).get('price', 0)
+            is_valid = self.is_zone_validated(asset, price, action)
+            if not is_valid:
+                strategy['confidence'] *= 0.5 # Penalización masiva por zona no probada
+                strategy['reason'] += " (🕵️ ZONA NO VALIDADA POR SUPERVISOR)"
+            else:
+                strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
+                strategy['reason'] += " (💎 ZONA PROBADA Y EFECTIVA)"
+
+        # 6. Filtro de Horario Peligroso
         current_hour = datetime.utcnow().hour
         dangerous_hours = self.knowledge_optimizer.db.get('patterns_found', {}).get('dangerous_hours', [])
         if current_hour in dangerous_hours:
             strategy['confidence'] *= 0.85
             strategy['reason'] += f" (⚠️ Horario difícil {current_hour}:00)"
-
         # Asegurar límites
         strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
         
         return result
-    
+
+    def supervise_zones(self, df, asset):
+        """
+        Actúa como supervisor: identifica puntos donde el precio HA REACCIONADO
+        realmente para darlos como válidos para futuras entradas.
+        """
+        # Mirar los últimos 50 periodos para encontrar rebotes reales
+        v_supports = []
+        v_resistances = []
+        
+        for i in range(10, len(df) - 5):
+            window = df.iloc[i-5:i+5]
+            curr = df.iloc[i]
+            
+            # ¿Es un soporte validado? (punto bajo con rebote de al menos 3 velas)
+            if curr['low'] == window['low'].min():
+                # Confirmar que el precio subió después
+                future = df.iloc[i:i+5]
+                if future['close'].max() > curr['low'] * 1.001: # Al menos un pequeño rebote
+                    v_supports.append(curr['low'])
+            
+            # ¿Es una resistencia validada? (punto alto con caída real)
+            if curr['high'] == window['high'].max():
+                future = df.iloc[i:i+5]
+                if future['close'].min() < curr['high'] * 0.999:
+                    v_resistances.append(curr['high'])
+        
+        # Guardar en el registro del supervisor (solo los 5 más recientes)
+        self.zone_validation[asset] = {
+            'validated_supports': sorted(list(set(v_supports)))[-5:],
+            'validated_resistances': sorted(list(set(v_resistances)))[-5:],
+            'last_observation': datetime.now()
+        }
+        
+    def is_zone_validated(self, asset, price, action):
+        """Verifica si el precio actual está en una zona que el supervisor ya aprobó"""
+        zones = self.zone_validation.get(asset, {})
+        tolerance = 0.0003 # 3 pips de margen
+        
+        if action == 'CALL':
+            for s in zones.get('validated_supports', []):
+                if abs(price - s) / price < tolerance:
+                    return True
+        elif action == 'PUT':
+            for r in zones.get('validated_resistances', []):
+                if abs(price - r) / price < tolerance:
+                    return True
+        return False
+
     def get_adaptive_threshold(self):
         """
         Calcula un umbral de confianza adaptativo basado en fases de aprendizaje:
