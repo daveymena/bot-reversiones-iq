@@ -402,6 +402,54 @@ class IntelligentLearningSystem:
                     return True
         return False
 
+    def wait_for_price_confirmation(self, asset, action, wait_seconds=7):
+        """
+        Espera unos segundos y observa la reacción del precio antes de entrar.
+        Si el precio se mueve fuertemente en contra, aborta.
+        """
+        try:
+            # 1. Capturar precio inicial (Tick 0)
+            initial_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
+            if initial_candles.empty: return False, "No se pudo obtener precio inicial"
+            initial_price = initial_candles.iloc[-1]['close']
+            
+            # 2. Esperar el tiempo de observación
+            time.sleep(wait_seconds)
+            
+            # 3. Capturar precio final (Tick final)
+            final_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
+            if final_candles.empty: return False, "No se pudo obtener precio final"
+            final_price = final_candles.iloc[-1]['close']
+            
+            diff_pct = (final_price - initial_price) / initial_price
+            
+            # --- LÓGICA DE VALIDACIÓN ---
+            # Para un CALL (Compra):
+            if action == 'CALL':
+                # Si el precio cayó más de un 0.05% durante la espera, es peligroso (latigazo)
+                if diff_pct < -0.0005: 
+                    return False, f"Caída fuerte durante espera ({diff_pct*100:.3f}%)"
+                # Si el precio subió demasiado rápido, ya se nos fue la entrada
+                if diff_pct > 0.0015:
+                    return False, "El precio ya subió demasiado rápido"
+                return True, f"Precio estable/favorable (Cambio: {diff_pct*100:.4f}%)"
+                
+            # Para un PUT (Venta):
+            if action == 'PUT':
+                # Si el precio subió más de un 0.05% durante la espera, peligro
+                if diff_pct > 0.0005:
+                    return False, f"Subida fuerte durante espera ({diff_pct*100:.3f}%)"
+                # Si ya cayó demasiado, perdimos el punto
+                if diff_pct < -0.0015:
+                    return False, "El precio ya cayó demasiado rápido"
+                return True, f"Precio estable/favorable (Cambio: {diff_pct*100:.4f}%)"
+                
+            return True, "Confirmación bypass"
+            
+        except Exception as e:
+            print(f"⚠️ Error en protocolo de confirmación: {e}")
+            return True, "Fallo técnico - Continuando por precaución"
+
     def get_adaptive_threshold(self):
         """
         Calcula un umbral de confianza adaptativo basado en fases de aprendizaje:
@@ -769,6 +817,17 @@ class IntelligentLearningSystem:
                         expiration = strategy.get('expiration', 60)
                         duration = max(1, round(expiration / 60))
                         
+                        # --- ⏱️ PROTOCOLO DE CONFIRMACIÓN DE MICRO-TENDENCIA ---
+                        # Esperar unos segundos para ver si el precio confirma o se viene en contra
+                        print(f"⏳ Iniciando Protocolo de Confirmación (7s) para {asset}...")
+                        confirmed, observation = self.wait_for_price_confirmation(asset, strategy['action'])
+                        
+                        if not confirmed:
+                            print(f"❌ Confirmación FALLIDA: El precio se movió en contra ({observation}). Abortando entrada.")
+                            continue
+                        else:
+                            print(f"✅ Confirmación EXITOSA: {observation}. Procediendo a ejecución.")
+
                         print(f"🚀 Enviando orden a {asset} ({action}, {duration}min)...")
                         
                         success, order_id = self.observer.market_data.buy(asset, amount, action, duration)
