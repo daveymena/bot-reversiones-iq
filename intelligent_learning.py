@@ -876,7 +876,10 @@ class IntelligentLearningSystem:
 
                         # --- FILTRO DE AGOTAMIENTO (MECHAS) ---
                         # Solo para Reversiones: confirmar rechazo
-                        df = self.observer.market_data.get_candles(asset, 60, 20, time.time())
+                        # Obtenemos DF aquí por seguridad si no se obtuvo antes
+                        if 'df' not in locals():
+                            df = self.observer.market_data.get_candles(asset, 60, 20, time.time())
+                        
                         if strategy.get('strategy', '').startswith('Smart Reversal'):
                             last_candle = df.iloc[-1]
                             upper_shadow = last_candle['high'] - max(last_candle['open'], last_candle['close'])
