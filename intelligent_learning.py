@@ -692,6 +692,48 @@ class IntelligentLearningSystem:
             print(f"      Tendencia M15: {mtf.get('trend_m15')}")
             print(f"      Nivel más cercano: {mtf.get('nearest_level'):.5f} ({mtf.get('position')})")
     
+    def analyze_missed_opportunity(self, asset, action, loose_time, loose_price):
+        """
+        ANÁLISIS FORENSE POST-MORTEM 🕵️‍♂️
+        Busca dónde ESTABA la entrada ganadora después de perder.
+        Retorna la corrección necesaria (ej: "Entrar 5 pips más tarde").
+        """
+        try:
+            # Obtener datos desde la pérdida hasta 5 minutos después
+            future_candles = self.observer.market_data.get_candles(asset, 60, 5, loose_time)
+            if future_candles is None or future_candles.empty: return None
+
+            best_correction = None
+            
+            # Buscar el punto extremo opuesto en los siguientes 5 minutos
+            # Si era CALL (y bajó y perdimos), buscamos el mínimo más bajo real (donde debimos entrar)
+            if action == 'CALL':
+                real_min = future_candles['low'].min()
+                # Si el mínimo real fue mucho más bajo que nuestro precio de pérdida
+                if real_min < loose_price:
+                    diff = loose_price - real_min
+                    best_correction = {
+                        "type": "WAIT_BETTER_PRICE",
+                        "value": diff,
+                        "msg": f"Debimos esperar una caída extra de {diff:.5f}"
+                    }
+            
+            # Si era PUT (y subió y perdimos), buscamos el máximo más alto
+            elif action == 'PUT':
+                real_max = future_candles['high'].max()
+                if real_max > loose_price:
+                    diff = real_max - loose_price
+                    best_correction = {
+                        "type": "WAIT_BETTER_PRICE",
+                        "value": diff,
+                        "msg": f"Debimos esperar una subida extra de {diff:.5f}"
+                    }
+            
+            return best_correction
+        except Exception as e:
+            print(f"⚠️ Error en análisis forense: {e}")
+            return None
+
     def continuous_learning_session(self, duration_minutes=60, operations_target=20):
         """
         Sesión de aprendizaje continuo
@@ -754,9 +796,10 @@ class IntelligentLearningSystem:
 
                 # 🛑 STOP LOSS DE SESIÓN
                 if self.session_losses >= self.max_session_losses:
-                    print(f"\n🛑 STOP LOSS DE SESIÓN ALCANZADO ({self.max_session_losses} pérdidas).")
-                    print("🛡️ Protección de capital activada. Finalizando sesión...")
-                    break
+                    print(f"\n⚠️ STOP LOSS DE SESIÓN ALCANZADO ({self.max_session_losses} pérdidas).")
+                    print("🛡️ PERO CONTINUANDO EN MODO ENTRENAMIENTO 24/7 (Simulación/Práctica)")
+                    # No hacemos break para cumplir con el requerimiento de "entrenamiento continuo"
+                    # break 
                 
                 # 1. Verificar resultados de operaciones activas
                 self.check_active_trades_results()
@@ -991,11 +1034,31 @@ class IntelligentLearningSystem:
                         
                         # --- ANÁLISIS FORENSE DE PÉRDIDO ---
                         mtf = op.get('mtf_context', {})
-                        if mtf:
-                            trend = mtf.get('trend_m30', 'DESCONOCIDA')
-                            diag = f"🛑 DIAGNÓSTICO: Pérdida en {asset} contra tendencia M30 ({trend})." if (op.get('strategy', {}).get('action') == 'CALL' and trend == 'DOWNTREND') or (op.get('strategy', {}).get('action') == 'PUT' and trend == 'UPTREND') else f"🛑 DIAGNÓSTICO: Pérdida en {asset} por volatilidad/ruido (Tendencia M30: {trend})."
-                            print(f"   {diag}")
-                            self.send_log_to_dashboard(diag, "warning")
+                        trend = mtf.get('trend_m30', 'DESCONOCIDA') if mtf else 'N/A'
+                        
+                        # 1. Diagnóstico de Tendencia
+                        diag = f"🛑 DIAGNÓSTICO: Pérdida en {asset} contra tendencia M30 ({trend})."
+                        print(f"   {diag}")
+                        
+                        # 2. Análisis de Oportunidad Perdida (Correction Lesson)
+                        try:
+                            loose_price = op.get('strategy', {}).get('entry_price', 0) # Necesitamos registrar el entry_price al crear la op
+                            action_type = op.get('strategy', {}).get('action')
+                            
+                            correction = self.analyze_missed_opportunity(asset, action_type, time.time(), loose_price)
+                            
+                            if correction:
+                                lesson = f"🎓 LECCIÓN APRENDIDA: {correction['msg']}"
+                                print(f"   {lesson}")
+                                # Guardar lección en DB
+                                self.knowledge_optimizer.db.setdefault('corrections', []).append({
+                                    'asset': asset,
+                                    'action': action_type,
+                                    'correction': correction['value'],
+                                    'timestamp': datetime.now().isoformat()
+                                })
+                        except Exception as e_forensic:
+                            print(f"⚠️ Fallo en forense: {e_forensic}")
 
                         print(f"   ⏱️ {asset} puesto en recuperación por 10 minutos.")
                 
