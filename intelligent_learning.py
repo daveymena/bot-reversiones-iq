@@ -320,10 +320,21 @@ class IntelligentLearningSystem:
             strategy['confidence'] *= 0.5
             strategy['reason'] += " (⚡ MERCADO INESTABLE: Explosión de Volatilidad)"
             
-        # 4.4 Muro de Tendencia HTF (Alineación M30/M15)
+        # 4.4 Muro de Tendencia HTF (Alineación H1/M30/M15)
         if mtf:
+            trend_h1 = mtf.get('trend_h1', 'SIDEWAYS')
             trend_m30 = mtf.get('trend_m30')
             trend_m15 = mtf.get('trend_m15')
+            
+            # 🛑 FILTRO SUPREMO H1: La tendencia de 1 hora manda
+            if trend_h1 != 'SIDEWAYS':
+                if (action == 'CALL' and trend_h1 == 'DOWNTREND'):
+                    strategy['confidence'] *= 0.5 # Penalización masiva
+                    strategy['reason'] += " (⛔ CONTRA TENDENCIA H1)"
+                elif (action == 'PUT' and trend_h1 == 'UPTREND'):
+                    strategy['confidence'] *= 0.5 # Penalización masiva
+                    strategy['reason'] += " (⛔ CONTRA TENDENCIA H1)"
+
             if trend_m30 == trend_m15 and trend_m30 != 'SIDEWAYS':
                 if (action == 'CALL' and trend_m30 == 'DOWNTREND') or (action == 'PUT' and trend_m30 == 'UPTREND'):
                     strategy['confidence'] *= 0.8  # Penalización adicional por 'muro de tendencia'
@@ -428,51 +439,81 @@ class IntelligentLearningSystem:
 
     def wait_for_price_confirmation(self, asset, action, wait_seconds=7):
         """
-        Espera unos segundos y observa la reacción del precio antes de entrar.
-        Si el precio se mueve fuertemente en contra, aborta.
+        PROTOCOLO DE ENTRADA INTELIGENTE:
+        No entra a ciegas. Espera un 'micro-pullback' para mejorar el punto de entrada.
+        
+        Lógica:
+        - CALL: Esperamos que el precio baje un poco (descuento) antes de subir.
+        - PUT: Esperamos que el precio suba un poco (mejor venta) antes de bajar.
         """
+        print(f"⏳ PROTOCOLO DE PRECISIÓN ({wait_seconds}s): Buscando punto óptimo para {action}...")
+        
         try:
             # 1. Capturar precio inicial (Tick 0)
             initial_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
-            if initial_candles.empty: return False, "No se pudo obtener precio inicial"
+            if initial_candles.empty: return False, "Fallo datos iniciales"
             initial_price = initial_candles.iloc[-1]['close']
             
-            # 2. Esperar el tiempo de observación
-            time.sleep(wait_seconds)
+            start_time = time.time()
             
-            # 3. Capturar precio final (Tick final)
-            final_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
-            if final_candles.empty: return False, "No se pudo obtener precio final"
-            final_price = final_candles.iloc[-1]['close']
-            
-            diff_pct = (final_price - initial_price) / initial_price
-            
-            # --- LÓGICA DE VALIDACIÓN ---
-            # Para un CALL (Compra):
-            if action == 'CALL':
-                # Si el precio cayó más de un 0.05% durante la espera, es peligroso (latigazo)
-                if diff_pct < -0.0005: 
-                    return False, f"Caída fuerte durante espera ({diff_pct*100:.3f}%)"
-                # Si el precio subió demasiado rápido, ya se nos fue la entrada
-                if diff_pct > 0.0015:
-                    return False, "El precio ya subió demasiado rápido"
-                return True, f"Precio estable/favorable (Cambio: {diff_pct*100:.4f}%)"
+            # 2. Bucle de Observación (Tick a Tick)
+            while time.time() - start_time < wait_seconds:
+                current_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
+                if current_candles.empty: continue
+                current_price = current_candles.iloc[-1]['close']
                 
-            # Para un PUT (Venta):
-            if action == 'PUT':
-                # Si el precio subió más de un 0.05% durante la espera, peligro
-                if diff_pct > 0.0005:
-                    return False, f"Subida fuerte durante espera ({diff_pct*100:.3f}%)"
-                # Si ya cayó demasiado, perdimos el punto
-                if diff_pct < -0.0015:
-                    return False, "El precio ya cayó demasiado rápido"
-                return True, f"Precio estable/favorable (Cambio: {diff_pct*100:.4f}%)"
+                pct_change = (current_price - initial_price) / initial_price
                 
-            return True, "Confirmación bypass"
+                # --- LÓGICA PARA CALL ---
+                if action == 'CALL':
+                    # Si el precio cae un poco (-0.005% a -0.04%), es MEJOR entrada (descuento)
+                    if -0.0004 >= pct_change >= -0.0004:
+                        print(f"    ⭐ PRECIO DE ORO DETECTADO (Pullback {pct_change*100:.4f}%). Entrando YA.")
+                        return True, f"Entrada Mejorada ({pct_change*100:.3f}%)"
+                    
+                    # Si el precio cae demasiado (>-0.06%), cuidado, puede ser ruptura
+                    if pct_change < -0.0007:
+                        print(f"    ⚠️ CAÍDA FUERTE ({pct_change*100:.3f}%). Abortando por posible ruptura.")
+                        return False, "Precio rompiendo soporte"
+                    
+                    # Si el precio sube demasiado (>0.05%), se nos escapó (FOMO)
+                    if pct_change > 0.0005:
+                        print(f"    🚀 EL PRECIO SE ESCAPÓ ({pct_change*100:.3f}%). Evitando FOMO.")
+                        return False, "Precio se escapó (FOMO)"
+
+                # --- LÓGICA PARA PUT ---
+                elif action == 'PUT':
+                    # Si el precio sube un poco (+0.005% a +0.04%), es MEJOR entrada
+                    if 0.0004 >= pct_change >= 0.00005:
+                        print(f"    ⭐ PRECIO DE ORO DETECTADO (Pullback {pct_change*100:.4f}%). Entrando YA.")
+                        return True, f"Entrada Mejorada ({pct_change*100:.3f}%)"
+                    
+                    # Si el precio sube demasiado (>0.06%), cuidado, ruptura
+                    if pct_change > 0.0007:
+                        print(f"    ⚠️ SUBIDA FUERTE ({pct_change*100:.3f}%). Abortando por posible ruptura.")
+                        return False, "Precio rompiendo resistencia"
+                        
+                    # Si el precio baja demasiado (<-0.05%), se nos escapó
+                    if pct_change < -0.0005:
+                        print(f"    🚀 EL PRECIO SE ESCAPÓ ({pct_change*100:.3f}%). Evitando FOMO.")
+                        return False, "Precio se escapó (FOMO)"
+                
+                time.sleep(1) # Sondeo cada segundo
             
+            # Fin del tiempo: Si no pasó nada extremo, entramos con el precio actual
+            # Calcular cambio final para registro
+            current_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
+            if not current_candles.empty:
+                current_price = current_candles.iloc[-1]['close']
+                final_change = (current_price - initial_price) / initial_price
+                print(f"✅ Tiempo agotado. Estabilidad confirmada ({final_change*100:.4f}%). Ejecutando.")
+                return True, "Entrada estable tras espera"
+            else:
+                return True, "Entrada estable (sin datos finales)"
+                
         except Exception as e:
-            print(f"⚠️ Error en protocolo de confirmación: {e}")
-            return True, "Fallo técnico - Continuando por precaución"
+            print(f"⚠️ Error en protocolo de espera: {e}")
+            return True, "Error en espera (bypass)"
 
     def get_adaptive_threshold(self):
         """

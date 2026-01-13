@@ -18,7 +18,7 @@ class MultiTimeframeAnalyzer:
         
     def analyze_asset(self, asset):
         """
-        Analiza un activo en múltiples temporalidades
+        Analiza un activo en múltiples temporalidades (M15, M30, H1)
         
         Returns:
             dict: {
@@ -30,20 +30,22 @@ class MultiTimeframeAnalyzer:
         import time
         current_time = time.time()
         
-        # 1. Obtener datos de M15 y M30 (niveles clave)
+        # 1. Obtener datos (M15, M30, H1)
         df_m15 = self.market_data.get_candles(asset, 60*15, 50, current_time)  # 15 min
         df_m30 = self.market_data.get_candles(asset, 60*30, 50, current_time)  # 30 min
+        df_h1  = self.market_data.get_candles(asset, 3600, 50, current_time)   # 1 hora
         df_m1 = self.market_data.get_candles(asset, 60, 100, current_time)     # 1 min
         
-        if df_m15 is None or df_m30 is None or df_m1 is None:
+        if df_m15 is None or df_m30 is None or df_h1 is None or df_m1 is None:
             return None
         
-        # 2. Identificar niveles clave en M15 y M30
-        key_levels = self._find_key_levels(df_m15, df_m30)
+        # 2. Identificar niveles clave en HTF (M15, M30, H1)
+        # Pasamos df_h1 para encontrar niveles aún más fuertes
+        key_levels = self._find_key_levels(df_m15, df_m30, df_h1)
         
         # 3. Analizar contexto actual
         current_price = df_m1.iloc[-1]['close']
-        context = self._analyze_context(df_m15, df_m30, current_price, key_levels)
+        context = self._analyze_context(df_m15, df_m30, df_h1, current_price, key_levels)
         
         # 4. Buscar señal de entrada en M1 (solo si estamos cerca de un nivel clave)
         entry_signal = self._find_entry_signal(df_m1, key_levels, context)
@@ -56,9 +58,9 @@ class MultiTimeframeAnalyzer:
             'current_price': current_price
         }
     
-    def _find_key_levels(self, df_m15, df_m30):
+    def _find_key_levels(self, df_m15, df_m30, df_h1):
         """
-        Identifica soportes y resistencias FUERTES en M15 y M30
+        Identifica soportes y resistencias FUERTES en M15, M30 y H1
         """
         levels = {
             'support': [],
@@ -66,9 +68,9 @@ class MultiTimeframeAnalyzer:
             'pivot_points': []
         }
         
-        # Combinar datos de ambas temporalidades
-        all_highs = list(df_m15['high'].values) + list(df_m30['high'].values)
-        all_lows = list(df_m15['low'].values) + list(df_m30['low'].values)
+        # Combinar datos de todas las temporalidades HTF
+        all_highs = list(df_m15['high'].values) + list(df_m30['high'].values) + list(df_h1['high'].values)
+        all_lows = list(df_m15['low'].values) + list(df_m30['low'].values) + list(df_h1['low'].values)
         
         # Encontrar resistencias (máximos que se repiten)
         resistance_candidates = []
@@ -127,11 +129,22 @@ class MultiTimeframeAnalyzer:
         # Retornar solo los 5 niveles más relevantes
         return sorted(clusters)[:5]
     
-    def _analyze_context(self, df_m15, df_m30, current_price, key_levels):
+    def _analyze_context(self, df_m15, df_m30, df_h1, current_price, key_levels):
         """
-        Analiza el contexto del mercado en temporalidades mayores (M15, M30)
+        Analiza el contexto del mercado en temporalidades mayores (M15, M30, H1)
         Detecta la 'fuerza real' y dirección del precio
         """
+        # --- TENDENCIA H1 (La Verdadera Dirección) ---
+        sma_20_h1 = df_h1['close'].rolling(20).mean().iloc[-1]
+        sma_50_h1 = df_h1['close'].rolling(50).mean().iloc[-1] if len(df_h1) >= 50 else sma_20_h1
+        
+        if sma_20_h1 > sma_50_h1 and current_price > sma_20_h1:
+            trend_h1 = "UPTREND"
+        elif sma_20_h1 < sma_50_h1 and current_price < sma_20_h1:
+            trend_h1 = "DOWNTREND"
+        else:
+            trend_h1 = "SIDEWAYS"
+
         # --- TENDENCIA M30 ---
         sma_20_m30 = df_m30['close'].rolling(20).mean().iloc[-1]
         sma_50_m30 = df_m30['close'].rolling(50).mean().iloc[-1] if len(df_m30) >= 50 else sma_20_m30
@@ -181,6 +194,7 @@ class MultiTimeframeAnalyzer:
             nearest_level = None
         
         return {
+            'trend_h1': trend_h1,
             'trend_m30': trend_m30,
             'trend_m15': trend_m15,
             'adx_m30': adx_m30,
