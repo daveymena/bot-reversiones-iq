@@ -300,6 +300,21 @@ class IntelligentLearningSystem:
                 strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
 
         # --- NUEVO: FILTRO DE RIGUROSIDAD INTEGRAL (Acción del Precio) ---
+        
+        # OBTENER DATOS (DF) SI NO ESTÁN DISPONIBLES
+        # Esto soluciona el error "df not defined"
+        try:
+            if 'current_price' not in result: # Indicador indirecto
+                 df = self.observer.market_data.get_candles(result['asset'], 60, 50, time.time())
+            else:
+                 # Intentar recuperar de alguna caché o volver a pedir (más seguro volver a pedir ultimas velas)
+                 df = self.observer.market_data.get_candles(result['asset'], 60, 50, time.time())
+        except:
+             df = pd.DataFrame() # Fallback vacío
+
+        if df.empty:
+            return result # No podemos aplicar filtros técnicos sin datos
+
         # 4.1 Filtro de Fuerza de Tendencia HTF (ADX)
         if mtf and mtf.get('adx_m30', 0) > 35:
             # Si el ADX es muy alto, el mercado está en modo "Apisonadora"
