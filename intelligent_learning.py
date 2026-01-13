@@ -454,14 +454,11 @@ class IntelligentLearningSystem:
 
     def wait_for_price_confirmation(self, asset, action, wait_seconds=7):
         """
-        PROTOCOLO DE ENTRADA INTELIGENTE:
-        No entra a ciegas. Espera un 'micro-pullback' para mejorar el punto de entrada.
-        
-        Lógica:
-        - CALL: Esperamos que el precio baje un poco (descuento) antes de subir.
-        - PUT: Esperamos que el precio suba un poco (mejor venta) antes de bajar.
+        PROTOCOLO 'WICK SNIPER' (FRANCOTIRADOR DE MECHAS):
+        1. Detecta si el precio viene con fuerza (inercia institucional) para NO ponerse en medio.
+        2. Espera que el precio 'barra' liquidez (vaya más allá del nivel) y entre en la mecha extrema.
         """
-        print(f"⏳ PROTOCOLO DE PRECISIÓN ({wait_seconds}s): Buscando punto óptimo para {action}...")
+        print(f"⏳ PROTOCOLO WICK SNIPER ({wait_seconds}s): Cazando la mejor mecha para {action}...")
         
         try:
             # 1. Capturar precio inicial (Tick 0)
@@ -470,6 +467,7 @@ class IntelligentLearningSystem:
             initial_price = initial_candles.iloc[-1]['close']
             
             start_time = time.time()
+            max_deviation = 0.0 # Para medir cuánto se movió en contra (toma de liquidez)
             
             # 2. Bucle de Observación (Tick a Tick)
             while time.time() - start_time < wait_seconds:
@@ -479,55 +477,79 @@ class IntelligentLearningSystem:
                 
                 pct_change = (current_price - initial_price) / initial_price
                 
-                # --- LÓGICA PARA CALL ---
+                # --- LÓGICA PARA CALL (Queremos comprar BARATO, en la mecha de abajo) ---
                 if action == 'CALL':
-                    # Si el precio cae un poco (-0.005% a -0.04%), es MEJOR entrada (descuento)
-                    if -0.0004 >= pct_change >= -0.0004:
-                        print(f"    ⭐ PRECIO DE ORO DETECTADO (Pullback {pct_change*100:.4f}%). Entrando YA.")
-                        return True, f"Entrada Mejorada ({pct_change*100:.3f}%)"
+                    # Rastrear máxima caída (liquidez tomada)
+                    if pct_change < 0:
+                        max_deviation = min(max_deviation, pct_change)
                     
-                    # Si el precio cae demasiado (>-0.06%), cuidado, puede ser ruptura
-                    if pct_change < -0.0007:
-                        print(f"    ⚠️ CAÍDA FUERTE ({pct_change*100:.3f}%). Abortando por posible ruptura.")
-                        return False, "Precio rompiendo soporte"
-                    
-                    # Si el precio sube demasiado (>0.05%), se nos escapó (FOMO)
-                    if pct_change > 0.0005:
-                        print(f"    🚀 EL PRECIO SE ESCAPÓ ({pct_change*100:.3f}%). Evitando FOMO.")
-                        return False, "Precio se escapó (FOMO)"
+                    # 🛡️ ESCUDO ANTI-MOMENTUM
+                    # Si cae DEMASIADO rápido (más de 0.08%), es un rompimiento con fuerza = ABORTAR
+                    if pct_change < -0.0008:
+                        print(f"    🛑 FUERZA BAJISTA DETECTADA ({pct_change*100:.3f}%). El precio rompió con violencia.")
+                        return False, "Rompimiento violento (Momentum)"
 
-                # --- LÓGICA PARA PUT ---
-                elif action == 'PUT':
-                    # Si el precio sube un poco (+0.005% a +0.04%), es MEJOR entrada
-                    if 0.0004 >= pct_change >= 0.00005:
-                        print(f"    ⭐ PRECIO DE ORO DETECTADO (Pullback {pct_change*100:.4f}%). Entrando YA.")
-                        return True, f"Entrada Mejorada ({pct_change*100:.3f}%)"
+                    # 🎯 WICK ENTRY (Entrada en la mecha)
+                    # Queremos que haya bajado al menos un poco (-0.02%) para tomar liquidez
+                    # Y que ahora esté "frenando" o regresando.
+                    if -0.0006 <= pct_change <= -0.0002:
+                        print(f"    🎯 MECHA CAZADA (Descuento {pct_change*100:.4f}%). Tomando liquidez.")
+                        return True, f"Entrada Sniper ({pct_change*100:.3f}%)"
                     
-                    # Si el precio sube demasiado (>0.06%), cuidado, ruptura
-                    if pct_change > 0.0007:
-                        print(f"    ⚠️ SUBIDA FUERTE ({pct_change*100:.3f}%). Abortando por posible ruptura.")
-                        return False, "Precio rompiendo resistencia"
+                    # Si empieza a subir rápido (>0.03%), se nos va (FOMO controlado)
+                    if pct_change > 0.0003:
+                        # Solo entramos si ANTES bajó a tomar liquidez
+                        if max_deviation < -0.0001:
+                            print(f"    🚀 REBOTE CONFIRMADO (Bajó {max_deviation*100:.3f}% y ahora sube). Entrando.")
+                            return True, "Rebote tras toma de liquidez"
+                        else:
+                            print(f"    ⚠️ Subida sin toma de liquidez previa. Esperando...")
+                
+                # --- LÓGICA PARA PUT (Queremos vender CARO, en la mecha de arriba) ---
+                elif action == 'PUT':
+                    # Rastrear máxima subida
+                    if pct_change > 0:
+                        max_deviation = max(max_deviation, pct_change)
+
+                    # 🛡️ ESCUDO ANTI-MOMENTUM
+                    # Si sube DEMASIADO rápido (más de 0.08%), es un rompimiento = ABORTAR
+                    if pct_change > 0.0008:
+                        print(f"    🛑 FUERZA ALCISTA DETECTADA ({pct_change*100:.3f}%). El precio rompió con violencia.")
+                        return False, "Rompimiento violento (Momentum)"
+
+                    # 🎯 WICK ENTRY
+                    # Queremos que haya subido un poco (+0.02%) para tomar stops
+                    if 0.0002 <= pct_change <= 0.0006:
+                        print(f"    🎯 MECHA CAZADA (Premium {pct_change*100:.4f}%). Tomando liquidez.")
+                        return True, f"Entrada Sniper ({pct_change*100:.3f}%)"
                         
-                    # Si el precio baja demasiado (<-0.05%), se nos escapó
-                    if pct_change < -0.0005:
-                        print(f"    🚀 EL PRECIO SE ESCAPÓ ({pct_change*100:.3f}%). Evitando FOMO.")
-                        return False, "Precio se escapó (FOMO)"
+                    # Si empieza a bajar rápido
+                    if pct_change < -0.0003:
+                        if max_deviation > 0.0001:
+                            print(f"    🚀 RECHAZO CONFIRMADO (Subió {max_deviation*100:.3f}% y ahora baja). Entrando.")
+                            return True, "Rechazo tras toma de liquidez"
+                        else:
+                             print(f"    ⚠️ Bajada sin toma de liquidez previa. Esperando...")
                 
                 time.sleep(1) # Sondeo cada segundo
             
-            # Fin del tiempo: Si no pasó nada extremo, entramos con el precio actual
-            # Calcular cambio final para registro
+            # Fin del tiempo:
+            # Si se mantuvo estable (ni rompió fuerte ni dio mecha perfecta), entramos con cautela
+            # pero preferimos la mecha.
+            print(f"⚠️ Tiempo agotado sin mecha perfecta. Evaluando estabilidad...")
             current_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
             if not current_candles.empty:
-                current_price = current_candles.iloc[-1]['close']
-                final_change = (current_price - initial_price) / initial_price
-                print(f"✅ Tiempo agotado. Estabilidad confirmada ({final_change*100:.4f}%). Ejecutando.")
-                return True, "Entrada estable tras espera"
-            else:
-                return True, "Entrada estable (sin datos finales)"
+                end_change = (current_candles.iloc[-1]['close'] - initial_price) / initial_price
+                if abs(end_change) < 0.0005: # Si está tranquilo
+                     print(f"✅ Precio estable ({end_change*100:.4f}%). Ejecutando estándar.")
+                     return True, "Entrada estándar (Estable)"
+                else:
+                     return False, "Mercado muy volátil tras espera"
+            
+            return False, "Sin datos finales"
                 
         except Exception as e:
-            print(f"⚠️ Error en protocolo de espera: {e}")
+            print(f"⚠️ Error en protocolo Sniper: {e}")
             return True, "Error en espera (bypass)"
 
     def get_adaptive_threshold(self):
