@@ -43,6 +43,7 @@ from core.observational_learner import ObservationalLearner
 from core.intelligent_filters import IntelligentFilters
 from core.parallel_trainer import ParallelTrainer
 from core.market_structure_analyzer import MarketStructureAnalyzer
+from core.consistency_manager import ConsistencyManager
 from database.db_manager import db
 from datetime import datetime
 import json
@@ -87,6 +88,7 @@ class LiveTrader(QThread):
         
         # 📊 Analizador de Estructura de Mercado (VE TODO EL PANORAMA)
         self.market_structure_analyzer = MarketStructureAnalyzer()
+        self.consistency_manager = ConsistencyManager()
         
         self.signals = TraderSignals()
         self.running = False
@@ -191,28 +193,32 @@ class LiveTrader(QThread):
             if time.time() - last_connection_check >= 30:
                 if not self.market_data.is_really_connected():
                     self.signals.error_message.emit("⚠️ Conexión perdida detectada!")
-                    self.signals.log_message.emit("🔄 Intentando reconectar automáticamente...")
+                    self.signals.log_message.emit("🔄 Iniciando ciclo de reconexión infinita (24/7)...")
                     
-                    # Intentar reconectar
-                    try:
-                        email = Config.EXNOVA_EMAIL if self.market_data.broker_name == "exnova" else Config.IQ_EMAIL
-                        password = Config.EXNOVA_PASSWORD if self.market_data.broker_name == "exnova" else Config.IQ_PASSWORD
-                        
-                        success = self.market_data.reconnect(email, password)
-                        
-                        if success:
-                            self.signals.log_message.emit("✅ Reconexión exitosa!")
-                            self.signals.log_message.emit("♾️ Continuando operaciones...")
-                        else:
-                            self.signals.error_message.emit("❌ No se pudo reconectar")
-                            self.signals.log_message.emit("⏸️ Deteniendo bot por seguridad...")
-                            self.running = False
-                            break
-                    except Exception as e:
-                        self.signals.error_message.emit(f"❌ Error en reconexión: {e}")
-                        self.signals.log_message.emit("⏸️ Deteniendo bot por seguridad...")
-                        self.running = False
-                        break
+                    retry_count = 0
+                    while self.running:
+                        try:
+                            retry_count += 1
+                            self.signals.log_message.emit(f"🔄 Intento de reconexión #{retry_count}...")
+                            
+                            email = Config.EXNOVA_EMAIL if self.market_data.broker_name == "exnova" else Config.IQ_EMAIL
+                            password = Config.EXNOVA_PASSWORD if self.market_data.broker_name == "exnova" else Config.IQ_PASSWORD
+                            
+                            success = self.market_data.reconnect(email, password)
+                            if success:
+                                self.signals.log_message.emit("✅ Reconexión exitosa! El bot 24/7 reanuda operaciones.")
+                                break
+                            
+                            # Backoff exponencial limitado
+                            wait_time = min(30 * (2 ** (retry_count - 1)), 600)  # Máximo 10 minutos
+                            self.signals.log_message.emit(f"⏳ Reintento fallido. Esperando {wait_time}s para el próximo intento...")
+                            
+                            for _ in range(int(wait_time)):
+                                if not self.running: break
+                                time.sleep(1)
+                        except Exception as e:
+                            self.signals.error_message.emit(f"❌ Error en ciclo de reconexión: {e}")
+                            time.sleep(10)
                 
                 last_connection_check = time.time()
             
@@ -220,6 +226,7 @@ class LiveTrader(QThread):
             if time.time() - last_heartbeat >= 60:
                 self.signals.log_message.emit(f"💓 Bot activo - Iteración #{iteration_count} - Conexión: {'✅' if self.market_data.is_really_connected() else '❌'}")
                 last_heartbeat = time.time()
+            
             iteration_count += 1
             if iteration_count % 10 == 0:  # Log cada 10 iteraciones
                 print(f"[DEBUG] Iteración #{iteration_count}, running={self.running}, paused={self.paused}, connected={self.market_data.is_really_connected()}")
@@ -581,6 +588,18 @@ class LiveTrader(QThread):
                                     self.signals.log_message.emit(f"⚠️ Error en análisis de estructura: {e}")
                                     self.signals.log_message.emit("   Continuando con validación estándar...")
                                 
+                                # ⚖️ FILTRO DE CONSISTENCIA 24/7 (Punto de Equilibrio)
+                                allow_trade, consistency_reason = self.consistency_manager.should_allow_trade(self.current_asset)
+                                if not allow_trade:
+                                    self.signals.log_message.emit(f"\n{consistency_reason}")
+                                    continue
+                                
+                                # Ajustar confianza dinámica basada en PnL
+                                dynamic_threshold = self.consistency_manager.get_dynamic_confidence_threshold()
+                                if validation.get('confidence', 0) < (dynamic_threshold * 100):
+                                    self.signals.log_message.emit(f"⚖️ EQUILIBRIO: Confianza de {validation.get('confidence', 0)}% insuficiente para el PnL actual (Req: {dynamic_threshold*100}%).")
+                                    continue
+
                                 # 🎯 FILTROS INTELIGENTES: Consultar datos históricos (PROTEGIDO)
                                 self.signals.log_message.emit("\n🎯 VALIDACIÓN CON DATOS HISTÓRICOS")
                                 

@@ -83,4 +83,15 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    print("🚀 INICIANDO MODO INFINTO 24/7...")
+    while True:
+        try:
+            exit_code = main()
+            if exit_code == 0:
+                print("🏁 Bot finalizado voluntariamente.")
+                break # Solo salir si el shutdown fue graceful
+        except Exception as e:
+            print(f"🔥 CRASH detectado: {e}")
+        
+        print("🔄 Reiniciando bot en 30 segundos...")
+        time.sleep(30)

@@ -37,9 +37,9 @@ class Config:
     TAKE_PROFIT_PERCENT = float(os.getenv("TAKE_PROFIT_PERCENT", "10"))
     
     # ============= HORARIO DE OPERACIÓN =============
-    TRADING_START_HOUR = int(os.getenv("TRADING_START_HOUR", "7"))  # 7:00 AM
-    TRADING_END_HOUR = int(os.getenv("TRADING_END_HOUR", "9"))      # 9:30 AM
-    TRADING_END_MINUTE = int(os.getenv("TRADING_END_MINUTE", "30"))
+    TRADING_START_HOUR = int(os.getenv("TRADING_START_HOUR", "0"))  # 00:00 AM
+    TRADING_END_HOUR = int(os.getenv("TRADING_END_HOUR", "23"))      # 23:59 PM
+    TRADING_END_MINUTE = int(os.getenv("TRADING_END_MINUTE", "59"))
     MIN_VOLATILITY_TO_START = float(os.getenv("MIN_VOLATILITY_TO_START", "0.05"))  # ATR mínimo para iniciar
     
     # ============= AI/LLM =============
