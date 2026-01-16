@@ -1,0 +1,459 @@
+[
+  {
+    "asset": "EURUSD-OTC",
+    "timestamp": "2026-01-16 14:25:15.414462",
+    "movement": {
+      "bullish_candles": 22,
+      "bearish_candles": 27,
+      "total_movement_pct": -0.13868216609177503,
+      "reversals": 20,
+      "volatility_pct": 0.09753741092174295,
+      "trend": "BAJISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 2.2,
+      "avg_bearish_duration_candles": 2.5454545454545454,
+      "total_streaks": 21,
+      "longest_bullish": 5,
+      "longest_bearish": 5,
+      "current_streak": {
+        "type": "bearish",
+        "length": 5,
+        "start_price": 1.132425,
+        "end_price": 1.130515
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0.0,
+      "reason": "No hay breakout v\u00e1lido (\u26a1 MERCADO INESTABLE: Explosi\u00f3n de Volatilidad)",
+      "details": {
+        "resistances": [
+          1.132575
+        ],
+        "supports": [
+          1.130655
+        ],
+        "current_price": 1.130515
+      }
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0.0,
+        "reason": "No hay breakout v\u00e1lido (\u26a1 MERCADO INESTABLE: Explosi\u00f3n de Volatilidad)",
+        "details": {
+          "resistances": [
+            1.132575
+          ],
+          "supports": [
+            1.130655
+          ],
+          "current_price": 1.130515
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay tendencia clara de racha"
+      }
+    },
+    "current_price": 1.130515
+  },
+  {
+    "asset": "GBPUSD-OTC",
+    "timestamp": "2026-01-16 14:25:18.849672",
+    "movement": {
+      "bullish_candles": 29,
+      "bearish_candles": 21,
+      "total_movement_pct": 0.2599399167449625,
+      "reversals": 25,
+      "volatility_pct": 0.09004037894557114,
+      "trend": "ALCISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 2.230769230769231,
+      "avg_bearish_duration_candles": 1.6153846153846154,
+      "total_streaks": 26,
+      "longest_bullish": 7,
+      "longest_bearish": 3,
+      "current_streak": {
+        "type": "bullish",
+        "length": 1,
+        "start_price": 1.349655,
+        "end_price": 1.349965
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          1.348575,
+          1.350525
+        ],
+        "supports": [
+          1.347075,
+          1.349705
+        ],
+        "current_price": 1.349965
+      }
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay breakout v\u00e1lido",
+        "details": {
+          "resistances": [
+            1.348575,
+            1.350525
+          ],
+          "supports": [
+            1.347075,
+            1.349705
+          ],
+          "current_price": 1.349965
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay tendencia clara de racha"
+      }
+    },
+    "current_price": 1.349965
+  },
+  {
+    "asset": "USDJPY-OTC",
+    "timestamp": "2026-01-16 14:25:22.235309",
+    "movement": {
+      "bullish_candles": 23,
+      "bearish_candles": 27,
+      "total_movement_pct": -0.1223141309914549,
+      "reversals": 30,
+      "volatility_pct": 0.05849728022646021,
+      "trend": "BAJISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 1.4375,
+      "avg_bearish_duration_candles": 1.8,
+      "total_streaks": 31,
+      "longest_bullish": 4,
+      "longest_bearish": 4,
+      "current_streak": {
+        "type": "bullish",
+        "length": 4,
+        "start_price": 160.11655,
+        "end_price": 160.21045
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          160.17385,
+          160.40195
+        ],
+        "supports": [
+          160.07415
+        ],
+        "current_price": 160.21045
+      }
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay breakout v\u00e1lido",
+        "details": {
+          "resistances": [
+            160.17385,
+            160.40195
+          ],
+          "supports": [
+            160.07415
+          ],
+          "current_price": 160.21045
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay tendencia clara de racha"
+      }
+    },
+    "current_price": 160.21045
+  },
+  {
+    "asset": "USDCAD-OTC",
+    "timestamp": "2026-01-16 14:25:25.655310",
+    "movement": {
+      "bullish_candles": 26,
+      "bearish_candles": 24,
+      "total_movement_pct": 0.4745284554315713,
+      "reversals": 21,
+      "volatility_pct": 0.2375963078092397,
+      "trend": "ALCISTA"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 2.3636363636363638,
+      "avg_bearish_duration_candles": 2.1818181818181817,
+      "total_streaks": 22,
+      "longest_bullish": 7,
+      "longest_bearish": 10,
+      "current_streak": {
+        "type": "bullish",
+        "length": 1,
+        "start_price": 1.388665,
+        "end_price": 1.388985
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          1.379915,
+          1.383225,
+          1.385465
+        ],
+        "supports": [
+          1.374315,
+          1.378785
+        ],
+        "current_price": 1.388985
+      }
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay breakout v\u00e1lido",
+        "details": {
+          "resistances": [
+            1.379915,
+            1.383225,
+            1.385465
+          ],
+          "supports": [
+            1.374315,
+            1.378785
+          ],
+          "current_price": 1.388985
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay tendencia clara de racha"
+      }
+    },
+    "current_price": 1.388985
+  },
+  {
+    "asset": "AUDUSD-OTC",
+    "timestamp": "2026-01-16 14:25:29.094681",
+    "movement": {
+      "bullish_candles": 25,
+      "bearish_candles": 25,
+      "total_movement_pct": 0.0165141608929739,
+      "reversals": 24,
+      "volatility_pct": 0.04948679572188856,
+      "trend": "LATERAL"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 2.0833333333333335,
+      "avg_bearish_duration_candles": 1.9230769230769231,
+      "total_streaks": 25,
+      "longest_bullish": 5,
+      "longest_bearish": 5,
+      "current_streak": {
+        "type": "bearish",
+        "length": 1,
+        "start_price": 0.666215,
+        "end_price": 0.666205
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "WAIT",
+      "confidence": 0,
+      "reason": "No hay breakout v\u00e1lido",
+      "details": {
+        "resistances": [
+          0.665575,
+          0.666275
+        ],
+        "supports": [
+          0.665215
+        ],
+        "current_price": 0.666205
+      }
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay breakout v\u00e1lido",
+        "details": {
+          "resistances": [
+            0.665575,
+            0.666275
+          ],
+          "supports": [
+            0.665215
+          ],
+          "current_price": 0.666205
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay tendencia clara de racha"
+      }
+    },
+    "current_price": 0.666205
+  },
+  {
+    "asset": "EURJPY-OTC",
+    "timestamp": "2026-01-16 14:25:32.550980",
+    "movement": {
+      "bullish_candles": 28,
+      "bearish_candles": 22,
+      "total_movement_pct": 0.011241391043580545,
+      "reversals": 22,
+      "volatility_pct": 0.043874927540733834,
+      "trend": "LATERAL"
+    },
+    "timing": {
+      "avg_bullish_duration_candles": 2.3333333333333335,
+      "avg_bearish_duration_candles": 2.0,
+      "total_streaks": 23,
+      "longest_bullish": 5,
+      "longest_bearish": 4,
+      "current_streak": {
+        "type": "bullish",
+        "length": 5,
+        "start_price": 181.952025,
+        "end_price": 182.026405
+      }
+    },
+    "mtf_context": {},
+    "mtf_data": {},
+    "strategy": {
+      "action": "CALL",
+      "confidence": 47.6,
+      "strategy": "Trend Following",
+      "reason": "Tendencia bullish con racha de 5 velas (\u26a0\ufe0f ACTIVO T\u00d3XICO: Historial negativo) (\u26a0\ufe0f RSI 50.0 > Seguro 29.1)",
+      "details": {
+        "streak": 5,
+        "body_ratio": 0.5054390054396309,
+        "last_type": "bullish"
+      },
+      "expiration": 60
+    },
+    "all_strategies": {
+      "bollinger_rsi": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "Score insuficiente (0/100, m\u00ednimo 75)"
+      },
+      "breakout": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay breakout v\u00e1lido",
+        "details": {
+          "resistances": [
+            182.028355
+          ],
+          "supports": [
+            181.875175
+          ],
+          "current_price": 182.026405
+        }
+      },
+      "reversal": {
+        "action": "WAIT",
+        "confidence": 0,
+        "reason": "No hay condiciones de reversi\u00f3n"
+      },
+      "trend": {
+        "action": "CALL",
+        "confidence": 47.6,
+        "strategy": "Trend Following",
+        "reason": "Tendencia bullish con racha de 5 velas (\u26a0\ufe0f ACTIVO T\u00d3XICO: Historial negativo) (\u26a0\ufe0f RSI 50.0 > Seguro 29.1)",
+        "details": {
+          "streak": 5,
+          "body_ratio": 0.5054390054396309,
+          "last_type": "bullish"
+        },
+        "expiration": 60
+      }
+    },
+    "current_price": 182.026405
+  }
+]
