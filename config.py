@@ -44,22 +44,17 @@ class Config:
     
     # ============= AI/LLM =============
     USE_LLM = os.getenv("USE_LLM", "True").lower() == "true"
-    USE_GROQ = os.getenv("USE_GROQ", "True").lower() == "true"
+    USE_GROQ = False # DISABLED AS REQUESTED
     
-    # Soporte para múltiples llaves de Groq con rotación
-    GROQ_API_KEYS = [
-        os.getenv("VITE_GROQ_API_KEY", os.getenv("GROQ_API_KEY", "")),
-        os.getenv("VITE_GROQ_API_KEY_2", ""),
-        os.getenv("VITE_GROQ_API_KEY_3", ""),
-        os.getenv("VITE_GROQ_API_KEY_4", "")
-    ]
-    GROQ_API_KEYS = [k for k in GROQ_API_KEYS if k] # Filtrar vacías
-    GROQ_API_KEY = GROQ_API_KEYS[0] if GROQ_API_KEYS else ""
+    # Soporte para múltiples llaves de Groq (Desactivado)
+    GROQ_API_KEYS = []
+    GROQ_API_KEY = ""
     
-    OLLAMA_MODEL = os.getenv("VITE_OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "gemma2:2b"))
-    OLLAMA_MODEL_FAST = os.getenv("OLLAMA_MODEL_FAST", "gemma2:2b")
-    OLLAMA_BASE_URL = os.getenv("VITE_OLLAMA_BASE_URL", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
-    OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate" if "ollama" in OLLAMA_BASE_URL else f"{OLLAMA_BASE_URL}/api/generate"
+    # Modelo optimizado: llama3.2:1b (Confirmado disponible en Easypanel)
+    OLLAMA_MODEL = os.getenv("VITE_OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "llama3.2:1b"))
+    OLLAMA_MODEL_FAST = os.getenv("OLLAMA_MODEL_FAST", "llama3.2:1b")
+    OLLAMA_BASE_URL = os.getenv("VITE_OLLAMA_BASE_URL", os.getenv("OLLAMA_BASE_URL", "https://ollama-ollama.ginee6.easypanel.host"))
+    OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
     
     # ============= BACKEND (para GUI remota) =============
     BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")

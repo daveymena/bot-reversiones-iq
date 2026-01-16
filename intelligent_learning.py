@@ -9,6 +9,7 @@ from pathlib import Path
 import os
 import sys
 import requests
+import pandas as pd
 sys.path.insert(0, '.')
 
 from observe_market import MarketObserver
@@ -109,32 +110,31 @@ class IntelligentLearningSystem:
         
         for asset in self.priority_assets:
             print(f"\n📊 Analizando {asset}...")
-            
             try:
                 # Obtener datos históricos (últimas 200 velas)
-                df = self.observer.market_data.get_candles(asset, 60, 200, time.time())
+                df_local = self.observer.market_data.get_candles(asset, 60, 200, time.time())
                 
-                print(f"   💡 Velas obtenidas para {asset}: {len(df)}")
+                print(f"   💡 Velas obtenidas para {asset}: {len(df_local)}")
                 
-                if df.empty or len(df) < 100:
+                if df_local.empty or len(df_local) < 100:
                     print(f"   ⚠️ Datos insuficientes")
                     continue
                 
                 # Aplicar indicadores
-                df = self.observer.feature_engineer.prepare_for_rl(df)
+                df_local = self.observer.feature_engineer.prepare_for_rl(df_local)
                 
                 # Análisis de movimientos
-                movement_analysis = self.analyze_movements(df, asset)
+                movement_analysis = self.analyze_movements(df_local, asset)
                 
                 # 🟢 MODO SUPERVISOR: Validar si el activo está respetando zonas
                 if asset not in self.zone_validation:
                     self.zone_validation[asset] = {'validated_supports': [], 'validated_resistances': [], 'last_observation': None}
                 
                 # Actualizar validación de zonas (mirar si rebotó en los últimos 20 periodos)
-                self.supervise_zones(df, asset)
+                self.supervise_zones(df_local, asset)
                 
                 # Análisis de timing
-                timing_analysis = self.analyze_timing_patterns(df, asset)
+                timing_analysis = self.analyze_timing_patterns(df_local, asset)
                 
                 # 🎯 ANÁLISIS MULTI-TIMEFRAME (M15, M30)
                 mtf_context = {}
@@ -144,10 +144,11 @@ class IntelligentLearningSystem:
                         mtf_context = mtf_data.get('current_context', {})
                 except Exception as mtf_e:
                     print(f"      ⚠️ Error MTF en {asset}: {mtf_e}")
+                    mtf_data = {}
 
                 # 🎯 ANÁLISIS PRIORITARIO: Bollinger+RSI (Patrón Real)
                 current_threshold = self.get_adaptive_threshold()
-                bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df, min_confidence=current_threshold)
+                bollinger_rsi_analysis = self.bollinger_rsi_strategy.analyze(df_local, min_confidence=current_threshold)
                 
                 # Depuración: mostrar score siempre si está cerca del umbral
                 if bollinger_rsi_analysis['confidence'] > 50:
@@ -173,13 +174,13 @@ class IntelligentLearningSystem:
                             'reversal': {'action': 'WAIT', 'confidence': 0},
                             'trend': {'action': 'WAIT', 'confidence': 0}
                         },
-                        'current_price': df.iloc[-1]['close']
+                        'current_price': df_local.iloc[-1]['close']
                     }
                 else:
                     # Si no hay patrón real, usar estrategias secundarias
-                    breakout_analysis = self.breakout_strategy.analyze(df)
-                    reversal_analysis = self.reversal_strategy.analyze(df)
-                    trend_analysis = self.trend_strategy.analyze(df)
+                    breakout_analysis = self.breakout_strategy.analyze(df_local)
+                    reversal_analysis = self.reversal_strategy.analyze(df_local)
+                    trend_analysis = self.trend_strategy.analyze(df_local)
                     
                     # Elegir la mejor señal
                     strategies = [breakout_analysis, reversal_analysis, trend_analysis]
@@ -199,11 +200,11 @@ class IntelligentLearningSystem:
                             'reversal': reversal_analysis,
                             'trend': trend_analysis
                         },
-                        'current_price': df.iloc[-1]['close']
+                        'current_price': df_local.iloc[-1]['close']
                     }
                 
                 # Aplicar aprendizaje dinámico
-                result = self.apply_learned_filters(result)
+                result = self.apply_learned_filters(result, df_local)
                 
                 analysis_results.append(result)
                 
@@ -220,24 +221,29 @@ class IntelligentLearningSystem:
                 time.sleep(1)  # Pausa entre activos
                 
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 print(f"   ❌ Error: {e}")
                 continue
         
         return analysis_results
 
-    def apply_learned_filters(self, result):
+    def apply_learned_filters(self, result, df=None):
         """
         Refina la confianza de la estrategia basándose en patrones de aprendizaje profundo
         """
+        # Inicialización robusta para evitar UnboundLocalError
+        current_df = df
+        
         asset = result['asset']
         strategy = result['strategy']
         
         # Obtener refinamientos del optimizador
         refinements = self.knowledge_optimizer.get_refinements_for_asset(asset)
         
-        # 1. Filtro de Activo Tóxico (Rigurosidad Extrema)
+        # 1. Filtro de Activo Tóxico
         if refinements['is_toxic']:
-            strategy['confidence'] *= 0.7  # Penalización del 30%
+            strategy['confidence'] *= 0.7
             strategy['reason'] += " (⚠️ ACTIVO TÓXICO: Historial negativo)"
             print(f"   ⚠️ Penalización por Activo Tóxico en {asset}")
 
@@ -247,16 +253,11 @@ class IntelligentLearningSystem:
             strategy['reason'] += " (🌟 ACTIVO ESTRELLA)"
 
         # 3. Comprobación de Umbrales RSI Adaptativos
-        # Si hemos perdido operaciones CALL con RSI > 30, el sistema sugiere bajar el umbral
         rsi_adjusts = refinements.get('rsi_adjust', {})
-        
-        # Obtener RSI de forma segura
-        current_rsi = 50  # Valor por defecto
+        current_rsi = 50
         try:
-            # Intentar obtener de strategy details
             if 'details' in strategy:
                 current_rsi = strategy['details'].get('rsi', 50)
-            # Si no, intentar de all_strategies
             elif 'all_strategies' in result:
                 for strat_name, strat_data in result['all_strategies'].items():
                     if 'details' in strat_data and 'rsi' in strat_data['details']:
@@ -270,103 +271,77 @@ class IntelligentLearningSystem:
         if action == 'CALL':
             safe_rsi = rsi_adjusts.get('CALL')
             if safe_rsi and current_rsi > safe_rsi:
-                penalty = 0.8
-                strategy['confidence'] *= penalty
+                strategy['confidence'] *= 0.8
                 strategy['reason'] += f" (⚠️ RSI {current_rsi:.1f} > Seguro {safe_rsi:.1f})"
-                
         elif action == 'PUT':
             safe_rsi = rsi_adjusts.get('PUT')
             if safe_rsi and current_rsi < safe_rsi:
-                penalty = 0.8
-                strategy['confidence'] *= penalty
+                strategy['confidence'] *= 0.8
                 strategy['reason'] += f" (⚠️ RSI {current_rsi:.1f} < Seguro {safe_rsi:.1f})"
 
-        # 4. Filtro de Alineación con Temporalidad Mayor (M30/M15)
+        # 4. Filtro de Alineación con Temporalidad Mayor
         mtf = result.get('mtf_context', {})
         if mtf:
             trend_m30 = mtf.get('trend_m30')
-            trend_m15 = mtf.get('trend_m15')
             strength = mtf.get('trend_strength', 'WEAK')
-            
-            # Si operamos contra la tendencia de M30
             if action == 'CALL' and trend_m30 == 'DOWNTREND':
                 penalty = 0.6 if strength == 'STRONG' else 0.8
                 strategy['confidence'] *= penalty
                 strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
-                
             elif action == 'PUT' and trend_m30 == 'UPTREND':
                 penalty = 0.6 if strength == 'STRONG' else 0.8
                 strategy['confidence'] *= penalty
                 strategy['reason'] += f" (🚨 CONTRA-TENDENCIA M30 {strength})"
 
-        # --- NUEVO: FILTRO DE RIGUROSIDAD INTEGRAL (Acción del Precio) ---
+        # --- FILTRO DE RIGUROSIDAD INTEGRAL ---
+        if current_df is None or current_df.empty:
+             try:
+                current_df = self.observer.market_data.get_candles(result['asset'], 60, 50, time.time())
+             except:
+                current_df = pd.DataFrame()
         
-        # OBTENER DATOS (DF) SI NO ESTÁN DISPONIBLES
-        # Esto soluciona el error "df not defined"
-        try:
-            if 'current_price' not in result: # Indicador indirecto
-                 df = self.observer.market_data.get_candles(result['asset'], 60, 50, time.time())
-            else:
-                 # Intentar recuperar de alguna caché o volver a pedir (más seguro volver a pedir ultimas velas)
-                 df = self.observer.market_data.get_candles(result['asset'], 60, 50, time.time())
-        except:
-             df = pd.DataFrame() # Fallback vacío
+        if current_df is None or current_df.empty:
+            return result
 
-        if df.empty:
-            return result # No podemos aplicar filtros técnicos sin datos
-
-        # 4.1 Filtro de Fuerza de Tendencia HTF (ADX)
+        # 4.1 Filtro ADX
         if mtf and mtf.get('adx_m30', 0) > 35:
-            # Si el ADX es muy alto, el mercado está en modo "Apisonadora"
-            # Ignorar niveles de soporte/resistencia
             if 'Reversal' in strategy.get('strategy', ''):
                 strategy['confidence'] *= 0.6
                 strategy['reason'] += " (🛑 TENDENCIA HTF IMPARABLE: ADX > 35)"
 
-        # 4.2 Filtro de Aceleración de Momentum (Trap Detector)
-        is_accelerating, acc_score = self.trap_detector.detect_momentum_acceleration(df, action)
+        # 4.2 Trap Detector
+        is_accelerating, acc_score = self.trap_detector.detect_momentum_acceleration(current_df, action)
         if is_accelerating:
-            strategy['confidence'] *= 0.5  # Penalización masiva
+            strategy['confidence'] *= 0.5
             strategy['reason'] += " (🏎️ ACELERACIÓN: El precio viene con demasiada fuerza)"
 
-        # 4.3 Filtro de Explosión de Volatilidad
-        is_explosive, vol_score = self.trap_detector.detect_volatility_explosion(df)
+        is_explosive, vol_score = self.trap_detector.detect_volatility_explosion(current_df)
         if is_explosive:
             strategy['confidence'] *= 0.5
             strategy['reason'] += " (⚡ MERCADO INESTABLE: Explosión de Volatilidad)"
             
-        # 4.4 Muro de Tendencia HTF (Alineación H1/M30/M15)
+        # 4.4 Muro de Tendencia HTF
         if mtf:
             trend_h1 = mtf.get('trend_h1', 'SIDEWAYS')
             trend_m30 = mtf.get('trend_m30')
             trend_m15 = mtf.get('trend_m15')
-            
-            # 🛑 FILTRO SUPREMO H1: La tendencia de 1 hora manda
             if trend_h1 != 'SIDEWAYS':
-                if (action == 'CALL' and trend_h1 == 'DOWNTREND'):
-                    strategy['confidence'] *= 0.5 # Penalización masiva
+                if (action == 'CALL' and trend_h1 == 'DOWNTREND') or (action == 'PUT' and trend_h1 == 'UPTREND'):
+                    strategy['confidence'] *= 0.5
                     strategy['reason'] += " (⛔ CONTRA TENDENCIA H1)"
-                elif (action == 'PUT' and trend_h1 == 'UPTREND'):
-                    strategy['confidence'] *= 0.5 # Penalización masiva
-                    strategy['reason'] += " (⛔ CONTRA TENDENCIA H1)"
-
             if trend_m30 == trend_m15 and trend_m30 != 'SIDEWAYS':
                 if (action == 'CALL' and trend_m30 == 'DOWNTREND') or (action == 'PUT' and trend_m30 == 'UPTREND'):
-                    strategy['confidence'] *= 0.8  # Penalización adicional por 'muro de tendencia'
+                    strategy['confidence'] *= 0.8
                     strategy['reason'] += " (🛑 MURO DE TENDENCIA HTF)"
 
-        # 5. Filtro de Validación de Zona (Supervisor)
-        # Solo para reversiones: verificar si la zona donde estamos ha sido VALIDADA por el supervisor
+        # 5. Validación de Zona
         if 'Reversal' in strategy.get('strategy', ''):
             price = strategy.get('details', {}).get('price', 0)
-            
-            # 5.1 ¿El nivel está agotado (exhausto)?
             key_levels = mtf.get('key_levels', {}) if 'key_levels' in mtf else {}
-            # Necesitamos los niveles reales para el detector de trampas
             if not key_levels and 'mtf_data' in result:
                 key_levels = result['mtf_data'].get('key_levels', {})
 
-            exhaustion = self.trap_detector.detect_level_exhaustion(df, key_levels)
+            exhaustion = self.trap_detector.detect_level_exhaustion(current_df, key_levels)
             is_exhausted = False
             if action == 'CALL' and any(abs(price - s)/price < 0.0005 for s in exhaustion['support']):
                 is_exhausted = True
@@ -376,34 +351,130 @@ class IntelligentLearningSystem:
             if is_exhausted:
                 strategy['confidence'] *= 0.4
                 strategy['reason'] += " (🛑 NIVEL EXHAUSTO: Probable Ruptura)"
-                return result # Salir con penalización fuerte
-            
-            # 5.2 ¿Es una toma de liquidez (Liquidity Sweep)?
-            is_sweep, sweep_score = self.trap_detector.detect_liquidity_sweep(df, action, key_levels)
+                return result
+
+            is_sweep, sweep_score = self.trap_detector.detect_liquidity_sweep(current_df, action, key_levels)
             if is_sweep:
                 strategy['confidence'] = min(99.0, strategy['confidence'] + 15)
                 strategy['reason'] += " (🌊 LIQUIDITY SWEEP DETECTADO)"
 
-            # 5.3 Validación del Supervisor original
             is_valid = self.is_zone_validated(asset, price, action)
             if not is_valid:
-                strategy['confidence'] *= 0.5 # Penalización masiva por zona no probada
+                strategy['confidence'] *= 0.5
                 strategy['reason'] += " (🕵️ ZONA NO VALIDADA POR SUPERVISOR)"
             else:
                 strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
                 strategy['reason'] += " (💎 ZONA PROBADA Y EFECTIVA)"
 
-        # 6. Filtro de Horario Peligroso
+        # 6. Horario Peligroso
         current_hour = datetime.utcnow().hour
         dangerous_hours = self.knowledge_optimizer.db.get('patterns_found', {}).get('dangerous_hours', [])
         if current_hour in dangerous_hours:
             strategy['confidence'] *= 0.85
             strategy['reason'] += f" (⚠️ Horario difícil {current_hour}:00)"
-        # Asegurar límites
+
         strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
         
+        # 7. Validación Final por IA
+        # if self.llm and strategy['confidence'] > 70:  <-- REMOVED STRAY IF
+        try:
+            current_price = current_df.iloc[-1]['close']
+        except:
+            current_price = 0
+            
+        action = result['strategy']['action']
+        
+        # Validar si estamos en zona peligrosa
+        zone_status = self.check_zone_status(asset, current_price)
+        
+        if zone_status['in_resistance'] and action == 'CALL':
+            print(f"   🛑 ALERTA: Señal de COMPRA justo en RESISTENCIA VALIDADA ({zone_status['nearest_level']})")
+            print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
+            
+            # Forzar inversión de estrategia
+            result['strategy']['action'] = 'PUT'
+            result['strategy']['reason'] = f"REVERSIÓN POR RESISTENCIA (Original era CALL). Mercado en techo {zone_status['nearest_level']}"
+            result['strategy']['confidence'] = 85.0 # Alta confianza por rebote técnico
+            
+        elif zone_status['in_support'] and action == 'PUT':
+            print(f"   🛑 ALERTA: Señal de VENTA justo en SOPORTE VALIDADO ({zone_status['nearest_level']})")
+            print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
+            
+            # Forzar inversión de estrategia
+            result['strategy']['action'] = 'CALL'
+            result['strategy']['reason'] = f"REVERSIÓN POR SOPORTE (Original era PUT). Mercado en suelo {zone_status['nearest_level']}"
+            result['strategy']['confidence'] = 85.0
+
+        # 7. VALIDACIÓN FINAL CON OLLAMA (IA)
+        if strategy['confidence'] > 55.0 and self.llm:
+            try:
+                # Preparar contexto enriquecido para la IA
+                enriched_context = f"""
+                CONTEXTO DE ZONAS (IMPORTANTE):
+                - Precio Actual: {current_price}
+                - Distancia a Resistencia: {zone_status['dist_res'] if zone_status['dist_res'] else 'Lejos'}
+                - Distancia a Soporte: {zone_status['dist_sup'] if zone_status['dist_sup'] else 'Lejos'}
+                - ¿En zona de rechazo?: {'SÍ' if zone_status['in_resistance'] or zone_status['in_support'] else 'NO'}
+                """
+                
+                print(f"   🤖 Consultando IA ({config.Config.OLLAMA_MODEL}) para {asset}...")
+                
+                # Pasamos el contexto extra como parte del prompt implícito o comentarios
+                # Nota: La función analyze_entry_timing recibe el df. Podemos inyectar esto si modificamos la llamada
+                # o confiamos en que el LLM analice el DF. Aquí forzamos la validación.
+                
+                ai_check = self.llm.analyze_entry_timing(current_df, result['strategy']['action'], asset)
+                
+                if not ai_check['is_optimal']:
+                    strategy['confidence'] *= 0.8
+                    strategy['reason'] += f" (🤖 IA Duda: {ai_check['reasoning']})"
+                else:
+                    strategy['confidence'] = min(99.0, strategy['confidence'] + 5)
+                    strategy['reason'] += f" (🤖 IA Confirma)"
+            except Exception as e:
+                print(f"   ⚠️ Error consultando IA: {e}")
+
         return result
 
+    def check_zone_status(self, asset, current_price):
+        """Verifica si el precio está en zona de soporte o resistencia"""
+        zones = self.zone_validation.get(asset, {'validated_supports': [], 'validated_resistances': []})
+        tolerance = 0.0003 # 3-4 pips
+        
+        status = {
+            'in_resistance': False,
+            'in_support': False,
+            'nearest_level': None,
+            'dist_res': None,
+            'dist_sup': None
+        }
+        
+        # Check Resistencia
+        if zones['validated_resistances']:
+            try:
+                nearest_res = min(zones['validated_resistances'], key=lambda x: abs(x - current_price))
+                dist = abs(current_price - nearest_res)
+                status['dist_res'] = dist
+                if dist < tolerance:
+                    status['in_resistance'] = True
+                    status['nearest_level'] = nearest_res
+            except:
+                pass
+                
+        # Check Soporte
+        if zones['validated_supports']:
+            try:
+                nearest_sup = min(zones['validated_supports'], key=lambda x: abs(x - current_price))
+                dist = abs(current_price - nearest_sup)
+                status['dist_sup'] = dist
+                if dist < tolerance:
+                    status['in_support'] = True
+                    status['nearest_level'] = nearest_sup
+            except:
+                pass
+                
+        return status
+    
     def supervise_zones(self, df, asset):
         """
         Actúa como supervisor: identifica puntos donde el precio HA REACCIONADO
@@ -577,9 +648,9 @@ class IntelligentLearningSystem:
         total_ops = len(history)
         
         # --- FASE 1: APRENDIZAJE (Mucha frecuencia) ---
-        if total_ops < 20: # Bajado de 30 a 20 para ser más dinámico
-            print(f"   🧠 MODO APRENDIZAJE ACTIVO ({total_ops}/20 ops recientes): Recolectando datos nuevos...")
-            return 60.0
+        if total_ops < 20: 
+            print(f"   🧠 MODO APRENDIZAJE ACTIVO ({total_ops}/20 ops recientes): Recolectando datos (Umbral 65%)...")
+            return 65.0 # AJUSTADO A PEDIDO DEL USUARIO (Antes 60.0)
             
         # Calcular Win Rate reciente
         recent_ops = history[-20:]
@@ -588,10 +659,10 @@ class IntelligentLearningSystem:
         
         # --- FASE 2: OPTIMIZACIÓN ---
         if total_ops < 100:
-            base = 70.0
+            base = 70.0 # AJUSTADO A PEDIDO DEL USUARIO
             if win_rate < 0.50:
-                adjustment = 10.0
-                print(f"   ⚠️ APRENDIZAJE DEFENSIVO: WR bajo ({win_rate*100:.0f}%). Subiendo exigencia.")
+                adjustment = 5.0 # Penalización más suave (75% en vez de 80%) para permitir recuperación
+                print(f"   ⚠️ APRENDIZAJE DEFENSIVO: WR bajo ({win_rate*100:.0f}%). Ajustando umbral a {base+adjustment}%.")
             else:
                 adjustment = 0.0
             return base + adjustment
@@ -599,8 +670,8 @@ class IntelligentLearningSystem:
         # --- FASE 3: ÉLITE (Máxima selectividad) ---
         print(f"   🏆 MODO ÉLITE ACTIVADO ({total_ops} ops): Máxima selectividad para proteger capital.")
         if win_rate < 0.60:
-            return 85.0 
-        return 80.0
+            return 80.0  # Bajado levemente de 85 a 80 para mantener actividad
+        return 75.0 # Bajado de 80 a 75 para mantener flujo constante en elite
 
     
     def analyze_movements(self, df, asset):
@@ -1293,12 +1364,30 @@ def main():
 
 
 if __name__ == "__main__":
+    # Asegurar codificación UTF-8 para la consola (evita caracteres raros en logs)
+    if sys.stdout.encoding != 'utf-8':
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except:
+            pass
+
     # Soporte para modo no interactivo (Docker/Easypanel)
     if os.getenv("HEADLESS_MODE", "false").lower() == "true":
-        print("🤖 MODO HEADLESS ACTIVADO")
-        system_main = IntelligentLearningSystem()
-        # Automatizar inicio de sesión de aprendizaje
-        # 1440 minutos = 24 horas
-        system_main.continuous_learning_session(1440, 200)
+        print("🤖 MODO HEADLESS ACTIVADO: BUCLE INFINITO DE APRENDIZAJE 24/7")
+        print("💡 El bot se reiniciará automáticamente si la sesión termina.")
+        
+        while True:
+            try:
+                system_main = IntelligentLearningSystem()
+                # 1440 minutos = 24 horas por sesión. 1000 ops target.
+                # Al terminar, el bucle while lo reinicia inmediatamente.
+                system_main.continuous_learning_session(1440, 1000)
+            except Exception as e:
+                print(f"⚠️ Error crítico en ciclo principal: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            print("🔄 Reiniciando ciclo de aprendizaje en 10 segundos...")
+            time.sleep(10)
     else:
         main()

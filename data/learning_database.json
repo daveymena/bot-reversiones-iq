@@ -9325,6 +9325,187 @@
       "executed": true,
       "result": "pending",
       "expiration_time": 1768086520.4149382
+    },
+    {
+      "id": 13520714221,
+      "timestamp": "2026-01-16T10:01:26.852420",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "reason": "Rechazo confirmado en RESISTENCIA M30 (160.04325)",
+        "entry_price": 160.25655,
+        "rsi": 76.72714584786665,
+        "timeframe": "M30->M1",
+        "expiration": 180,
+        "strategy": "Multi-Timeframe M30->M1"
+      },
+      "executed": true,
+      "result": "loose",
+      "expiration_time": 1768575876.8524206,
+      "profit": -1.0
+    },
+    {
+      "id": 13520804603,
+      "timestamp": "2026-01-16T10:30:46.749745",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Trend Following",
+        "reason": "REVERSI\u00d3N POR RESISTENCIA (Original era CALL). Mercado en techo 1.386205 (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "streak": 3,
+          "body_ratio": 0.6993006993006016,
+          "last_type": "bullish"
+        },
+        "expiration": 60
+      },
+      "executed": true,
+      "result": "win",
+      "expiration_time": 1768577516.7497451,
+      "profit": 0.8500000000000001
+    },
+    {
+      "id": 13520830940,
+      "timestamp": "2026-01-16T10:39:27.040465",
+      "asset": "USDJPY-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 75,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 160.26985 (\u26a0\ufe0f RSI 50.0 > Seguro 29.1) (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "resistance_level": 160.26985,
+          "current_price": 160.28175,
+          "adx": 21.75585245230057,
+          "di_plus": 29.284452296823694,
+          "di_minus": 12.05830388692371,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "loose",
+      "expiration_time": 1768578097.0404656,
+      "profit": -1.0
+    },
+    {
+      "id": 13520845353,
+      "timestamp": "2026-01-16T10:44:02.527530",
+      "asset": "EURUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Breakout Momentum (Bajista)",
+        "reason": "Ruptura de soporte 1.13440 (\u26a0\ufe0f RSI 50.0 < Seguro 71.6) (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "support_level": 1.134395,
+          "current_price": 1.134105,
+          "adx": 27.35068102037628,
+          "di_plus": 10.676835081029534,
+          "di_minus": 35.462345090559424,
+          "ma_alignment": "MAs alineadas bajista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "win",
+      "expiration_time": 1768578372.5275304,
+      "profit": 0.8700000000000001
+    },
+    {
+      "id": 13520859546,
+      "timestamp": "2026-01-16T10:48:23.604797",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 70.0,
+        "strategy": "Trend Following",
+        "reason": "Tendencia bearish con racha de 3 velas (\u26a0\ufe0f RSI 50.0 < Seguro 71.6) (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "streak": 3,
+          "body_ratio": 0.6666666666670779,
+          "last_type": "bearish"
+        },
+        "expiration": 60
+      },
+      "executed": true,
+      "result": "win",
+      "expiration_time": 1768578573.6047974,
+      "profit": 0.8500000000000001
+    },
+    {
+      "id": 13520867871,
+      "timestamp": "2026-01-16T10:51:04.090721",
+      "asset": "USDCAD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "REVERSI\u00d3N POR RESISTENCIA (Original era CALL). Mercado en techo 1.389215 (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "resistance_level": 1.388465,
+          "current_price": 1.389325,
+          "adx": 20.823048961995774,
+          "di_plus": 26.305015353120954,
+          "di_minus": 17.60491299897672,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "win",
+      "expiration_time": 1768578794.0907214,
+      "profit": 0.8500000000000001
+    },
+    {
+      "id": 13520882942,
+      "timestamp": "2026-01-16T10:56:04.816095",
+      "asset": "GBPUSD-OTC",
+      "strategy": {
+        "action": "CALL",
+        "confidence": 75,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "REVERSI\u00d3N POR RESISTENCIA (Original era CALL). Mercado en techo 1.345795 (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "resistance_level": 1.345255,
+          "current_price": 1.345495,
+          "adx": 22.304004721129854,
+          "di_plus": 23.34682860998919,
+          "di_minus": 15.654520917679193,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "win",
+      "expiration_time": 1768579094.8160949,
+      "profit": 0.8700000000000001
+    },
+    {
+      "id": 13520897582,
+      "timestamp": "2026-01-16T11:00:39.346419",
+      "asset": "AUDUSD-OTC",
+      "strategy": {
+        "action": "PUT",
+        "confidence": 75,
+        "strategy": "Breakout Momentum (Alcista)",
+        "reason": "Ruptura de resistencia 0.66566 (\u26a0\ufe0f RSI 50.0 > Seguro 29.1) (\ud83e\udd16 IA Confirma)",
+        "details": {
+          "resistance_level": 0.665665,
+          "current_price": 0.666575,
+          "adx": 50.63538927634384,
+          "di_plus": 22.049689440996872,
+          "di_minus": 13.975155279505014,
+          "ma_alignment": "MAs alineadas alcista"
+        },
+        "expiration": 120
+      },
+      "executed": true,
+      "result": "loose",
+      "expiration_time": 1768579369.3464196,
+      "profit": -1.0
     }
   ],
   "patterns_found": {
@@ -9342,13 +9523,14 @@
       "PUT": 71.56213847158595
     },
     "forbidden_strategies": [
-      "Breakout Momentum (Bajista)",
+      "Multi-Timeframe M30->M1",
       "Smart Reversal (Bajista)"
     ],
-    "last_update": "2026-01-11T14:40:56.186415",
+    "last_update": "2026-01-16T10:51:04.188547",
     "toxic_assets": [
       "EURJPY-OTC"
-    ]
+    ],
+    "strict_trend_filter": false
   },
   "asset_statistics": {},
   "timing_analysis": {},

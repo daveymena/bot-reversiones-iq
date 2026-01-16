@@ -75,33 +75,37 @@ class LLMClient:
         last = df.iloc[-1]
         
         prompt = f"""
-        Analista de Timing:
-        Activo: {proposed_asset} | Acción: {proposed_action}
-        Precio: {last['close']:.5f} | RSI: {last.get('rsi', 50):.1f}
+        DATOS:
+        Activo: {proposed_asset}
+        Acción: {proposed_action}
+        Precio: {last['close']:.5f}
+        RSI: {last.get('rsi', 50):.1f}
         
-        ¿Es el momento perfecto? Responde SOLO JSON:
+        TAREA:
+        Analiza si el RSI apoya la {proposed_action}.
+        
+        FORMATO JSON (IMPORTANTE):
         {{
             "momento_optimo": true/false,
-            "esperar_segundos": 0-60,
-            "expiracion_minutos": 1-5,
             "confianza_entrada": 0-100,
-            "razonamiento": "breve"
+            "razonamiento": "max 5 palabras"
         }}
         """
         
         try:
             response = self._safe_query(prompt)
-            # Extraer JSON
+            # Limpieza básica para modelos pequeños que hablan demás
             start = response.find('{')
             end = response.rfind('}') + 1
             if start >= 0 and end > start:
-                data = json.loads(response[start:end])
+                json_str = response[start:end]
+                data = json.loads(json_str)
                 return {
                     'is_optimal': data.get('momento_optimo', True),
                     'confidence': data.get('confianza_entrada', 50) / 100,
-                    'recommended_expiration': data.get('expiracion_minutos', 1),
-                    'wait_time': data.get('esperar_segundos', 0),
-                    'reasoning': data.get('razonamiento', '')
+                    'recommended_expiration': 1,
+                    'wait_time': 0, # Simplificado para evitar alucinaciones
+                    'reasoning': data.get('razonamiento', 'AI Check OK')
                 }
         except:
             pass
