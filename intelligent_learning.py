@@ -19,6 +19,7 @@ from strategies.trend_following import TrendFollowingStrategy
 from strategies.trap_detector import TrapDetector
 from strategies.multi_timeframe import MultiTimeframeAnalyzer
 from strategies.bollinger_rsi_real import BollingerRSIStrategy
+from strategies.market_intent import MarketIntentAnalyzer
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -37,6 +38,7 @@ class IntelligentLearningSystem:
         self.reversal_strategy = SmartReversalStrategy()
         self.trend_strategy = TrendFollowingStrategy()
         self.trap_detector = TrapDetector()  # 🚨 Detector de trampas
+        self.intent_analyzer = MarketIntentAnalyzer() # 🏎️ Analizador de inercia
         self.mtf_analyzer = None  # Se inicializa después de conectar
         
         # Priorizar EUR/USD (más líquido y predecible)
@@ -373,37 +375,49 @@ class IntelligentLearningSystem:
             strategy['confidence'] *= 0.85
             strategy['reason'] += f" (⚠️ Horario difícil {current_hour}:00)"
 
-        strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
+        # 5. NUEVO: FILTRO DE INTENCIÓN DE MERCADO (Inercia Insoportable)
+        intent = self.intent_analyzer.analyze_intent(current_df)
+        action = result['strategy']['action']
         
-        # 7. Validación Final por IA
-        # if self.llm and strategy['confidence'] > 70:  <-- REMOVED STRAY IF
+        if intent['is_unstoppable']:
+            # Si el mercado es imparable hacia un lado, NO operar en contra
+            if (intent['intent'].startswith('BEARISH') and action == 'CALL') or \
+               (intent['intent'].startswith('BULLISH') and action == 'PUT'):
+                print(f"   🚨 BLOQUEO POR INERCIA: {intent['reason']}")
+                strategy['confidence'] = 0 # Anular operación
+                strategy['reason'] += f" (🚫 FORCE LOCK: {intent['intent']})"
+                return result
+            # Si el mercado es imparable HACIA nuestra dirección, darle bonus
+            elif (intent['intent'].startswith('BULLISH') and action == 'CALL') or \
+                 (intent['intent'].startswith('BEARISH') and action == 'PUT'):
+                print(f"   🚀 BONUS POR INERCIA: El mercado empuja a nuestro favor.")
+                strategy['confidence'] = min(99.0, strategy['confidence'] + 10)
+                strategy['reason'] += " (🚀 MARKET FORCE)"
+
+        # 6. FILTRO DE ZONAS (CRÍTICO: Evitar comprar en resistencia)
         try:
             current_price = current_df.iloc[-1]['close']
         except:
             current_price = 0
             
-        action = result['strategy']['action']
-        
         # Validar si estamos en zona peligrosa
         zone_status = self.check_zone_status(asset, current_price)
         
         if zone_status['in_resistance'] and action == 'CALL':
             print(f"   🛑 ALERTA: Señal de COMPRA justo en RESISTENCIA VALIDADA ({zone_status['nearest_level']})")
             print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
-            
-            # Forzar inversión de estrategia
             result['strategy']['action'] = 'PUT'
             result['strategy']['reason'] = f"REVERSIÓN POR RESISTENCIA (Original era CALL). Mercado en techo {zone_status['nearest_level']}"
-            result['strategy']['confidence'] = 85.0 # Alta confianza por rebote técnico
+            result['strategy']['confidence'] = 85.0
             
         elif zone_status['in_support'] and action == 'PUT':
             print(f"   🛑 ALERTA: Señal de VENTA justo en SOPORTE VALIDADO ({zone_status['nearest_level']})")
             print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
-            
-            # Forzar inversión de estrategia
             result['strategy']['action'] = 'CALL'
             result['strategy']['reason'] = f"REVERSIÓN POR SOPORTE (Original era PUT). Mercado en suelo {zone_status['nearest_level']}"
             result['strategy']['confidence'] = 85.0
+
+        strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
 
         # 7. VALIDACIÓN FINAL CON OLLAMA (IA)
         if strategy['confidence'] > 55.0 and self.llm:
