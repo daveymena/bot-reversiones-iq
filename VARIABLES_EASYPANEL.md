@@ -1,83 +1,47 @@
-# Variables de Entorno para Easypanel
+# Configuración para Easypanel (Bot de Aprendizaje 24/7)
 
-## Variables Requeridas
-
+## 1. Variables de Entorno
 Configura estas variables en Easypanel > Tu App > Environment:
 
 ```env
-# ============= BROKER (Solo Exnova) =============
-# Opción 1: Sin credenciales (usuarios ingresan desde GUI)
+# ============= BROKER =============
 BROKER_NAME=exnova
+EXNOVA_EMAIL=tu@email.com
+EXNOVA_PASSWORD=tupassword
+ACCOUNT_TYPE=PRACTICE
 
-# Opción 2: Con credenciales por defecto (opcional)
-# EXNOVA_EMAIL=tu@email.com
-# EXNOVA_PASSWORD=tupassword
-# ACCOUNT_TYPE=PRACTICE
+# ============= MODO OPERACIÓN (CRÍTICO) =============
+HEADLESS_MODE=true
 
-# ============= GROQ API (LLM) =============
-GROQ_API_KEY=tu_groq_api_key
+# ============= IA / OLLAMA =============
 USE_LLM=True
-USE_GROQ=True
-
-# ============= OLLAMA (Opcional) =============
-OLLAMA_URL=https://davey-ollama2.mapf5v.easypanel.host
-OLLAMA_MODEL=llama3.2:3b
-OLLAMA_MODEL_FAST=gemma2:2b
+# Configura la URL de tu servicio de Ollama en Easypanel
+OLLAMA_BASE_URL=https://ollama-ollama.ginee6.easypanel.host
+OLLAMA_MODEL=llama3.2:1b
 
 # ============= TRADING =============
-DEFAULT_ASSET=EURUSD-OTC
-CAPITAL_PER_TRADE=10
+CAPITAL_PER_TRADE=1
 EXPIRATION_TIME=60
-
-# ============= RISK MANAGEMENT =============
-MAX_MARTINGALE=2
-STOP_LOSS_PERCENT=20
-TAKE_PROFIT_PERCENT=10
 ```
 
-## Variables Opcionales
+## 2. Persistencia de Datos (Muy Importante)
+Para que el bot no "olvide" lo aprendido cuando se reinicie la app, debes configurar un volumen:
 
-```env
-# Base de datos (si la habilitas)
-ENABLE_DATABASE=False
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=trading_bot
-DB_USER=postgres
-DB_PASSWORD=tupassword
-```
+1. Ve a la pestaña **Volumes** en Easypanel.
+2. Añade un nuevo volumen:
+   - **Host Path**: `trading_data` (o cualquier nombre)
+   - **Mount Path**: `/app/data`
 
-## ⚠️ IMPORTANTE
+Esto asegurará que el archivo `data/learning_database.json` se mantenga a salvo entre reinicios.
 
-1. **Inicia en PRACTICE**: Siempre usa `ACCOUNT_TYPE=PRACTICE` primero
-2. **Groq API Key**: Obtén tu key gratis en https://console.groq.com
-3. **No commitees credenciales**: Nunca subas el `.env` a GitHub
-4. **Cambia a REAL**: Solo después de validar en PRACTICE
+## 3. Despliegue
+1. Conecta tu repositorio de GitHub.
+2. Easypanel detectará automáticamente el `Dockerfile`.
+3. El comando de inicio por defecto será `python intelligent_learning.py`.
 
-## 📋 Checklist de Configuración
-
-- [ ] Variables configuradas en Easypanel
-- [ ] `ACCOUNT_TYPE=PRACTICE` para pruebas
-- [ ] Groq API Key válida
-- [ ] Credenciales de Exnova correctas
-- [ ] Deploy exitoso
-- [ ] Logs sin errores
-- [ ] Bot conecta al broker
-- [ ] Validado en PRACTICE por 24h
-- [ ] Cambiar a `ACCOUNT_TYPE=REAL` (opcional)
-
-## 🔍 Verificar Configuración
-
-Después del deploy, revisa los logs en Easypanel:
-
-```
-✅ Conectado a EXNOVA (PRACTICE)
-✅ Modelo RL cargado
-✅ Sistema de aprendizaje inicializado
-🚀 Iniciando LiveTrader 24/7
-```
-
-Si ves errores:
-- Verifica credenciales
-- Revisa que Groq API Key sea válida
-- Confirma que el broker sea "exnova"
+## 4. Monitoreo
+Desde la pestaña **Logs** podrás ver:
+- ✅ Conexión al broker.
+- 📊 Los análisis técnicos.
+- 🎯 Las validaciones de Ollama.
+- 🛡️ Los bloqueos por trampas o inercia.
