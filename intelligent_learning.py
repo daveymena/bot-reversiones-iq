@@ -422,29 +422,25 @@ class IntelligentLearningSystem:
         # 7. VALIDACIÓN FINAL CON OLLAMA (IA)
         if strategy['confidence'] > 55.0 and self.llm:
             try:
-                # Preparar contexto enriquecido para la IA
-                enriched_context = f"""
-                CONTEXTO DE ZONAS (IMPORTANTE):
-                - Precio Actual: {current_price}
-                - Distancia a Resistencia: {zone_status['dist_res'] if zone_status['dist_res'] else 'Lejos'}
-                - Distancia a Soporte: {zone_status['dist_sup'] if zone_status['dist_sup'] else 'Lejos'}
-                - ¿En zona de rechazo?: {'SÍ' if zone_status['in_resistance'] or zone_status['in_support'] else 'NO'}
+                # Contexto para el "Abogado del Diablo"
+                extra_context = f"""
+                ZONA ACTUAL: {'Resistencia' if zone_status['in_resistance'] else 'Soporte' if zone_status['in_support'] else 'Ninguna'}
+                DISTANCIA A NIVEL: {zone_status['dist_res'] if zone_status['in_resistance'] else zone_status['dist_sup'] if zone_status['in_support'] else 'Lejos'}
+                INERCIA DETECTADA: {intent['intent']}
                 """
                 
-                print(f"   🤖 Consultando IA ({config.Config.OLLAMA_MODEL}) para {asset}...")
+                print(f"   🤖 Consultando IA (Abogado del Diablo) para {asset}...")
+                ai_check = self.llm.analyze_entry_timing(current_df, result['strategy']['action'], asset, extra_context)
                 
-                # Pasamos el contexto extra como parte del prompt implícito o comentarios
-                # Nota: La función analyze_entry_timing recibe el df. Podemos inyectar esto si modificamos la llamada
-                # o confiamos en que el LLM analice el DF. Aquí forzamos la validación.
-                
-                ai_check = self.llm.analyze_entry_timing(current_df, result['strategy']['action'], asset)
-                
-                if not ai_check['is_optimal']:
-                    strategy['confidence'] *= 0.8
-                    strategy['reason'] += f" (🤖 IA Duda: {ai_check['reasoning']})"
+                if not ai_check.get('is_optimal', True):
+                    # Si la IA duda, gran penalización (protección contra trampas)
+                    penalty = 0.6 # -40%
+                    strategy['confidence'] *= penalty
+                    strategy['reason'] += f" (🤖 IA Advierte: {ai_check.get('reasoning', 'No óptimo')})"
                 else:
+                    # Si la IA confirma, bonus moderado
                     strategy['confidence'] = min(99.0, strategy['confidence'] + 5)
-                    strategy['reason'] += f" (🤖 IA Confirma)"
+                    strategy['reason'] += f" (🤖 IA Confirma: {ai_check.get('reasoning', 'OK')})"
             except Exception as e:
                 print(f"   ⚠️ Error consultando IA: {e}")
 
@@ -537,105 +533,76 @@ class IntelligentLearningSystem:
                     return True
         return False
 
-    def wait_for_price_confirmation(self, asset, action, wait_seconds=7):
+    def wait_for_price_confirmation(self, asset, action, wait_seconds=10):
         """
-        PROTOCOLO 'WICK SNIPER' (FRANCOTIRADOR DE MECHAS):
-        1. Detecta si el precio viene con fuerza (inercia institucional) para NO ponerse en medio.
-        2. Espera que el precio 'barra' liquidez (vaya más allá del nivel) y entre en la mecha extrema.
+        PROTOCOLO 'END OF CANDLE SNIPER' (Sincronización con Cierre):
+        1. Espera a que la vela actual esté cerca de cerrar (segundos 50-58).
+        2. Verifica si hay una MECHA de rechazo.
+        3. Si la vela es un 'Marubozu' (fuerza total sin mecha), aborta.
         """
-        print(f"⏳ PROTOCOLO WICK SNIPER ({wait_seconds}s): Cazando la mejor mecha para {action}...")
+        print(f"⏳ PROTOCOLO END-OF-CANDLE SNIPER: Sincronizando con el cierre de vela para {action}...")
         
         try:
-            # 1. Capturar precio inicial (Tick 0)
-            initial_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
-            if initial_candles.empty: return False, "Fallo datos iniciales"
-            initial_price = initial_candles.iloc[-1]['close']
+            # 1. Esperar al momento óptimo (segundos 50-55 de la vela de 1m)
+            start_wait = time.time()
+            current_sec = datetime.now().second
             
-            start_time = time.time()
-            max_deviation = 0.0 # Para medir cuánto se movió en contra (toma de liquidez)
+            # Si estamos antes del segundo 50, esperar hasta llegar ahí
+            if current_sec < 50:
+                wait_to_sync = 50 - current_sec
+                print(f"   ⏱️ Sincronizando: Esperando {wait_to_sync}s para llegar al cierre de la vela...")
+                time.sleep(wait_to_sync)
             
-            # 2. Bucle de Observación (Tick a Tick)
-            while time.time() - start_time < wait_seconds:
-                current_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
-                if current_candles.empty: continue
-                current_price = current_candles.iloc[-1]['close']
-                
-                pct_change = (current_price - initial_price) / initial_price
-                
-                # --- LÓGICA PARA CALL (Queremos comprar BARATO, en la mecha de abajo) ---
-                if action == 'CALL':
-                    # Rastrear máxima caída (liquidez tomada)
-                    if pct_change < 0:
-                        max_deviation = min(max_deviation, pct_change)
+            # 2. Análisis de la vela en formación (Segundos finales)
+            print(f"   🔍 Analizando rechazo en segundos finales...")
+            df = self.observer.market_data.get_candles(asset, 60, 1, time.time())
+            if df.empty: return False, "Fallo datos"
+            
+            last_candle = df.iloc[-1]
+            high, low = last_candle['high'], last_candle['low']
+            open_p, close_p = last_candle['open'], last_candle['close']
+            
+            # Calcular mechas
+            upper_wick = high - max(open_p, close_p)
+            lower_wick = min(open_p, close_p) - low
+            body = abs(close_p - open_p)
+            total_range = high - low if high > low else 0.0001
+            
+            # --- CRITERIOS DE RECHAZO ---
+            if action == 'CALL':
+                # Queremos ver una mecha INFERIOR (rechazo de vendedores)
+                wick_ratio = lower_wick / total_range
+                if wick_ratio > 0.25:
+                    print(f"   ✅ RECHAZO DETECTADO: Mecha inferior del {wick_ratio*100:.1f}%. Compradores defendiendo.")
+                    return True, f"Wick Rejection {wick_ratio*100:.1f}%"
+                if body > total_range * 0.8 and close_p < open_p:
+                    print(f"   🚨 BLOQUEO: Vela Marubozu bajista (Sin mecha). Fuerza vendedora absoluta.")
+                    return False, "Marubozu bajista (Sin rechazo)"
                     
-                    # 🛡️ ESCUDO ANTI-MOMENTUM
-                    # Si cae DEMASIADO rápido (más de 0.08%), es un rompimiento con fuerza = ABORTAR
-                    if pct_change < -0.0008:
-                        print(f"    🛑 FUERZA BAJISTA DETECTADA ({pct_change*100:.3f}%). El precio rompió con violencia.")
-                        return False, "Rompimiento violento (Momentum)"
+            if action == 'PUT':
+                # Queremos ver una mecha SUPERIOR (rechazo de compradores)
+                wick_ratio = upper_wick / total_range
+                if wick_ratio > 0.25:
+                    print(f"   ✅ RECHAZO DETECTADO: Mecha superior del {wick_ratio*100:.1f}%. Vendedores defendiendo.")
+                    return True, f"Wick Rejection {wick_ratio*100:.1f}%"
+                if body > total_range * 0.8 and close_p > open_p:
+                    print(f"   🚨 BLOQUEO: Vela Marubozu alcista. Fuerza compradora absoluta.")
+                    return False, "Marubozu alcista (Sin rechazo)"
 
-                    # 🎯 WICK ENTRY (Entrada en la mecha)
-                    # Queremos que haya bajado al menos un poco (-0.02%) para tomar liquidez
-                    # Y que ahora esté "frenando" o regresando.
-                    if -0.0006 <= pct_change <= -0.0002:
-                        print(f"    🎯 MECHA CAZADA (Descuento {pct_change*100:.4f}%). Tomando liquidez.")
-                        return True, f"Entrada Sniper ({pct_change*100:.3f}%)"
-                    
-                    # Si empieza a subir rápido (>0.03%), se nos va (FOMO controlado)
-                    if pct_change > 0.0003:
-                        # Solo entramos si ANTES bajó a tomar liquidez
-                        if max_deviation < -0.0001:
-                            print(f"    🚀 REBOTE CONFIRMADO (Bajó {max_deviation*100:.3f}% y ahora sube). Entrando.")
-                            return True, "Rebote tras toma de liquidez"
-                        else:
-                            print(f"    ⚠️ Subida sin toma de liquidez previa. Esperando...")
-                
-                # --- LÓGICA PARA PUT (Queremos vender CARO, en la mecha de arriba) ---
-                elif action == 'PUT':
-                    # Rastrear máxima subida
-                    if pct_change > 0:
-                        max_deviation = max(max_deviation, pct_change)
-
-                    # 🛡️ ESCUDO ANTI-MOMENTUM
-                    # Si sube DEMASIADO rápido (más de 0.08%), es un rompimiento = ABORTAR
-                    if pct_change > 0.0008:
-                        print(f"    🛑 FUERZA ALCISTA DETECTADA ({pct_change*100:.3f}%). El precio rompió con violencia.")
-                        return False, "Rompimiento violento (Momentum)"
-
-                    # 🎯 WICK ENTRY
-                    # Queremos que haya subido un poco (+0.02%) para tomar stops
-                    if 0.0002 <= pct_change <= 0.0006:
-                        print(f"    🎯 MECHA CAZADA (Premium {pct_change*100:.4f}%). Tomando liquidez.")
-                        return True, f"Entrada Sniper ({pct_change*100:.3f}%)"
-                        
-                    # Si empieza a bajar rápido
-                    if pct_change < -0.0003:
-                        if max_deviation > 0.0001:
-                            print(f"    🚀 RECHAZO CONFIRMADO (Subió {max_deviation*100:.3f}% y ahora baja). Entrando.")
-                            return True, "Rechazo tras toma de liquidez"
-                        else:
-                             print(f"    ⚠️ Bajada sin toma de liquidez previa. Esperando...")
-                
-                time.sleep(1) # Sondeo cada segundo
+            # Por defecto, si no hay gran mecha pero tampoco es un marubozu violento, 
+            # hacemos una última micro-confirmación de dirección de 3 segundos
+            print(f"   ⚖️ Sin mecha clara. Observando micro-dirección de 3s...")
+            p1 = self.observer.market_data.get_candles(asset, 1, 1, time.time()).iloc[-1]['close']
+            time.sleep(3)
+            p2 = self.observer.market_data.get_candles(asset, 1, 1, time.time()).iloc[-1]['close']
             
-            # Fin del tiempo:
-            # Si se mantuvo estable (ni rompió fuerte ni dio mecha perfecta), entramos con cautela
-            # pero preferimos la mecha.
-            print(f"⚠️ Tiempo agotado sin mecha perfecta. Evaluando estabilidad...")
-            current_candles = self.observer.market_data.get_candles(asset, 1, 1, time.time())
-            if not current_candles.empty:
-                end_change = (current_candles.iloc[-1]['close'] - initial_price) / initial_price
-                if abs(end_change) < 0.0005: # Si está tranquilo
-                     print(f"✅ Precio estable ({end_change*100:.4f}%). Ejecutando estándar.")
-                     return True, "Entrada estándar (Estable)"
-                else:
-                     return False, "Mercado muy volátil tras espera"
+            if action == 'CALL' and p2 > p1: return True, "Micro-rebote alcista"
+            if action == 'PUT' and p2 < p1: return True, "Micro-rebote bajista"
             
-            return False, "Sin datos finales"
-                
+            return False, "Falta de rechazo o micro-reacción"
+            
         except Exception as e:
-            print(f"⚠️ Error en protocolo Sniper: {e}")
-            return True, "Error en espera (bypass)"
+            return True, f"Error en sniper, procediendo por seguridad: {e}"
 
     def get_adaptive_threshold(self):
         """

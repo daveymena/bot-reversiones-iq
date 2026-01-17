@@ -101,6 +101,14 @@ class MarketDataHandler:
         if not candles:
             return pd.DataFrame()
             
+        # Error handling for cases where the API returns a dict with an error message
+        if isinstance(candles, dict):
+            if 'message' in candles:
+                print(f"⚠️ API Error en get_candles ({asset}): {candles['message']}")
+            else:
+                print(f"⚠️ API devolvió formato inesperado en get_candles ({asset}): {candles}")
+            return pd.DataFrame()
+            
         df = pd.DataFrame(candles)
         if not df.empty:
             # Estandarizar columnas

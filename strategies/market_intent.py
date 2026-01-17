@@ -76,7 +76,23 @@ class MarketIntentAnalyzer:
                 'reason': f"Fuerte inercia BAJISTA ({ (1-position_pct)*100:.1f}% del rango). Compradores sin fuerza."
             }
 
-        # 4. Análisis de ADX (Fuerza de Tendencia)
+        # 4. Análisis de Aceleración (Velas creciendo en tamaño)
+        recent_diffs = abs(recent['close'] - recent['open']).tail(3).tolist()
+        is_accelerating = recent_diffs[2] > recent_diffs[1] > recent_diffs[0]
+        
+        # 5. Análisis de Volumen Clímax
+        avg_vol = df['volume'].tail(50).mean()
+        is_volume_climax = df['volume'].iloc[-1] > avg_vol * 2.5
+        
+        if is_accelerating and is_volume_climax:
+             return {
+                'intent': 'CLIMAX_ACCELERATION',
+                'strength': 1.0,
+                'is_unstoppable': True,
+                'reason': "CLÍMAX DE ACELERACIÓN Y VOLUMEN: El mercado está barriendo niveles sin freno."
+            }
+
+        # 6. Análisis de ADX (Fuerza de Tendencia)
         # Si ADX > 35, la tendencia es MUY fuerte. Reversiones son peligrosas.
         adx = self.calculate_adx(df)
         if adx > 35:

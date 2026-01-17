@@ -65,30 +65,42 @@ class LLMClient:
 
         return self._safe_query(prompt)
     
-    def analyze_entry_timing(self, df, proposed_action, proposed_asset, expiration_minutes=1):
+    def analyze_entry_timing(self, df, proposed_action, proposed_asset, extra_context=""):
         """
-        Analiza el timing óptimo de entrada.
+        Analiza el timing óptimo de entrada con un rol de 'Abogado del Diablo'.
+        Su objetivo es encontrar razones para NO entrar y evitar trampas.
         """
-        if df.empty or len(df) < 5:
-            return {'is_optimal': True, 'confidence': 0.5, 'recommended_expiration': 1, 'wait_time': 0, 'reasoning': "Suficiente"}
+        if df.empty or len(df) < 10:
+            return {'is_optimal': True, 'confidence': 0.5, 'reasoning': "Sin datos"}
         
         last = df.iloc[-1]
+        prev = df.iloc[-2]
+        
+        # Calcular inercia reciente
+        momentum = (last['close'] - df.iloc[-5]['close'])
+        momentum_dir = "ALCISTA" if momentum > 0 else "BAJISTA"
         
         prompt = f"""
-        DATOS:
-        Activo: {proposed_asset}
-        Acción: {proposed_action}
-        Precio: {last['close']:.5f}
-        RSI: {last.get('rsi', 50):.1f}
+        INSTRUCCIONES: Eres un TRADER ESCÉPTICO. Tu meta es evitar "Bull/Bear Traps".
         
-        TAREA:
-        Analiza si el RSI apoya la {proposed_action}.
+        DATOS ACTUALES:
+        - Activo: {proposed_asset}
+        - Acción Propuesta: {proposed_action}
+        - RSI: {last.get('rsi', 50):.1f}
+        - Momentum (5 velas): {momentum_dir}
+        - Precio: {last['close']:.5f}
+        - Contexto Extra: {extra_context}
         
-        FORMATO JSON (IMPORTANTE):
+        REGLAS DE ORO:
+        1. No entres en CALL si el momentum es bajista agresivo.
+        2. No entres en PUT si el momentum es alcista agresivo.
+        3. Si el RSI está cerca de 50, es zona de azar (NO OPTIMO).
+        
+        RESPONDE SOLO EN FORMATO JSON:
         {{
-            "momento_optimo": true/false,
-            "confianza_entrada": 0-100,
-            "razonamiento": "max 5 palabras"
+            "is_optimal": bool,
+            "confidence_score": 0-100,
+            "reasoning": "Resumen de por qué es óptimo o por qué es una trampa"
         }}
         """
         
