@@ -1,0 +1,38 @@
+﻿
+================================================================================
+­ƒºá REPORTE DE ESTABILIDAD Y RENTABILIDAD
+================================================================================
+
+ÔÅ░ 1. ESTABILIDAD POR HORARIO (Win Rate):
+   Franja 19:00 -  62.5% WR (  8 ops) -> ÔÜá´©Å VOL├üTIL
+   Franja 10:00 -  57.1% WR ( 56 ops) -> ÔÜá´©Å VOL├üTIL
+   Franja 08:00 -  54.0% WR ( 63 ops) -> ÔÜá´©Å VOL├üTIL
+   Franja 15:00 -  50.0% WR (  8 ops) -> ÔÜá´©Å VOL├üTIL
+   Franja 20:00 -  44.4% WR (  9 ops) -> ÔØî PELIGROSO
+   Franja 09:00 -  39.7% WR ( 68 ops) -> ÔØî PELIGROSO
+   Franja 07:00 -  37.5% WR ( 24 ops) -> ÔØî PELIGROSO
+   Franja 16:00 -  30.0% WR ( 10 ops) -> ÔØî PELIGROSO
+   Franja 14:00 -  27.8% WR ( 18 ops) -> ÔØî PELIGROSO
+   Franja 21:00 -  16.7% WR ( 18 ops) -> ÔØî PELIGROSO
+   Franja 17:00 -   2.9% WR ( 69 ops) -> ÔØî PELIGROSO
+   Franja 11:00 -   0.0% WR (  1 ops) -> ÔØî PELIGROSO
+   Franja 18:00 -   0.0% WR (  7 ops) -> ÔØî PELIGROSO
+
+­ƒÄ» 2. EFECTIVIDAD POR ESTRATEGIA:
+   Trend Following     :  51.3% WR ( 76 ops)
+   Breakout Momentum (Alcista):  38.8% WR ( 98 ops)
+   Smart Reversal (Alcista):  37.9% WR ( 66 ops)
+   Breakout Momentum (Bajista):  29.4% WR ( 51 ops)
+   Smart Reversal (Bajista):  18.3% WR ( 60 ops)
+   Multi-Timeframe M30->M1:   0.0% WR (  2 ops)
+
+­ƒîƒ 3. LAS MEJORES COMBINACIONES (Sugerencias):
+   Hora 20:00 con Trend Following -> 100.0% WR
+   Hora 20:00 con Breakout Momentum (Bajista) -> 100.0% WR
+   Hora 19:00 con Breakout Momentum (Bajista) -> 100.0% WR
+   Hora 15:00 con Trend Following -> 75.0% WR
+   Hora 19:00 con Trend Following -> 75.0% WR
+   Hora 08:00 con Breakout Momentum (Alcista) -> 72.0% WR
+   Hora 10:00 con Smart Reversal (Alcista) -> 70.0% WR
+
+================================================================================

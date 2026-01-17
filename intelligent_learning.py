@@ -20,6 +20,8 @@ from strategies.trap_detector import TrapDetector
 from strategies.multi_timeframe import MultiTimeframeAnalyzer
 from strategies.bollinger_rsi_real import BollingerRSIStrategy
 from strategies.market_intent import MarketIntentAnalyzer
+from strategies.volatility_sniper import VolatilitySniperStrategy
+from strategies.pattern_recon import PatternReconStrategy
 from optimize_knowledge import KnowledgeOptimizer
 from ai.llm_client import LLMClient
 import config
@@ -37,6 +39,8 @@ class IntelligentLearningSystem:
         self.breakout_strategy = BreakoutMomentumStrategy()
         self.reversal_strategy = SmartReversalStrategy()
         self.trend_strategy = TrendFollowingStrategy()
+        self.volatility_strategy = VolatilitySniperStrategy()
+        self.pattern_strategy = PatternReconStrategy()
         self.trap_detector = TrapDetector()  # 🚨 Detector de trampas
         self.intent_analyzer = MarketIntentAnalyzer() # 🏎️ Analizador de inercia
         self.mtf_analyzer = None  # Se inicializa después de conectar
@@ -165,6 +169,7 @@ class IntelligentLearningSystem:
                     result = {
                         'asset': asset,
                         'timestamp': datetime.now(),
+                        'hour': datetime.now().hour,
                         'movement': movement_analysis,
                         'timing': timing_analysis,
                         'mtf_context': mtf_context,
@@ -174,7 +179,9 @@ class IntelligentLearningSystem:
                             'bollinger_rsi': bollinger_rsi_analysis,
                             'breakout': {'action': 'WAIT', 'confidence': 0},
                             'reversal': {'action': 'WAIT', 'confidence': 0},
-                            'trend': {'action': 'WAIT', 'confidence': 0}
+                            'trend': {'action': 'WAIT', 'confidence': 0},
+                            'volatility': {'action': 'WAIT', 'confidence': 0},
+                            'pattern': {'action': 'WAIT', 'confidence': 0}
                         },
                         'current_price': df_local.iloc[-1]['close']
                     }
@@ -183,14 +190,23 @@ class IntelligentLearningSystem:
                     breakout_analysis = self.breakout_strategy.analyze(df_local)
                     reversal_analysis = self.reversal_strategy.analyze(df_local)
                     trend_analysis = self.trend_strategy.analyze(df_local)
+                    volatility_analysis = self.volatility_strategy.analyze(df_local)
+                    pattern_analysis = self.pattern_strategy.analyze(df_local)
                     
                     # Elegir la mejor señal
-                    strategies = [breakout_analysis, reversal_analysis, trend_analysis]
+                    strategies = [
+                        breakout_analysis, 
+                        reversal_analysis, 
+                        trend_analysis, 
+                        volatility_analysis, 
+                        pattern_analysis
+                    ]
                     best_strat = max(strategies, key=lambda x: x['confidence'])
                     
                     result = {
                         'asset': asset,
                         'timestamp': datetime.now(),
+                        'hour': datetime.now().hour,
                         'movement': movement_analysis,
                         'timing': timing_analysis,
                         'mtf_context': mtf_context,
@@ -200,7 +216,9 @@ class IntelligentLearningSystem:
                             'bollinger_rsi': bollinger_rsi_analysis,
                             'breakout': breakout_analysis,
                             'reversal': reversal_analysis,
-                            'trend': trend_analysis
+                            'trend': trend_analysis,
+                            'volatility': volatility_analysis,
+                            'pattern': pattern_analysis
                         },
                         'current_price': df_local.iloc[-1]['close']
                     }
