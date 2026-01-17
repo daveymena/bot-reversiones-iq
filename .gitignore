@@ -30,6 +30,7 @@ env/
 # Data
 data/experiences.json
 data/experiences_backup.json
+data/learning_database.json
 models/*.zip
 
 # IDE
