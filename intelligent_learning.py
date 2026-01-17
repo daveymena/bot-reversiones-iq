@@ -817,37 +817,34 @@ class IntelligentLearningSystem:
         """
         ANÁLISIS FORENSE POST-MORTEM 🕵️‍♂️
         Busca dónde ESTABA la entrada ganadora después de perder.
-        Retorna la corrección necesaria (ej: "Entrar 5 pips más tarde").
         """
         try:
-            # Obtener datos desde la pérdida hasta 5 minutos después
-            future_candles = self.observer.market_data.get_candles(asset, 60, 5, loose_time)
-            if future_candles is None or future_candles.empty: return None
+            # Obtener datos: 1 minuto antes (contexto) y 5 minutos después (resultado)
+            df = self.observer.market_data.get_candles(asset, 60, 10, loose_time + 300)
+            if df is None or df.empty: return None
 
             best_correction = None
             
             # Buscar el punto extremo opuesto en los siguientes 5 minutos
-            # Si era CALL (y bajó y perdimos), buscamos el mínimo más bajo real (donde debimos entrar)
             if action == 'CALL':
-                real_min = future_candles['low'].min()
-                # Si el mínimo real fue mucho más bajo que nuestro precio de pérdida
+                # Si era CALL y perdimos, el precio bajó. ¿Dónde estuvo el piso real?
+                real_min = df['low'].min()
                 if real_min < loose_price:
                     diff = loose_price - real_min
                     best_correction = {
                         "type": "WAIT_BETTER_PRICE",
                         "value": diff,
-                        "msg": f"Debimos esperar una caída extra de {diff:.5f}"
+                        "msg": f"Entrada prematura. Debimos esperar a que el precio cayera hasta {real_min:.5f} (diferencia de {diff:.5f})"
                     }
-            
-            # Si era PUT (y subió y perdimos), buscamos el máximo más alto
             elif action == 'PUT':
-                real_max = future_candles['high'].max()
+                # Si era PUT y perdimos, el precio subió. ¿Dónde estuvo el techo real?
+                real_max = df['high'].max()
                 if real_max > loose_price:
                     diff = real_max - loose_price
                     best_correction = {
                         "type": "WAIT_BETTER_PRICE",
                         "value": diff,
-                        "msg": f"Debimos esperar una subida extra de {diff:.5f}"
+                        "msg": f"Entrada prematura. Debimos esperar a que el precio subiera hasta {real_max:.5f} (diferencia de {diff:.5f})"
                     }
             
             return best_correction
@@ -1065,13 +1062,16 @@ class IntelligentLearningSystem:
                         success, order_id = self.observer.market_data.buy(asset, amount, action, duration)
 
                         if success:
-                            print(f"✅ ¡Operación abierta! ID: {order_id}. Esperando resultado...")
+                            current_price = df.iloc[-1]['close'] if not df.empty else 0
+                            print(f"✅ ¡Operación abierta! ID: {order_id} (Precio: {current_price}). Esperando resultado...")
                             # Registrar
+                            strategy['entry_price'] = current_price
                             opp_record = {
                                 'id': order_id,
                                 'timestamp': datetime.now().isoformat(),
                                 'asset': asset,
                                 'strategy': strategy,
+                                'mtf_context': context if 'context' in locals() else {},
                                 'executed': True,
                                 'result': 'pending',
                                 'expiration_time': time.time() + (duration * 60) + 10
