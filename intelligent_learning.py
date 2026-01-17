@@ -272,6 +272,20 @@ class IntelligentLearningSystem:
             strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
             strategy['reason'] += " (🌟 ACTIVO ESTRELLA)"
 
+        # 2.1 Filtro de Horario Peligroso (Nuevo: Aprendizaje de Estabilidad)
+        current_hour = datetime.now().hour
+        if current_hour in refinements.get('dangerous_hours', []):
+            strategy['confidence'] *= 0.5
+            strategy['reason'] += f" (⏰ HORARIO PELIGROSO: {current_hour}:00 suele ser inestable)"
+            print(f"   ⏰ Penalización por Horario Peligroso: {current_hour}:00")
+
+        # 2.2 Filtro de Estrategia Prohibida (Nuevo: Aprendizaje de Efectividad)
+        strat_name = strategy.get('strategy', 'Unknown')
+        if strat_name in refinements.get('forbidden_strategies', []):
+            strategy['confidence'] *= 0.5
+            strategy['reason'] += f" (🚫 ESTRATEGIA FALLIDA: {strat_name} tiene bajo WR histórico)"
+            print(f"   🚫 Penalización por Estrategia Fallida: {strat_name}")
+
         # 3. Comprobación de Umbrales RSI Adaptativos
         rsi_adjusts = refinements.get('rsi_adjust', {})
         current_rsi = 50

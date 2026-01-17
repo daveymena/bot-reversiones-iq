@@ -143,6 +143,8 @@ class KnowledgeOptimizer:
             'is_toxic': asset in patterns.get('toxic_assets', []),
             'is_star': asset in patterns.get('best_assets', []),
             'rsi_adjust': patterns.get('rsi_thresholds', {}),
+            'dangerous_hours': patterns.get('dangerous_hours', []),
+            'forbidden_strategies': patterns.get('forbidden_strategies', []),
             'caution_mode': False
         }
         
