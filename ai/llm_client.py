@@ -59,64 +59,96 @@ class LLMClient:
 
         return self._safe_query(prompt)
     
+    def get_visual_description(self, df):
+        """Convierte las últimas velas en una descripción visual para la IA"""
+        if df.empty: return "Sin datos visuales."
+        
+        last_5 = df.tail(5)
+        desc = []
+        for i, (idx, row) in enumerate(last_5.iterrows()):
+            color = "VERDE" if row['close'] > row['open'] else "ROJA"
+            body_size = abs(row['close'] - row['open'])
+            total_range = row['high'] - row['low']
+            
+            # Tamaño relativo (visual)
+            size_desc = "Pequeña"
+            if total_range > df['high'].diff().abs().mean() * 1.5: size_desc = "GRANDE"
+            elif total_range < df['high'].diff().abs().mean() * 0.5: size_desc = "Diminuta (Doji)"
+            
+            # Mechas
+            upper_wick = row['high'] - max(row['open'], row['close'])
+            lower_wick = min(row['open'], row['close']) - row['low']
+            wick_desc = ""
+            if upper_wick > body_size * 0.5: wick_desc += "Mecha Superior Larga. "
+            if lower_wick > body_size * 0.5: wick_desc += "Mecha Inferior Larga. "
+            
+            desc.append(f"Vela {i+1} ({color}, {size_desc}): {wick_desc}")
+            
+        return " | ".join(desc)
+
     def analyze_entry_timing(self, df, proposed_action, proposed_asset, extra_context=""):
         """
-        Analiza el timing óptimo de entrada con un rol de 'Abogado del Diablo'.
-        Su objetivo es encontrar razones para NO entrar y evitar trampas.
+        Analiza el timing con enfoque VISUAL humano.
         """
         if df.empty or len(df) < 10:
             return {'is_optimal': True, 'confidence': 0.5, 'reasoning': "Sin datos"}
         
+        visual_desc = self.get_visual_description(df)
         last = df.iloc[-1]
-        prev = df.iloc[-2]
         
         # Calcular inercia reciente
         momentum = (last['close'] - df.iloc[-5]['close'])
         momentum_dir = "ALCISTA" if momentum > 0 else "BAJISTA"
         
         prompt = f"""
-        INSTRUCCIONES: Eres un TRADER ESCÉPTICO. Tu meta es evitar "Bull/Bear Traps".
+        ACTÚA COMO UN TRADER VISUAL EXPERTO. Tienes el gráfico frente a ti (descrito abajo).
         
-        DATOS ACTUALES:
-        - Activo: {proposed_asset}
-        - Acción Propuesta: {proposed_action}
-        - RSI: {last.get('rsi', 50):.1f}
-        - Momentum (5 velas): {momentum_dir}
-        - Precio: {last['close']:.5f}
+        TU MISIÓN: Validar si el PATRÓN VISUAL confirma una entrada {proposed_action} en {proposed_asset}.
+        
+        DESCRIPCIÓN VISUAL DEL GRÁFICO (M1):
+        {visual_desc}
+        
+        DATOS TÉCNICOS:
+        - RSI (14): {last.get('rsi', 50):.1f}
+        - Tendencia (5 velas): {momentum_dir}
         - Contexto Extra: {extra_context}
         
-        REGLAS DE ORO:
-        1. No entres en CALL si el momentum es bajista agresivo.
-        2. No entres en PUT si el momentum es alcista agresivo.
-        3. Si el RSI está cerca de 50, es zona de azar (NO OPTIMO).
+        REGLAS DE TRADER HUMANO:
+        1. ¿Hay RECHAZO VISUAL claro (mechas) contra el movimiento opuesto?
+        2. ¿Vemos velas de agotamiento o velas de fuerza a nuestro favor?
+        3. Si la operación es CALL, ¿Vemos que el precio dejó de caer y empieza a subir (velas verdes, mechas abajo)?
+        4. Si la operación es PUT, ¿Vemos que el precio dejó de subir y empieza a caer (velas rojas, mechas arriba)?
         
-        RESPONDE SOLO EN FORMATO JSON:
+        RESPONDE SOLO EN JSON:
         {{
-            "is_optimal": bool,
-            "confidence_score": 0-100,
-            "reasoning": "Resumen de por qué es óptimo o por qué es una trampa"
+            "is_optimal": bool, (True si el patrón visual es claro y favorable)
+            "confidence": 0-100,
+            "reasoning": "Breve explicación visual (ej: 'Claramente rechazó el soporte con mecha larga en vela 4')"
         }}
         """
         
         try:
             response = self._safe_query(prompt)
-            # Limpieza básica para modelos pequeños que hablan demás
+            # Limpieza básica
             start = response.find('{')
             end = response.rfind('}') + 1
             if start >= 0 and end > start:
                 json_str = response[start:end]
                 data = json.loads(json_str)
+                is_optimal = data.get('is_optimal', False)
+                if isinstance(is_optimal, str):
+                    is_optimal = is_optimal.lower() == 'true'
+                
                 return {
-                    'is_optimal': data.get('momento_optimo', True),
-                    'confidence': data.get('confianza_entrada', 50) / 100,
-                    'recommended_expiration': 1,
-                    'wait_time': 0, # Simplificado para evitar alucinaciones
-                    'reasoning': data.get('razonamiento', 'AI Check OK')
+                    'is_optimal': is_optimal,
+                    'confidence': float(data.get('confidence', 50)),
+                    'reasoning': data.get('reasoning', 'AI Visual Check')
                 }
-        except:
+        except Exception as e:
+            print(f"Error parseando AI response: {e}")
             pass
         
-        return {'is_optimal': True, 'confidence': 0.5, 'recommended_expiration': 1, 'wait_time': 0, 'reasoning': 'Análisis simple'}
+        return {'is_optimal': True, 'confidence': 50, 'reasoning': 'Fallback Analysis'}
 
     def _safe_query(self, prompt, retries=1):
         """Intenta Groq con rotación, si falla usa Ollama"""

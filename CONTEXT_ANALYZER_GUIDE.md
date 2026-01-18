@@ -56,6 +56,17 @@ Este nuevo módulo analiza **4 dimensiones críticas** antes de permitir cualqui
 
 ---
 
+## 👁️ NUEVO: Motor de Análisis Visual (IA)
+
+Para resolver el problema de "operaciones obvias que el bot ignora", hemos agregado un **Ojo Digital**:
+
+1.  **Traducción Visual:** El bot convierte el gráfico en una descripción para la IA:
+    > "Vela 1: Roja, Grande. Vela 2: Roja, Pequeña con mecha inferior larga. Vela 3: Verde, Martillo rebotando en 1.3500."
+2.  **Juicio "Humano":** La IA analiza esta descripción buscando patrones que los indicadores numéricos no ven (rechazos sutiles, formaciones de velas de libro).
+3.  **Override Inteligente:** Si la IA detecta un **"Patrón de Libro"** (Confianza > 80%), le da un **BONO de +15%** a la operación, permitiendo que el bot tome entradas que antes ignoraba por ser "demasiado estricto".
+
+---
+
 ## 📈 Flujo de Validación (Ahora)
 
 ```

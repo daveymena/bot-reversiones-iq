@@ -1064,17 +1064,33 @@ class IntelligentLearningSystem:
                                 print(f"⚠️ Omitiendo: Sin mecha de rechazo inferior (fuerza bajista aún presente)")
                                 continue
 
-                        # --- VALIDACIÓN IA (GROQ / OLLAMA) ---
+                        # --- VALIDACIÓN IA VISUAL (GROQ / OLLAMA) ---
                         if self.llm:
-                            print(f"🧠 Consultando IA para validar {asset}...")
-                            ai_analysis = self.llm.analyze_entry_timing(df, strategy['action'], asset)
+                            print(f"🧠 Consultando IA VISUAL para validar {asset}...")
+                            
+                            # Preparar contexto extra (HTF)
+                            htf_context = "Sin contexto HTF"
+                            if mtf_analysis and 'current_context' in mtf_analysis:
+                                ctx = mtf_analysis['current_context']
+                                htf_context = f"M30: {ctx.get('trend_m30')}, M15: {ctx.get('trend_m15')}, Posición: {ctx.get('position')}"
+                            
+                            ai_analysis = self.llm.analyze_entry_timing(df, strategy['action'], asset, extra_context=htf_context)
                             
                             if not ai_analysis.get('is_optimal', False):
-                                print(f"⚠️ IA RECOMIENDA ESPERAR: {ai_analysis.get('reasoning', 'No óptimo')}")
-                                continue
+                                print(f"⚠️ IA VISUAL RECHAZA: {ai_analysis.get('reasoning', 'No óptimo')}")
+                                
+                                # Si la confianza visual es muy baja, bloquear sin importar qué
+                                if ai_analysis.get('confidence', 0.5) < 0.4:
+                                    print("   🛑 BLOQUEO ABSOLUTO por rechazo visual fuerte.")
+                                    continue
                             else:
-                                print(f"✅ IA CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
-                                strategy['confidence'] = min(99.0, strategy['confidence'] + 5) # Bono por confirmación IA
+                                print(f"✅ IA VISUAL CONFIRMA: {ai_analysis.get('reasoning', 'Confirmado')}")
+                                # Si la IA ve un patrón claro (confianza > 80), damos un bono masivo
+                                if ai_analysis.get('confidence', 0) > 80:
+                                    print("   🚀 PATRÓN VISUAL DE LIBRO DETECTADO (+15% Confianza)")
+                                    strategy['confidence'] = min(99.0, strategy['confidence'] + 15)
+                                else:
+                                    strategy['confidence'] = min(99.0, strategy['confidence'] + 5)
 
                         # --- 🚨 DETECTOR DE TRAMPAS DEL MERCADO ---
                         print(f"🚨 Verificando trampas del mercado en {asset}...")
