@@ -1,0 +1,17 @@
+{
+  "analysis": "El patr\u00f3n l\u00f3gico fallando es una tendencia bullish con rachas de 3 velas y rupturas de resistencia. Aunque algunas t\u00e9cnicas pueden ser efectivas, estos patrones son demasiado frecuentes y no se est\u00e1n tomando decisiones \u00f3ptimas.",
+  "forbidden_patterns": [
+    "tendencias_billush",
+    "ruptura_de_resistencia"
+  ],
+  "dynamic_adjustments": {
+    "asset_rigidity": {
+      "EURUSD": 0.9,
+      "GLOBAL": 1.0
+    },
+    "rsi_extra_buffer": 5,
+    "min_confidence_override": 80
+  },
+  "market_view_shift": "El patr\u00f3n l\u00f3gico fallando es una tendencia bullish con rachas de 3 velas y rupturas de resistencia. Aunque algunas t\u00e9cnicas pueden ser efectivas, estos patrones son demasiado frecuentes y no se est\u00e1n tomando decisiones \u00f3ptimas.",
+  "updated_at": "2026-01-18T08:09:07.306857"
+}

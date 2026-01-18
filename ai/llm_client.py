@@ -1,16 +1,6 @@
 import os
 import requests
 import json
-try:
-    from groq import Groq
-except ImportError:
-    Groq = None
-
-from config import Config
-
-import os
-import requests
-import json
 import time
 try:
     from groq import Groq
@@ -47,6 +37,10 @@ class LLMClient:
             print("⚠️ Se agotaron las llaves de Groq. Cambiando a Ollama.")
             self.use_groq = False
             self.groq_client = None
+
+    def ask_general(self, prompt):
+        """Envía una consulta general al LLM."""
+        return self._safe_query(prompt)
 
     def analyze_market(self, market_summary):
         """
@@ -153,7 +147,7 @@ class LLMClient:
                 "prompt": prompt,
                 "stream": False
             }
-            response = requests.post(Config.OLLAMA_URL, json=payload, timeout=12)
+            response = requests.post(Config.OLLAMA_URL, json=payload, timeout=45)
             if response.status_code == 200:
                 return response.json().get("response", "Sin respuesta")
             else:

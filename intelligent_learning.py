@@ -23,6 +23,7 @@ from strategies.market_intent import MarketIntentAnalyzer
 from strategies.volatility_sniper import VolatilitySniperStrategy
 from strategies.pattern_recon import PatternReconStrategy
 from optimize_knowledge import KnowledgeOptimizer
+from ai_strategy_refiner import AIStrategyRefiner
 from ai.llm_client import LLMClient
 import config
 
@@ -76,9 +77,12 @@ class IntelligentLearningSystem:
         self.session_losses = 0
         self.max_session_losses = 5 # 🛑 Parar si perdemos 5 en una sesión
         self.llm = LLMClient() if config.Config.USE_LLM else None
+        self.ai_refiner = AIStrategyRefiner() # 🤖 Cerebro evolutivo
+        self.meta_rules = {} # Reglas generadas por la IA
         self.bridge_url = "http://localhost:8080/update"
         self.zone_validation = {} # 🛡️ Registro de zonas que están respetando el precio
         self.load_learning_database()
+        self.load_meta_rules()
     
     def load_learning_database(self):
         """Carga la base de conocimiento existente"""
@@ -89,6 +93,17 @@ class IntelligentLearningSystem:
                 print(f"✅ Base de conocimiento cargada: {len(self.learning_database.get('operations', []))} operaciones")
             except Exception as e:
                 print(f"⚠️ Error cargando base de conocimiento: {e}")
+
+    def load_meta_rules(self):
+        """Carga las meta-reglas generadas por la IA"""
+        meta_path = Path("data/meta_rules.json")
+        if meta_path.exists():
+            try:
+                with open(meta_path, 'r', encoding='utf-8') as f:
+                    self.meta_rules = json.load(f)
+                print(f"🧠 Meta-Reglas de IA cargadas (Análisis: {self.meta_rules.get('analysis', 'Sin análisis')[:50]}...)")
+            except:
+                self.meta_rules = {}
     
     def save_learning_database(self):
         """Guarda la base de conocimiento"""
@@ -406,6 +421,29 @@ class IntelligentLearningSystem:
         if current_hour in dangerous_hours:
             strategy['confidence'] *= 0.85
             strategy['reason'] += f" (⚠️ Horario difícil {current_hour}:00)"
+
+        # 6.1 APLICAR META-REGLAS DE IA (EL CEREBRO EVOLUTIVO)
+        if self.meta_rules:
+            # Ajuste de rigidez por activo
+            asset_rigidity = self.meta_rules.get('dynamic_adjustments', {}).get('asset_rigidity', {})
+            rigidity = asset_rigidity.get(asset, asset_rigidity.get('GLOBAL', 1.0))
+            if rigidity != 1.0:
+                strategy['confidence'] *= rigidity
+                strategy['reason'] += f" (🤖 IA Rigidity: {rigidity})"
+
+            # Ajuste de RSI extra buffer
+            rsi_buffer = self.meta_rules.get('dynamic_adjustments', {}).get('rsi_extra_buffer', 0)
+            if rsi_buffer > 0:
+                if (action == 'CALL' and current_rsi > (30 + rsi_buffer)) or \
+                   (action == 'PUT' and current_rsi < (70 - rsi_buffer)):
+                    strategy['confidence'] *= 0.8
+                    strategy['reason'] += f" (🤖 IA RSI Buffer: +{rsi_buffer})"
+
+            # Min Confidence Override
+            min_override = self.meta_rules.get('dynamic_adjustments', {}).get('min_confidence_override', 0)
+            if min_override > 0 and strategy['confidence'] < min_override:
+                strategy['confidence'] *= 0.5
+                strategy['reason'] += f" (🤖 IA Min Confidence Check: {min_override}%)"
 
         # 5. NUEVO: FILTRO DE INTENCIÓN DE MERCADO (Inercia Insoportable)
         intent = self.intent_analyzer.analyze_intent(current_df)
@@ -1103,6 +1141,13 @@ class IntelligentLearningSystem:
                 with open(self.learning_file, 'r', encoding='utf-8') as f:
                     self.learning_database = json.load(f)
                 print("✅ Filtros de inteligencia actualizados automáticamente.")
+
+            # --- AUTO-EVOLUCIÓN (META-APRENDIZAJE) ---
+            # Cada 20 operaciones, la IA reconstruye su visión del mercado
+            if operations_completed > 0 and operations_completed % 20 == 0:
+                print("\n🧠🚀 INICIANDO EVOLUCIÓN ESTRATÉGICA CON IA...")
+                self.ai_refiner.analyze_and_evolve()
+                self.load_meta_rules() # Recargar las nuevas reglas
 
             # Esperar antes de la siguiente iteración
             wait_time = 20  # 20 segundos
