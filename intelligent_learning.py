@@ -22,6 +22,7 @@ from strategies.bollinger_rsi_real import BollingerRSIStrategy
 from strategies.market_intent import MarketIntentAnalyzer
 from strategies.volatility_sniper import VolatilitySniperStrategy
 from strategies.pattern_recon import PatternReconStrategy
+from strategies.context_analyzer import ContextAnalyzer
 from optimize_knowledge import KnowledgeOptimizer
 from ai_strategy_refiner import AIStrategyRefiner
 from ai.llm_client import LLMClient
@@ -44,6 +45,7 @@ class IntelligentLearningSystem:
         self.pattern_strategy = PatternReconStrategy()
         self.trap_detector = TrapDetector()  # 🚨 Detector de trampas
         self.intent_analyzer = MarketIntentAnalyzer() # 🏎️ Analizador de inercia
+        self.context_analyzer = ContextAnalyzer() # 🧠 Analizador de contexto profundo
         self.mtf_analyzer = None  # Se inicializa después de conectar
         
         # Priorizar EUR/USD (más líquido y predecible)
@@ -464,7 +466,7 @@ class IntelligentLearningSystem:
                 strategy['confidence'] = min(99.0, strategy['confidence'] + 10)
                 strategy['reason'] += " (🚀 MARKET FORCE)"
 
-        # 6. FILTRO DE ZONAS (CRÍTICO: Evitar comprar en resistencia)
+        # 6. FILTRO DE ZONAS (CRÍTICO: VALIDAR que la acción coincida con la zona)
         try:
             current_price = current_df.iloc[-1]['close']
         except:
@@ -473,19 +475,33 @@ class IntelligentLearningSystem:
         # Validar si estamos en zona peligrosa
         zone_status = self.check_zone_status(asset, current_price)
         
+        # LÓGICA CORRECTA: Bloquear operaciones incorrectas, NO invertirlas
         if zone_status['in_resistance'] and action == 'CALL':
-            print(f"   🛑 ALERTA: Señal de COMPRA justo en RESISTENCIA VALIDADA ({zone_status['nearest_level']})")
-            print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
-            result['strategy']['action'] = 'PUT'
-            result['strategy']['reason'] = f"REVERSIÓN POR RESISTENCIA (Original era CALL). Mercado en techo {zone_status['nearest_level']}"
-            result['strategy']['confidence'] = 85.0
+            # Queremos COMPRAR en RESISTENCIA = ERROR LÓGICO
+            print(f"   🛑 ERROR LÓGICO DETECTADO: Señal de COMPRA en RESISTENCIA ({zone_status['nearest_level']:.5f})")
+            print(f"   ❌ BLOQUEANDO: No se puede comprar donde el precio va a rebotar hacia abajo")
+            strategy['confidence'] = 0  # BLOQUEAR, no invertir
+            strategy['reason'] += " (🛑 COMPRA EN RESISTENCIA BLOQUEADA)"
+            return result
             
         elif zone_status['in_support'] and action == 'PUT':
-            print(f"   🛑 ALERTA: Señal de VENTA justo en SOPORTE VALIDADO ({zone_status['nearest_level']})")
-            print(f"   🔄 INVIRTIENDO ESTRATEGIA: El mercado va a rebotar.")
-            result['strategy']['action'] = 'CALL'
-            result['strategy']['reason'] = f"REVERSIÓN POR SOPORTE (Original era PUT). Mercado en suelo {zone_status['nearest_level']}"
-            result['strategy']['confidence'] = 85.0
+            # Queremos VENDER en SOPORTE = ERROR LÓGICO
+            print(f"   🛑 ERROR LÓGICO DETECTADO: Señal de VENTA en SOPORTE ({zone_status['nearest_level']:.5f})")
+            print(f"   ❌ BLOQUEANDO: No se puede vender donde el precio va a rebotar hacia arriba")
+            strategy['confidence'] = 0  # BLOQUEAR, no invertir
+            strategy['reason'] += " (🛑 VENTA EN SOPORTE BLOQUEADA)"
+            return result
+        
+        # Si la acción coincide con la zona, dar bonus
+        elif zone_status['in_support'] and action == 'CALL':
+            print(f"   ✅ VALIDADO: COMPRA en SOPORTE ({zone_status['nearest_level']:.5f}) - Lógica correcta")
+            strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
+            strategy['reason'] += " (✅ COMPRA EN SOPORTE VALIDADO)"
+        
+        elif zone_status['in_resistance'] and action == 'PUT':
+            print(f"   ✅ VALIDADO: VENTA en RESISTENCIA ({zone_status['nearest_level']:.5f}) - Lógica correcta")
+            strategy['confidence'] = min(99.0, strategy['confidence'] * 1.1)
+            strategy['reason'] += " (✅ VENTA EN RESISTENCIA VALIDADO)"
 
         strategy['confidence'] = min(round(strategy['confidence'], 1), 99.0)
 
@@ -1076,6 +1092,32 @@ class IntelligentLearningSystem:
                                 strategy['confidence'] = min(strategy['confidence'], 75)  # Reducir confianza en inversión
                         else:
                             print(f"   ✅ {trap_advice['advice']}")
+
+                        # --- 🧠 ANÁLISIS DE CONTEXTO PROFUNDO (CRÍTICO) ---
+                        print(f"🧠 Analizando CONTEXTO PROFUNDO para {asset}...")
+                        current_price = df.iloc[-1]['close']
+                        mtf_context_dict = mtf_analysis['current_context'] if mtf_analysis else {}
+                        
+                        deep_context = self.context_analyzer.analyze_deep_context(
+                            df=df,
+                            proposed_action=strategy['action'],
+                            proposed_price=current_price,
+                            mtf_context=mtf_context_dict
+                        )
+                        
+                        # Mostrar análisis
+                        print(f"   📊 Score de Contexto: {deep_context['score']:.1f}%")
+                        for warning in deep_context.get('warnings', []):
+                            print(f"      {warning}")
+                        
+                        # BLOQUEO CRÍTICO: Si el contexto es inseguro, NO entrar
+                        if not deep_context['is_safe']:
+                            print(f"   🛑 ENTRADA BLOQUEADA POR CONTEXTO INSEGURO: {deep_context['reason']}")
+                            print(f"   💡 Esto previene operaciones como las de tus imágenes 1, 4, 5 (niveles débiles sin confirmación)")
+                            continue
+                        elif deep_context['score'] < 50:
+                            print(f"   ⚠️ Contexto débil detectado. Reduciendo confianza al 50%.")
+                            strategy['confidence'] *= 0.5
 
 
                         # --- EJECUCIÓN UNIFICADA (Digital -> Binaria) ---
