@@ -18,7 +18,7 @@ class MultiTimeframeAnalyzer:
         
     def analyze_asset(self, asset):
         """
-        Analiza un activo en múltiples temporalidades (M15, M30, H1)
+        Analiza un activo en múltiples temporalidades (H1, M30, M15, M5, M1)
         
         Returns:
             dict: {
@@ -30,25 +30,25 @@ class MultiTimeframeAnalyzer:
         import time
         current_time = time.time()
         
-        # 1. Obtener datos (M15, M30, H1)
-        df_m15 = self.market_data.get_candles(asset, 60*15, 50, current_time)  # 15 min
-        df_m30 = self.market_data.get_candles(asset, 60*30, 50, current_time)  # 30 min
+        # 1. Obtener datos de TODAS las temporalidades (H1 → M30 → M15 → M5 → M1)
         df_h1  = self.market_data.get_candles(asset, 3600, 50, current_time)   # 1 hora
-        df_m1 = self.market_data.get_candles(asset, 60, 100, current_time)     # 1 min
+        df_m30 = self.market_data.get_candles(asset, 60*30, 50, current_time)  # 30 min
+        df_m15 = self.market_data.get_candles(asset, 60*15, 50, current_time)  # 15 min
+        df_m5  = self.market_data.get_candles(asset, 60*5, 80, current_time)   # 5 min (NUEVO)
+        df_m1  = self.market_data.get_candles(asset, 60, 100, current_time)    # 1 min
         
-        if df_m15 is None or df_m30 is None or df_h1 is None or df_m1 is None:
+        if df_m15 is None or df_m30 is None or df_h1 is None or df_m5 is None or df_m1 is None:
             return None
         
         # 2. Identificar niveles clave en HTF (M15, M30, H1)
-        # Pasamos df_h1 para encontrar niveles aún más fuertes
         key_levels = self._find_key_levels(df_m15, df_m30, df_h1)
         
-        # 3. Analizar contexto actual
+        # 3. Analizar contexto actual (incluyendo M5)
         current_price = df_m1.iloc[-1]['close']
-        context = self._analyze_context(df_m15, df_m30, df_h1, current_price, key_levels)
+        context = self._analyze_context(df_m15, df_m30, df_h1, df_m5, current_price, key_levels)
         
-        # 4. Buscar señal de entrada en M1 (solo si estamos cerca de un nivel clave)
-        entry_signal = self._find_entry_signal(df_m1, key_levels, context)
+        # 4. Buscar señal de entrada en M5 y M1 (confirmación en 2 temporalidades)
+        entry_signal = self._find_entry_signal(df_m5, df_m1, key_levels, context)
         
         return {
             'asset': asset,
@@ -129,9 +129,9 @@ class MultiTimeframeAnalyzer:
         # Retornar solo los 5 niveles más relevantes
         return sorted(clusters)[:5]
     
-    def _analyze_context(self, df_m15, df_m30, df_h1, current_price, key_levels):
+    def _analyze_context(self, df_m15, df_m30, df_h1, df_m5, current_price, key_levels):
         """
-        Analiza el contexto del mercado en temporalidades mayores (M15, M30, H1)
+        Analiza el contexto del mercado en temporalidades mayores (H1, M30, M15, M5)
         Detecta la 'fuerza real' y dirección del precio
         """
         # --- TENDENCIA H1 (La Verdadera Dirección) ---
@@ -177,6 +177,15 @@ class MultiTimeframeAnalyzer:
         else:
             trend_m15 = "SIDEWAYS"
         
+        # --- TENDENCIA M5 (MICRO-ESTRUCTURA) ---
+        sma_10_m5 = df_m5['close'].rolling(10).mean().iloc[-1]
+        if current_price > sma_10_m5:
+            trend_m5 = "UPTREND"
+        elif current_price < sma_10_m5:
+            trend_m5 = "DOWNTREND"
+        else:
+            trend_m5 = "SIDEWAYS"
+        
         # Encontrar nivel más cercano
         all_levels = key_levels['support'] + key_levels['resistance']
         distance = 1.0 # Valor por defecto
@@ -197,17 +206,19 @@ class MultiTimeframeAnalyzer:
             'trend_h1': trend_h1,
             'trend_m30': trend_m30,
             'trend_m15': trend_m15,
+            'trend_m5': trend_m5,
             'adx_m30': adx_m30,
             'trend_strength': "STRONG" if adx_m30 > 25 else "WEAK",
             'position': position,
             'nearest_level': nearest_level,
             'distance_to_level': distance if nearest_level else None,
-            'is_aligned': (trend_m30 == trend_m15)
+            'is_aligned': (trend_m30 == trend_m15 == trend_m5)
         }
     
-    def _find_entry_signal(self, df_m1, key_levels, context):
+    def _find_entry_signal(self, df_m5, df_m1, key_levels, context):
         """
-        Busca señal de entrada en M1 SOLO si estamos cerca de un nivel clave
+        Busca señal de entrada en M5 y M1 SOLO si estamos cerca de un nivel clave
+        Requiere CONFIRMACIÓN en AMBAS temporalidades (M5 + M1)
         """
         position = context['position']
         
@@ -215,75 +226,103 @@ class MultiTimeframeAnalyzer:
         if position not in ['AT_SUPPORT', 'AT_RESISTANCE']:
             return None
         
-        last_candle = df_m1.iloc[-1]
-        prev_candle = df_m1.iloc[-2]
-        current_price = last_candle['close']
+        # Análisis en M5 (micro-estructura)
+        last_m5 = df_m5.iloc[-1]
+        prev_m5 = df_m5.iloc[-2]
         
-        # RSI en M1
-        delta = df_m1['close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        current_rsi = rsi.iloc[-1]
+        # Análisis en M1 (confirmación)
+        last_m1 = df_m1.iloc[-1]
+        prev_m1 = df_m1.iloc[-2]
+        current_price = last_m1['close']
+        
+        # RSI en M5 y M1
+        def calc_rsi(df):
+            delta = df['close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            return 100 - (100 / (1 + rs))
+        
+        rsi_m5 = calc_rsi(df_m5).iloc[-1]
+        rsi_m1 = calc_rsi(df_m1).iloc[-1]
         
         # --- SEÑAL DE COMPRA (CALL) en SOPORTE ---
         if position == 'AT_SUPPORT':
-            # Condiciones:
-            # 1. Vela actual es ALCISTA (ya rebotó)
-            # 2. Vela anterior era BAJISTA (estaba cayendo)
-            # 3. RSI < 35 (sobreventa)
-            # 4. Mecha inferior larga (rechazo del soporte)
+            # Validación en M5
+            m5_bullish = last_m5['close'] > last_m5['open']
+            m5_prev_bearish = prev_m5['close'] < prev_m5['open']
+            m5_lower_wick = min(last_m5['open'], last_m5['close']) - last_m5['low']
+            m5_range = last_m5['high'] - last_m5['low']
+            m5_rejection = m5_range > 0 and m5_lower_wick / m5_range > 0.25
             
-            candle_is_bullish = last_candle['close'] > last_candle['open']
-            prev_was_bearish = prev_candle['close'] < prev_candle['open']
+            # Validación en M1
+            m1_bullish = last_m1['close'] > last_m1['open']
+            m1_lower_wick = min(last_m1['open'], last_m1['close']) - last_m1['low']
+            m1_range = last_m1['high'] - last_m1['low']
+            m1_rejection = m1_range > 0 and m1_lower_wick / m1_range > 0.25
             
-            lower_wick = min(last_candle['open'], last_candle['close']) - last_candle['low']
-            candle_range = last_candle['high'] - last_candle['low']
-            strong_rejection = candle_range > 0 and lower_wick / candle_range > 0.3
+            # M5 debe alinearse con tendencia micro
+            m5_aligned_with_trend = (context['trend_m5'] == 'UPTREND' or context['trend_m5'] == 'SIDEWAYS')
             
-            if candle_is_bullish and prev_was_bearish and current_rsi < 35 and strong_rejection:
+            # CONDICIONES PARA ENTRAR:
+            # 1. M5 muestra rebote (vela alcista + mecha)
+            # 2. M1 confirma (vela alcista)
+            # 3. RSI M5 < 40 (sobreventa)
+            # 4. M5 alineado con tendencia micro
+            
+            if m5_bullish and m5_rejection and m1_bullish and rsi_m5 < 40 and m5_aligned_with_trend:
                 confidence = 70
-                if current_rsi < 30: confidence += 10
-                if strong_rejection: confidence += 10
+                if rsi_m5 < 30: confidence += 10
+                if m5_rejection and m1_rejection: confidence += 10
+                if context['trend_m5'] == context['trend_m15']: confidence += 5
                 
                 return {
                     'action': 'CALL',
                     'confidence': min(confidence, 95),
-                    'reason': f'Rebote confirmado en SOPORTE M30 ({context["nearest_level"]:.5f})',
+                    'reason': f'Rebote confirmado M5+M1 en SOPORTE ({context["nearest_level"]:.5f})',
                     'entry_price': current_price,
-                    'rsi': current_rsi,
-                    'timeframe': 'M30->M1',
-                    'expiration': 180  # 3 minutos (dar tiempo al rebote)
+                    'rsi': rsi_m5,
+                    'timeframe': 'M30->M5->M1',
+                    'expiration': 180  # 3 minutos
                 }
         
         # --- SEÑAL DE VENTA (PUT) en RESISTENCIA ---
         elif position == 'AT_RESISTANCE':
-            # Condiciones:
-            # 1. Vela actual es BAJISTA (ya rechazó)
-            # 2. Vela anterior era ALCISTA (estaba subiendo)
-            # 3. RSI > 65 (sobrecompra)
-            # 4. Mecha superior larga (rechazo de resistencia)
+            # Validación en M5
+            m5_bearish = last_m5['close'] < last_m5['open']
+            m5_prev_bullish = prev_m5['close'] > prev_m5['open']
+            m5_upper_wick = last_m5['high'] - max(last_m5['open'], last_m5['close'])
+            m5_range = last_m5['high'] - last_m5['low']
+            m5_rejection = m5_range > 0 and m5_upper_wick / m5_range > 0.25
             
-            candle_is_bearish = last_candle['close'] < last_candle['open']
-            prev_was_bullish = prev_candle['close'] > prev_candle['open']
+            # Validación en M1
+            m1_bearish = last_m1['close'] < last_m1['open']
+            m1_upper_wick = last_m1['high'] - max(last_m1['open'], last_m1['close'])
+            m1_range = last_m1['high'] - last_m1['low']
+            m1_rejection = m1_range > 0 and m1_upper_wick / m1_range > 0.25
             
-            upper_wick = last_candle['high'] - max(last_candle['open'], last_candle['close'])
-            candle_range = last_candle['high'] - last_candle['low']
-            strong_rejection = candle_range > 0 and upper_wick / candle_range > 0.3
+            # M5 debe alinearse con tendencia micro
+            m5_aligned_with_trend = (context['trend_m5'] == 'DOWNTREND' or context['trend_m5'] == 'SIDEWAYS')
             
-            if candle_is_bearish and prev_was_bullish and current_rsi > 65 and strong_rejection:
+            # CONDICIONES PARA ENTRAR:
+            # 1. M5 muestra rechazo (vela bajista + mecha)
+            # 2. M1 confirma (vela bajista)
+            # 3. RSI M5 > 60 (sobrecompra)
+            # 4. M5 alineado con tendencia micro
+            
+            if m5_bearish and m5_rejection and m1_bearish and rsi_m5 > 60 and m5_aligned_with_trend:
                 confidence = 70
-                if current_rsi > 70: confidence += 10
-                if strong_rejection: confidence += 10
+                if rsi_m5 > 70: confidence += 10
+                if m5_rejection and m1_rejection: confidence += 10
+                if context['trend_m5'] == context['trend_m15']: confidence += 5
                 
                 return {
                     'action': 'PUT',
                     'confidence': min(confidence, 95),
-                    'reason': f'Rechazo confirmado en RESISTENCIA M30 ({context["nearest_level"]:.5f})',
+                    'reason': f'Rechazo confirmado M5+M1 en RESISTENCIA ({context["nearest_level"]:.5f})',
                     'entry_price': current_price,
-                    'rsi': current_rsi,
-                    'timeframe': 'M30->M1',
+                    'rsi': rsi_m5,
+                    'timeframe': 'M30->M5->M1',
                     'expiration': 180  # 3 minutos
                 }
         
