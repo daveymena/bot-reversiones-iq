@@ -318,8 +318,15 @@ class AssetManager:
                 # print(f"      🛡️ Bloqueando entrada por VELA DE AGOTAMIENTO (Tamaño: {current_body:.5f} vs Avg: {avg_body:.5f})")
                 pass
             
+            # Definir variables locales (M1)
+            local_low = df['low'].min()
+            local_high = df['high'].max()
+            last = df.iloc[-1]
+            price = last['close']
+            
+            # --- LÓGICA DE DIVERGENCIA AVANZADA (Opcional) ---
             # CALL EN TENDENCIA (Pullback alcista)
-            elif is_uptrend and trend_strength > 0.0005:
+            if is_uptrend and trend_strength > 0.0005:
                 # 🛡️ FILTRO DE NIVEL (Lógica de Muros)
                 major_high = df['high'].tail(50).max()
                 local_high = df['high'].tail(20).max()
