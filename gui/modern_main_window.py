@@ -15,7 +15,11 @@ class ModernMainWindow(QMainWindow):
         super().__init__()
         self.trader = trader_thread
         self.setWindowTitle("🤖 Trading Bot Pro - AI Powered")
-        self.resize(1600, 1000)
+        
+        # Tamaño inicial más compacto pero funcional
+        self.resize(1100, 750)
+        # Permitir redimensionar a tamaño pequeño
+        self.setMinimumSize(800, 600)
         
         # Inicializar listas para gráfico
         self.candle_items = []
@@ -1578,73 +1582,72 @@ class ModernMainWindow(QMainWindow):
     
     @Slot(str, object)
     def update_chart_data(self, asset, df):
-        """Actualiza el gráfico con velas, EMAs y datos en tiempo real"""
+        """Actualiza el gráfico de forma segura ant-crash"""
         try:
-            print(f"[DEBUG] update_chart_data llamado - Asset: {asset}, Velas: {len(df) if df is not None else 0}")
+            # print(f"[DEBUG] update_chart_data llamado...") # Comentado para evitar flood
             
             if df is None or df.empty:
-                print("[WARNING] DataFrame vacío")
                 return
             
-            # 🎯 Actualizar título con activo y precio actual
-            last_price = df.iloc[-1]['close']
-            rsi_value = df.iloc[-1].get('rsi', 0) if 'rsi' in df.columns else 0
-            
-            # Calcular cambio porcentual
-            if len(df) >= 2:
-                prev_price = df.iloc[-2]['close']
-                change_pct = ((last_price - prev_price) / prev_price) * 100
-                change_symbol = "▲" if change_pct >= 0 else "▼"
-                change_color = "green" if change_pct >= 0 else "red"
-            else:
+            # 🎯 Actualizar título (Ligero)
+            try:
+                last_price = float(df.iloc[-1]['close'])
+                rsi_value = float(df.iloc[-1].get('rsi', 0)) if 'rsi' in df.columns else 0
+                
+                # Calcular cambio
                 change_pct = 0
-                change_symbol = ""
                 change_color = "white"
-            
-            # Actualizar título del gráfico
-            title_html = f'<span style="color: #00d4aa; font-size: 14pt; font-weight: bold;">📊 {asset}</span> ' \
+                change_symbol = ""
+                
+                if len(df) >= 2:
+                    prev = float(df.iloc[-2]['close'])
+                    if prev != 0:
+                        change_pct = ((last_price - prev) / prev) * 100
+                        change_symbol = "▲" if change_pct >= 0 else "▼"
+                        change_color = "#00ff88" if change_pct >= 0 else "#ff4444"
+                
+                title = f'<span style="color: #00d4aa; font-size: 14pt; font-weight: bold;">📊 {asset}</span> ' \
                         f'<span style="color: white; font-size: 12pt;">Precio: {last_price:.5f}</span> ' \
-                        f'<span style="color: {change_color}; font-size: 11pt;">{change_symbol} {change_pct:+.3f}%</span> ' \
-                        f'<span style="color: #ffaa00; font-size: 11pt;">RSI: {rsi_value:.1f}</span>'
+                        f'<span style="color: {change_color}; font-size: 11pt;">{change_symbol} {change_pct:+.3f}%</span>'
+                
+                self.chart.setTitle(title)
+            except:
+                pass # Fallo actualizando título no es crítico
+
+            # 🛠️ DIBUJADO DE VELAS (CRÍTICO) 🛠️
+            # Evitar recrear todo si no es necesario (Optimización simple pendiente)
+            # Por ahora, proteger contra crash de Qt
             
-            self.chart.setTitle(title_html)
+            # Limpiar
+            if not hasattr(self, 'candle_items'): self.candle_items = []
             
-            # Limpiar items anteriores
-            if hasattr(self, 'candle_items'):
-                for item in self.candle_items:
-                    try:
-                        self.chart.removeItem(item)
-                    except:
-                        pass
-                self.candle_items = []
-            else:
-                self.candle_items = []
+            # Borrar items viejos (Solo si hay demasiados para evitar memory leak explícito)
+            # pyqtgraph suele manejar esto mejor con clear()
+            self.chart.clear() # ¡MUCHO MÁS SEGURO Y RÁPIDO QUE BORRAR UNO POR UNO!
             
-            # Limpiar líneas de indicadores anteriores
-            if hasattr(self, 'indicator_lines'):
-                for line in self.indicator_lines:
-                    try:
-                        self.chart.removeItem(line)
-                    except:
-                        pass
-            self.indicator_lines = []
+            # Re-agregar grid
+            self.chart.showGrid(x=True, y=True, alpha=0.15)
             
-            # Dibujar velas (últimas 50)
-            num_candles = min(len(df), 50)
+            # Dibujar velas
+            num_candles = min(len(df), 60) # Mostrar 60 velas max
             df_display = df.tail(num_candles).reset_index(drop=True)
             
+            # Usar una lista temporal para no tener referencias colgadas
+            new_items = []
+            
             for i, row in df_display.iterrows():
-                try:
-                    self.draw_candlestick(
-                        i,
-                        row.get('open', 0),
-                        row.get('high', 0),
-                        row.get('low', 0),
-                        row.get('close', 0)
-                    )
-                except Exception as e:
-                    print(f"[WARNING] Error dibujando vela {i}: {e}")
-                    continue
+                # Dibujar vela individualmente (ineficiente pero funcional si se protege)
+                self.draw_candlestick(i, row['open'], row['high'], row['low'], row['close'])
+            
+            # Plotear indicadores (Simplificado)
+            # EMA 20
+            if 'sma_20' in df_display.columns:
+                self.chart.plot(df_display.index, df_display['sma_20'], pen=pg.mkPen('#00d4aa', width=1))
+                
+        except Exception as e:
+            # Crash grafico capturado - NO matar app
+            print(f"[GUI ERROR] Error pintando gráfico: {str(e)}")
+            pass
             
             # 📈 Dibujar EMAs (20 y 50) en gráfico principal
             if 'sma_20' in df_display.columns:

@@ -145,6 +145,56 @@ class MarketDataHandler:
                 return 0.0
         return 0.0
 
+    def get_current_price(self, asset):
+        """
+        Obtiene el precio actual del activo.
+        Intenta obtener la vela más reciente posible.
+        """
+        if not self.connected or not self.api:
+            return 0.0
+            
+        try:
+            # Pedir 1 vela actual del timeframe configurado para asegurar consistencia
+            candles = self.api.get_candles(asset, 60, 1, time.time())
+            
+            if candles and isinstance(candles, list) and len(candles) > 0:
+                last_candle = candles[-1]
+                return float(last_candle['close'])
+            
+            # Fallback a diccionario si devuelve dict
+            if isinstance(candles, dict) and 'close' in candles:
+                return float(candles['close'])
+                
+        except Exception as e:
+            print(f"[DEBUG] Error obteniendo precio actual: {e}")
+        
+        return 0.0
+
+    def get_current_price(self, asset):
+        """
+        Obtiene el precio actual del activo.
+        Intenta obtener la vela más reciente posible.
+        """
+        if not self.connected or not self.api:
+            return 0.0
+            
+        try:
+            # Pedir 1 vela actual del timeframe configurado para asegurar consistencia
+            candles = self.api.get_candles(asset, 60, 1, time.time())
+            
+            if candles and isinstance(candles, list) and len(candles) > 0:
+                last_candle = candles[-1]
+                return float(last_candle['close'])
+            
+            # Fallback a diccionario si devuelve dict
+            if isinstance(candles, dict) and 'close' in candles:
+                return float(candles['close'])
+                
+        except Exception as e:
+            print(f"[DEBUG] Error obteniendo precio actual: {e}")
+        
+        return 0.0
+
     def get_open_assets(self, min_profit=75):
         """
         Escanea activos disponibles y devuelve los que están abiertos 

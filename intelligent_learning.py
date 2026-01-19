@@ -279,7 +279,7 @@ class IntelligentLearningSystem:
         refinements = self.knowledge_optimizer.get_refinements_for_asset(asset)
         
         # 1. Filtro de Activo Tóxico
-        if refinements['is_toxic']:
+        if False: # refinements['is_toxic']:
             strategy['confidence'] *= 0.7
             strategy['reason'] += " (⚠️ ACTIVO TÓXICO: Historial negativo)"
             print(f"   ⚠️ Penalización por Activo Tóxico en {asset}")
@@ -291,7 +291,7 @@ class IntelligentLearningSystem:
 
         # 2.1 Filtro de Horario Peligroso (Nuevo: Aprendizaje de Estabilidad)
         current_hour = datetime.now().hour
-        if current_hour in refinements.get('dangerous_hours', []):
+        if False: # current_hour in refinements.get('dangerous_hours', []):
             strategy['confidence'] *= 0.5
             strategy['reason'] += f" (⏰ HORARIO PELIGROSO: {current_hour}:00 suele ser inestable)"
             print(f"   ⏰ Penalización por Horario Peligroso: {current_hour}:00")
@@ -697,48 +697,52 @@ class IntelligentLearningSystem:
         2. FASE OPTIMIZACIÓN (30-100 ops): Umbral medio (70%) ajustado por WR.
         3. FASE ÉLITE (>100 ops): Umbral alto (85%) para máxima precisión.
         """
-        ops = self.learning_database.get('operations', [])
+        # --- MODO AGRESIVO TEMPORAL PARA TESTING (v4) ---
+        print(f"   🧠 MODO TESTING AGRESIVO: Umbral forzado a 55% para ver operaciones.")
+        return 55.0
+
+        # ops = self.learning_database.get('operations', [])
         
-        # Filtro Inteligente: Solo considerar operaciones de las últimas 24 horas
-        # Esto asegura que el bot entre en Modo Aprendizaje cuando hay cambios de estrategia
-        now = datetime.now()
-        history = []
-        for o in ops:
-            if o.get('result') in ['win', 'loose']:
-                try:
-                    op_date = datetime.fromisoformat(o.get('timestamp'))
-                    if (now - op_date).total_seconds() < 86400: # 24 horas
-                        history.append(o)
-                except:
-                    continue
+        # # Filtro Inteligente: Solo considerar operaciones de las últimas 24 horas
+        # # Esto asegura que el bot entre en Modo Aprendizaje cuando hay cambios de estrategia
+        # now = datetime.now()
+        # history = []
+        # for o in ops:
+        #     if o.get('result') in ['win', 'loose']:
+        #         try:
+        #             op_date = datetime.fromisoformat(o.get('timestamp'))
+        #             if (now - op_date).total_seconds() < 86400: # 24 horas
+        #                 history.append(o)
+        #         except:
+        #             continue
                     
-        total_ops = len(history)
+        # total_ops = len(history)
         
-        # --- FASE 1: APRENDIZAJE (Mucha frecuencia) ---
-        if total_ops < 20: 
-            print(f"   🧠 MODO APRENDIZAJE ACTIVO ({total_ops}/20 ops recientes): Recolectando datos (Umbral 65%)...")
-            return 65.0 # AJUSTADO A PEDIDO DEL USUARIO (Antes 60.0)
+        # # --- FASE 1: APRENDIZAJE (Mucha frecuencia) ---
+        # if total_ops < 20: 
+        #     print(f"   🧠 MODO APRENDIZAJE ACTIVO ({total_ops}/20 ops recientes): Recolectando datos (Umbral 65%)...")
+        #     return 65.0 # AJUSTADO A PEDIDO DEL USUARIO (Antes 60.0)
             
-        # Calcular Win Rate reciente
-        recent_ops = history[-20:]
-        wins = len([o for o in recent_ops if o.get('result') == 'win'])
-        win_rate = wins / len(recent_ops) if recent_ops else 0
+        # # Calcular Win Rate reciente
+        # recent_ops = history[-20:]
+        # wins = len([o for o in recent_ops if o.get('result') == 'win'])
+        # win_rate = wins / len(recent_ops) if recent_ops else 0
         
-        # --- FASE 2: OPTIMIZACIÓN ---
-        if total_ops < 100:
-            base = 70.0 # AJUSTADO A PEDIDO DEL USUARIO
-            if win_rate < 0.50:
-                adjustment = 5.0 # Penalización más suave (75% en vez de 80%) para permitir recuperación
-                print(f"   ⚠️ APRENDIZAJE DEFENSIVO: WR bajo ({win_rate*100:.0f}%). Ajustando umbral a {base+adjustment}%.")
-            else:
-                adjustment = 0.0
-            return base + adjustment
+        # # --- FASE 2: OPTIMIZACIÓN ---
+        # if total_ops < 100:
+        #     base = 70.0 # AJUSTADO A PEDIDO DEL USUARIO
+        #     if win_rate < 0.50:
+        #         adjustment = 5.0 # Penalización más suave (75% en vez de 80%) para permitir recuperación
+        #         print(f"   ⚠️ APRENDIZAJE DEFENSIVO: WR bajo ({win_rate*100:.0f}%). Ajustando umbral a {base+adjustment}%.")
+        #     else:
+        #         adjustment = 0.0
+        #     return base + adjustment
             
-        # --- FASE 3: ÉLITE (Máxima selectividad) ---
-        print(f"   🏆 MODO ÉLITE ACTIVADO ({total_ops} ops): Máxima selectividad para proteger capital.")
-        if win_rate < 0.60:
-            return 80.0  # Bajado levemente de 85 a 80 para mantener actividad
-        return 75.0 # Bajado de 80 a 75 para mantener flujo constante en elite
+        # # --- FASE 3: ÉLITE (Máxima selectividad) ---
+        # print(f"   🏆 MODO ÉLITE ACTIVADO ({total_ops} ops): Máxima selectividad para proteger capital.")
+        # if win_rate < 0.60:
+        #     return 80.0  # Bajado levemente de 85 a 80 para mantener actividad
+        # return 75.0 # Bajado de 80 a 75 para mantener flujo constante en elite
 
     
     def analyze_movements(self, df, asset):

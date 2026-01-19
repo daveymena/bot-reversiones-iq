@@ -16,14 +16,14 @@ class AssetManager:
         # Lista de activos OTC disponibles 24/7
         self.otc_assets = [
             "EURUSD-OTC", "GBPUSD-OTC", "USDJPY-OTC",
-            "AUDUSD-OTC", "USDCAD-OTC", "EURJPY-OTC",
+            "AUDUSD-OTC", "EURJPY-OTC",
             "EURGBP-OTC", "GBPJPY-OTC", "AUDJPY-OTC"
         ]
         
         # Lista de activos normales (horario de mercado)
         self.normal_assets = [
             "EURUSD", "GBPUSD", "USDJPY",
-            "AUDUSD", "USDCAD", "EURJPY"
+            "AUDUSD", "EURJPY"
         ]
 
     def find_best_asset(self, prefer_otc=True):
@@ -222,106 +222,246 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró una oportunidad REAL (score >= 70)
-        if best_opportunity and best_opportunity['score'] >= 70:
+        # Solo retornar si encontró una oportunidad REAL (score >= 30, bajado para testing agresivo)
+        if best_opportunity and best_opportunity['score'] >= 30:
             return best_opportunity
         
         return None
     
+    def _get_power_levels(self, asset):
+        """Identifica Zonas de Liquidez e Interés en M15 y M30"""
+        try:
+            # Pedir velas de M15 y M30 para contexto macro
+            df_m15 = self.market_data.get_candles(asset, 900, 50)
+            if df_m15.empty: return None
+            
+            # Niveles Extremos (Los muros de verdad)
+            major_res = df_m15['high'].max()
+            major_supp = df_m15['low'].min()
+            
+            # Niveles Recientes (Posibles trampas de liquidez)
+            recent_high = df_m15['high'].tail(10).max()
+            recent_low = df_m15['low'].tail(10).min()
+            
+            # Detectar si el nivel reciente es una trampa (hay uno más extremo muy cerca)
+            is_trap_call = abs(recent_low - major_supp) / major_supp < 0.001 and recent_low != major_supp
+            is_trap_put = abs(recent_high - major_res) / major_res < 0.001 and recent_high != major_res
+            
+            return {
+                'major_res': major_res,
+                'major_supp': major_supp,
+                'recent_high': recent_high,
+                'recent_low': recent_low,
+                'is_trap_call': is_trap_call,
+                'is_trap_put': is_trap_put
+            }
+        except:
+            return None
+
     def _analyze_asset_opportunity(self, df, asset):
         """
-        Analiza un activo específico y calcula su score de oportunidad
-        
-        Returns:
-            dict con análisis o None si no hay oportunidad
+        Analiza el activo buscando setups de alta probabilidad basados en Niveles MTF
         """
-        if df.empty or len(df) < 20:
-            return None
-        
-        last = df.iloc[-1]
-        score = 0
-        signals = []
-        action = None
-        
-        # 1. RSI (30 puntos)
-        rsi = last.get('rsi', 50)
-        if rsi < 30:
-            score += 30
-            signals.append("RSI sobreventa")
-            action = "CALL"
-        elif rsi > 70:
-            score += 30
-            signals.append("RSI sobrecompra")
-            action = "PUT"
-        elif 40 < rsi < 60:
-            score += 10  # Neutral
-        
-        # 2. MACD (20 puntos)
-        macd = last.get('macd', 0)
-        macd_signal = last.get('macd_signal', 0)
-        if macd > macd_signal and macd > 0:
-            score += 20
-            signals.append("MACD alcista")
-            if action is None:
-                action = "CALL"
-        elif macd < macd_signal and macd < 0:
-            score += 20
-            signals.append("MACD bajista")
-            if action is None:
-                action = "PUT"
-        
-        # 3. Bollinger Bands (20 puntos)
-        if 'bb_low' in df.columns and 'bb_high' in df.columns:
-            bb_low = last.get('bb_low', 0)
-            bb_high = last.get('bb_high', 0)
-            price = last['close']
+        try:
+            if df.empty or len(df) < 50:
+                return None
             
-            if price <= bb_low:
-                score += 20
-                signals.append("Precio en BB inferior")
-                if action is None:
-                    action = "CALL"
-            elif price >= bb_high:
-                score += 20
-                signals.append("Precio en BB superior")
-                if action is None:
-                    action = "PUT"
-        
-        # 4. Tendencia (15 puntos)
-        sma_20 = df['close'].tail(20).mean()
-        sma_50 = df['close'].tail(50).mean() if len(df) >= 50 else sma_20
-        
-        if sma_20 > sma_50:
-            score += 15
-            signals.append("Tendencia alcista")
-        elif sma_20 < sma_50:
-            score += 15
-            signals.append("Tendencia bajista")
-        
-        # 5. Volatilidad (15 puntos)
-        volatility = df['close'].tail(10).std()
-        avg_volatility = df['close'].std()
-        
-        if volatility > avg_volatility * 1.2:
-            score += 15
-            signals.append("Alta volatilidad")
-        elif volatility < avg_volatility * 0.8:
-            score += 10
-            signals.append("Baja volatilidad")
-        
-        # Solo retornar si hay una acción clara y score >= 70 (más selectivo)
-        if action and score >= 70:
-            return {
-                'asset': asset,
-                'score': score,
-                'action': action,
-                'confidence': min(score / 100, 0.95),
-                'indicators': {
-                    'rsi': rsi,
-                    'macd': macd,
-                    'price': last['close']
-                },
-                'reasoning': ", ".join(signals)
-            }
-        
-        return None
+            # 🏢 OBTENER NIVELES INSTITUCIONALES (M15)
+            power_levels = self._get_power_levels(asset)
+            
+            last = df.iloc[-1]
+            price = last['close']
+            rsi = last.get('rsi', 50)
+            
+            # Calcular SMAs
+            sma_20 = df['close'].tail(20).mean()
+            sma_50 = df['close'].tail(50).mean()
+            
+            # Importar pandas y math para validación
+            import pandas as pd
+            import math
+            
+            # Verificar si son NaN
+            if pd.isna(sma_20) or pd.isna(sma_50) or math.isnan(sma_20) or math.isnan(sma_50):
+                return None
+
+            # Bollinger
+            bb_upper = last.get('bb_high', 0)
+            bb_lower = last.get('bb_low', 0)
+            
+            setup_found = None
+            action = None
+            confidence = 0
+            reasons = []
+            
+            # LOG SIMPLE (SIN EMOJIS CRITICOS POR AHORA)
+            print(f"\n   Analizando {asset} | RSI: {rsi:.1f} | Precio: {price:.5f}")
+
+            # ---------------------------------------------------------
+            # ESTRATEGIA 1: SEGUIMIENTO DE TENDENCIA (TREND FOLLOWING)
+            # ---------------------------------------------------------
+            # 🛡️ FILTRO DE AGOTAMIENTO (ANTI-CONFIRMACIÓN TARDÍA)
+            # Calculamos el tamaño promedio de los cuerpos de las últimas 10 velas
+            df_recent = df.tail(11).copy()
+            df_recent['body_size'] = abs(df_recent['close'] - df_recent['open'])
+            avg_body = df_recent['body_size'].iloc[:-1].mean()
+            current_body = abs(last['close'] - last['open'])
+            
+            is_exhaustion = current_body > (avg_body * 2.5) and avg_body > 0
+            
+            is_uptrend = sma_20 > sma_50
+            is_downtrend = sma_20 < sma_50
+            trend_strength = abs(sma_20 - sma_50) / (sma_50 if sma_50 != 0 else 1)
+            
+            if is_exhaustion:
+                # Si la vela es gigante, el movimiento probablemente ya terminó
+                # print(f"      🛡️ Bloqueando entrada por VELA DE AGOTAMIENTO (Tamaño: {current_body:.5f} vs Avg: {avg_body:.5f})")
+                pass
+            
+            # CALL EN TENDENCIA (Pullback alcista)
+            elif is_uptrend and trend_strength > 0.0005:
+                # 🛡️ FILTRO DE NIVEL (Lógica de Muros)
+                major_high = df['high'].tail(50).max()
+                local_high = df['high'].tail(20).max()
+                nearest_resistance = max(major_high, local_high)
+                
+                dist_to_res = abs(nearest_resistance - price) / (nearest_resistance if nearest_resistance != 0 else 1)
+                
+                # Exigir más espacio si el RSI ya está subiendo
+                min_safe_dist = 0.0008 if rsi > 60 else 0.0004
+                
+                if dist_to_res < min_safe_dist:
+                    # Bloqueado: No hay espacio para que el CALL respire
+                    pass
+                else:
+                    dist_sma20 = (price - sma_20) / (sma_20 if sma_20 != 0 else 1)
+                    if -0.001 < dist_sma20 < 0.002: # Precio cerca de SMA20
+                        if rsi > 40 and rsi < 65:
+                            if last['close'] > last['open']: 
+                                setup_found = "TREND_PULLBACK_CALL"
+                                action = "CALL"
+                                confidence = 0.85
+                                reasons.append("Tendencia Alcista Fuerte")
+                                reasons.append("Espacio libre hacia Resistencia")
+                                reasons.append("Vela de confirmacion alcista")
+
+            # PUT EN TENDENCIA (Pullback bajista)
+            elif is_downtrend and trend_strength > 0.0005:
+                # 🛡️ FILTRO DE NIVEL (Lógica de Suelos)
+                major_low = df['low'].tail(50).min()
+                local_low = df['low'].tail(20).min()
+                nearest_support = min(major_low, local_low)
+                
+                dist_to_supp = abs(price - nearest_support) / (price if price != 0 else 1)
+                
+                # Exigir más espacio si el RSI ya está bajando
+                min_safe_dist = 0.0008 if rsi < 40 else 0.0004
+                
+                if dist_to_supp < min_safe_dist:
+                    # Bloqueado: No vender contra el suelo
+                    pass
+                else:
+                    dist_sma20 = (sma_20 - price) / (sma_20 if sma_20 != 0 else 1)
+                    if -0.001 < dist_sma20 < 0.002: 
+                        if rsi < 60 and rsi > 35: 
+                            if last['close'] < last['open']:
+                                setup_found = "TREND_PULLBACK_PUT"
+                                action = "PUT"
+                                confidence = 0.85
+                                reasons.append("Tendencia Bajista Fuerte")
+                                reasons.append("Espacio libre hacia Soporte")
+                                reasons.append("Vela de confirmacion bajista")
+
+            # CALL EN TENDENCIA (Pullback alcista) - Implícito en la lógica similar para alcista
+            # (Se aplicaría lógica análoga si estuviera visible aquí, pero nos enfocamos en el PUT que falló)
+
+                # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
+                # ---------------------------------------------------------
+                # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
+                # ---------------------------------------------------------
+                if power_levels:
+                    target_supp = power_levels['major_supp'] if power_levels['is_trap_call'] else power_levels['recent_low']
+                    target_res  = power_levels['major_res'] if power_levels['is_trap_put'] else power_levels['recent_high']
+                    
+                    dist_to_supp = abs(price - target_supp) / price
+                    dist_to_res  = abs(price - target_res) / price
+                    
+                    # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% con verificación de mecha
+                    # Queremos entrar cuando el precio esté "hundido" en el soporte (CALL)
+                    if rsi < 42 and dist_to_supp < 0.0012:
+                        # Buscamos rechazo ya iniciado (mecha)
+                        lower_wick = min(last['open'], last['close']) - last['low']
+                        # SWEET SPOT: Si el precio actual está cerca del mínimo, tenemos ventaja
+                        is_in_sweet_spot = price <= last['open'] * 1.0005 
+                        
+                        if lower_wick > 0.00003 and is_in_sweet_spot:
+                            setup_found = "BALANCED_ROOT_CALL"
+                            if power_levels['is_trap_call']: setup_found = "SMC_SWEEP_CALL"
+                            
+                            action = "CALL"
+                            confidence = 0.95
+                            reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
+                            reasons.append("Entrada en zona de mecha (Raíz)")
+                    
+                    # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% para PUT
+                    elif rsi > 58 and dist_to_res < 0.0012:
+                        upper_wick = last['high'] - max(last['open'], last['close'])
+                        is_in_sweet_spot = price >= last['open'] * 0.9995
+                        
+                        if upper_wick > 0.00003 and is_in_sweet_spot:
+                            setup_found = "BALANCED_ROOT_PUT"
+                            if power_levels['is_trap_put']: setup_found = "SMC_SWEEP_PUT"
+                            
+                            action = "PUT"
+                            confidence = 0.95
+                            reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
+                            reasons.append("Entrada en zona de mecha (Raíz)")
+
+                # ---------------------------------------------------------
+                # ESTRATEGIA: REVERSIÓN ESTÁNDAR M1 (Si no hay MTF cerca)
+                # ---------------------------------------------------------
+                if not setup_found:
+                    # REVERSIÓN ALCISTA (CALL)
+                    if rsi < 30 and price <= local_low * 1.0003:
+                        setup_found = "M1_REVERSAL_CALL"
+                        action = "CALL"
+                        confidence = 0.85
+                    # REVERSIÓN BAJISTA (PUT)
+                    elif rsi > 70 and price >= local_high * 0.9997:
+                        setup_found = "M1_REVERSAL_PUT"
+                        action = "PUT"
+                        confidence = 0.85
+
+            # ---------------------------------------------------------
+            # RESULTADO DEL ANÁLISIS
+            # ---------------------------------------------------------
+            if setup_found:
+                print(f"      SETUP ENCONTRADO: {setup_found}")
+                print(f"      Accion: {action} | Confianza: {confidence*100:.0f}%")
+                
+                return {
+                    'asset': asset,
+                    'score': int(confidence * 100),
+                    'action': action,
+                    'confidence': confidence,
+                    'setup': setup_found,
+                    'indicators': {
+                        'rsi': rsi,
+                        'price': price,
+                        'sma_20': sma_20,
+                        'trend': "ALCISTA" if is_uptrend else "BAJISTA"
+                    },
+                    'reasoning': ", ".join(reasons)
+                }
+            else:
+                # print(f"      Ningun setup claro...") # Reducir ruido
+                return None
+
+        except Exception as e:
+            print(f"❌ Error analizando {asset}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+
+

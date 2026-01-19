@@ -40,16 +40,16 @@ def db_operation_with_timeout(timeout_seconds=2):
                 thread.join(timeout=timeout_seconds)
                 
                 if thread.is_alive():
-                    print(f"⚠️ Timeout en {func.__name__}, continuando sin BD")
+                    print(f"[!] Timeout en {func.__name__}, continuando sin BD")
                     return None
                 
                 if exception[0]:
-                    print(f"⚠️ Error en {func.__name__}: {exception[0]}")
+                    print(f"[!] Error en {func.__name__}: {exception[0]}")
                     return None
                 
                 return result[0]
             except Exception as e:
-                print(f"⚠️ Error en {func.__name__}: {e}")
+                print(f"[!] Error en {func.__name__}: {e}")
                 return None
         return wrapper
     return decorator
@@ -63,7 +63,7 @@ class DatabaseManager:
         self.db_enabled = os.getenv('ENABLE_DATABASE', 'False').lower() == 'true'
         
         if not self.db_enabled:
-            print("⚠️ Base de datos DESHABILITADA (para evitar congelamientos)")
+            print("[!] Base de datos DESHABILITADA (para evitar congelamientos)")
             print("   El bot funcionará sin guardar en BD")
             return
         self.connect()
@@ -83,7 +83,7 @@ class DatabaseManager:
                     connect_timeout=2,  # Timeout de 2 segundos para conectar (reducido)
                     options='-c statement_timeout=2000'  # Timeout de 2s para queries (reducido)
                 )
-                print("✅ Pool de conexiones creado (usando DATABASE_URL)")
+                print("[+] Pool de conexiones creado (usando DATABASE_URL)")
             else:
                 # Usar variables individuales con fallback a Easypanel
                 db_host = os.getenv('DB_HOST') or '157.173.97.41'
@@ -103,10 +103,10 @@ class DatabaseManager:
                     connect_timeout=5,  # Timeout de 5 segundos para conectar
                     options='-c statement_timeout=10000'  # Timeout de 10s para queries
                 )
-                print(f"✅ Pool de conexiones creado ({db_host}:{db_port})")
+                print(f"[+] Pool de conexiones creado ({db_host}:{db_port})")
         except Exception as e:
-            print(f"❌ Error conectando a la base de datos: {e}")
-            print("⚠️  El bot continuará sin base de datos")
+            print(f"[-] Error conectando a la base de datos: {e}")
+            print("[!]  El bot continuará sin base de datos")
             self.pool = None
             raise
     

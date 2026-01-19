@@ -6,7 +6,7 @@ import uvicorn
 import json
 import os
 from datetime import datetime
-from database import User, SessionLocal, TradeHistory
+from database_legacy import User, SessionLocal, TradeHistory
 from security import encrypt_password, decrypt_password
 from jose import JWTError, jwt
 from passlib.context import CryptContext

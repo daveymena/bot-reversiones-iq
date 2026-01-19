@@ -33,7 +33,7 @@ def main():
     time.sleep(0.5)
     
     # Preguntar modo de operación
-    from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QLineEdit, QRadioButton, QButtonGroup
+    from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QRadioButton, QButtonGroup, QWidget
     
     dialog = QDialog()
     dialog.setWindowTitle("🚀 Trading Bot Pro - Setup")
@@ -171,6 +171,7 @@ def main():
             from data.market_data import MarketDataHandler
             from strategies.technical import FeatureEngineer
             from gui.modern_main_window import ModernMainWindow
+            from ai.llm_client import LLMClient # <--- IMPORTAR CLIENTE IA
             
             # Inicializar componentes
             from config import Config
@@ -184,6 +185,7 @@ def main():
                 take_profit_pct=Config.TAKE_PROFIT_PERCENT
             )
             asset_manager = AssetManager(market_data)
+            llm_client = LLMClient() # <--- INICIALIZAR IA
             
             # Crear trader con todos los componentes
             trader = LiveTrader(
@@ -191,7 +193,8 @@ def main():
                 feature_engineer=feature_engineer,
                 agent=agent,
                 risk_manager=risk_manager,
-                asset_manager=asset_manager
+                asset_manager=asset_manager,
+                llm_client=llm_client # <--- CONECTAR IA AL TRADER
             )
             
             window = ModernMainWindow(trader)

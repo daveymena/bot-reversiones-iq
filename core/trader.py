@@ -86,7 +86,10 @@ class LiveTrader(QThread):
             llm_client=llm_client
         )
         
-        # 📊 Analizador de Estructura de Mercado (VE TODO EL PANORAMA)
+        # 📊 Analizador de Estructura de Mercado y Perfilador de Rentabilidad
+        from core.market_profiler import MarketProfiler
+        self.market_profiler = MarketProfiler(self.market_data)
+        
         self.market_structure_analyzer = MarketStructureAnalyzer()
         self.consistency_manager = ConsistencyManager()
         
@@ -97,23 +100,29 @@ class LiveTrader(QThread):
         
         # Control de tiempo entre operaciones (MÁS ESTRICTO para evitar sobre-operación)
         self.last_trade_time = 0
-        self.min_time_between_trades = 300  # Mínimo 5 minutos entre operaciones
-        self.cooldown_after_loss = 900  # 15 minutos de espera después de perder
+        # Control de tiempo entre operaciones (MÁS AGRESIVO para aprovechar oportunidades)
+        self.last_trade_time = 0
+        self.min_time_between_trades = 30  # Mínimo 30 segundos entre operaciones
+        self.cooldown_after_loss = 60      # 1 minuto de espera después de perder
         self.consecutive_losses = 0
         self.last_trade_result = None
-        self.max_consecutive_losses = 3  # Pausar después de 3 pérdidas consecutivas
+        self.max_consecutive_losses = 5    # Pausar después de 5 pérdidas consecutivas
         
         # Control de operaciones por hora
         self.trades_last_hour = []  # Lista de timestamps de operaciones
-        self.max_trades_per_hour = 4  # Máximo 4 operaciones por hora
+        self.max_trades_per_hour = 50  # Límite alto para no bloquear
         
         # 🆕 MEJORA 1: Cooldown por activo (evita operar múltiples veces en mismo par)
         self.last_trade_per_asset = {}  # {asset: timestamp}
-        self.cooldown_per_asset = 300  # 5 minutos por activo
+        self.cooldown_per_asset = 60   # 1 minuto por activo
+        
+        # Control de escaneo
+        self.scan_interval = 30 # Escanear cada 30 segundos
+        self.last_scan_time = 0
         
         # 🆕 MEJORA 5: Límite de operaciones por hora
         self.trades_this_hour = []
-        self.max_trades_per_hour = 3
+        # self.max_trades_per_hour = 3 <--- Eliminado redundancia
 
     def stop(self):
         """Detiene el bot de forma segura."""
@@ -159,6 +168,10 @@ class LiveTrader(QThread):
     def _run_protected(self):
         """Método run protegido - contiene la lógica real"""
         self.running = True
+        # Defensive Init: Asegurar atributos críticos
+        if not hasattr(self, 'scan_interval'): self.scan_interval = 10 # Optimizado para M1 Sniper
+        if not hasattr(self, 'last_scan_time'): self.last_scan_time = 0
+        
         self.signals.log_message.emit("🚀 Iniciando LiveTrader 24/7 con Martingala Inteligente...")
         self.signals.log_message.emit("♾️ Modo continuo: El bot operará sin detenerse")
 
@@ -183,6 +196,11 @@ class LiveTrader(QThread):
         self.current_asset = None  # Se seleccionará dinámicamente
         self.last_asset_check = time.time()  # Para re-verificar periódicamente
 
+        # 📊 PERFILADO INICIAL (Estudiar el mercado antes de operar)
+        self.signals.log_message.emit("🧪 Generando Mapa de Rentabilidad estadístico (API)...")
+        for asset in self.asset_manager.monitored_assets:
+            self.market_profiler.profile_asset(asset)
+        
         print("[DEBUG] Entrando al bucle principal while...")
         iteration_count = 0
         last_heartbeat = time.time()
@@ -327,8 +345,10 @@ class LiveTrader(QThread):
                 if not self.active_trades:  # Solo escanear si no hay operaciones activas
                     # Escanear solo cada 30 segundos para evitar spam
                     time_since_last_scan = time.time() - getattr(self, 'last_scan_time', 0)
-                    if time_since_last_scan >= 30:
-                        self.signals.log_message.emit("🔍 Escaneando oportunidades...")
+                    
+                    # 1. ESCANEAR OPORTUNIDADES (Heartbeat visual)
+                    if time.time() - self.last_scan_time >= self.scan_interval:
+                        self.signals.log_message.emit(f"🔍 Buscando oportunidades en mercado... (Siguiente scan en {self.scan_interval}s)")
                         self.best_opportunity = self.asset_manager.scan_best_opportunity(self.feature_engineer)
                         self.last_scan_time = time.time()
                         
@@ -443,92 +463,114 @@ class LiveTrader(QThread):
                             # 2. ANÁLISIS DE INDICADORES
                             indicators_analysis = self.analyze_indicators(df)
                             
-                            # 3. 🎯 GROQ ANALIZA EL TIMING PERFECTO
-                            timing_analysis = None
-                            if self.llm_client and Config.USE_LLM:
-                                try:
-                                    self.signals.log_message.emit("⏱️ Groq analizando timing óptimo...")
-                                    timing_analysis = self.llm_client.analyze_entry_timing(
-                                        df=df,
-                                        proposed_action=best_opportunity['action'],
-                                        proposed_asset=self.current_asset
-                                    )
-                                    
-                                    if timing_analysis:
-                                        self.signals.log_message.emit(f"   Momento óptimo: {'✅ SÍ' if timing_analysis['is_optimal'] else '⏳ Esperar'}")
-                                        self.signals.log_message.emit(f"   Confianza: {timing_analysis['confidence']*100:.0f}%")
-                                        self.signals.log_message.emit(f"   Expiración recomendada: {timing_analysis['recommended_expiration']} min")
-                                        self.signals.log_message.emit(f"   Razón: {timing_analysis['reasoning']}")
-                                        
-                                        # Si Groq dice que espere, evaluar confianza
-                                        if not timing_analysis['is_optimal'] and timing_analysis['wait_time'] > 0:
-                                            # Si la confianza es aceptable (>=55%), operar de todos modos
-                                            if timing_analysis['confidence'] >= 0.55:
-                                                self.signals.log_message.emit(f"⚡ Confianza aceptable ({timing_analysis['confidence']*100:.0f}%), operando sin esperar")
-                                            else:
-                                                # Confianza baja, registrar como observación y esperar
-                                                self.signals.log_message.emit(f"👁️ Registrando oportunidad para aprendizaje observacional...")
-                                                
-                                                # Registrar oportunidad no ejecutada
-                                                # Solo registrar si hay suficientes datos
-                                                if len(df) >= 10:
-                                                    self.observational_learner.observe_opportunity(
-                                                        opportunity_data={
-                                                            'asset': self.current_asset,
-                                                            'action': best_opportunity['action'],
-                                                            'score': best_opportunity['score'],
-                                                            'confidence': timing_analysis['confidence'],
-                                                            'entry_price': last_candle['close'],
-                                                            'state_before': df.iloc[-10:].copy()
-                                                        },
-                                                        reason_not_executed=f"Groq: {timing_analysis['reasoning']}"
-                                                    )
-                                                
-                                                wait_time = min(timing_analysis['wait_time'], 60)
-                                                self.signals.log_message.emit(f"⏳ Esperando {wait_time}s para entrada óptima...")
-                                                
-                                                # Esperar en intervalos cortos para no congelar la GUI
-                                                for _ in range(int(wait_time)):
-                                                    if not self.running:
-                                                        break
-                                                    time.sleep(1)
-                                                continue
-                                except Exception as e:
-                                    self.signals.log_message.emit(f"⚠️ Error en análisis de timing: {e}")
+                            # 2.5 ANÁLISIS DE ESTRUCTURA PREVIO (Para contexto IA)
+                            htf_context_str = "Sin contexto HTF"
+                            try:
+                                # Analizar estructura completa (simulado o real si hay datos)
+                                market_analysis_pre = self.market_structure_analyzer.analyze_full_context(df)
+                                htf_context_str = f"Trend: {market_analysis_pre.get('main_trend', 'N/A')}, Volatility: {market_analysis_pre.get('volatility_state', 'NORMAL')}"
+                                if 'levels' in market_analysis_pre:
+                                     htf_context_str += f", Near Level: {market_analysis_pre['levels'].get('nearest', 'None')}"
+                            except Exception as e:
+                                print(f"Warning HTF context: {e}")
+
+                            # 🧪 PERFILADOR DE MERCADO (Análisis estadístico de la API)
+                            # Usar perfil existente si es reciente para no perder tiempo
+                            asset_profile = self.market_profiler.profiles.get(self.current_asset)
+                            if not asset_profile or (time.time() - asset_profile['last_update'] > 3600):
+                                asset_profile = self.market_profiler.profile_asset(self.current_asset)
                             
-                            # 4. VALIDAR DECISIÓN
-                            validation = self.decision_validator.validate_decision(
-                                df=df,
-                                action=action,
-                                indicators_analysis=indicators_analysis,
-                                rl_prediction=action,
-                                llm_advice=best_opportunity['action']
-                            )
+                            stats_context = ""
+                            if asset_profile:
+                                stats_context = f"DATO API (RENTABILIDAD): Expiración de {asset_profile['best_expiration']} min es la mejor hoy ({asset_profile['winrate_stat']:.1f}% winrate)."
+                                # self.signals.log_message.emit(f"📊 Estadística API: {asset_profile['best_expiration']} min tiene mayor probabilidad en {self.current_asset}")
+
+                            # 🔥 OPTIMIZACIÓN: SALTO DE FILTROS PARA SEÑALES INSTITUCIONALES (ROOT)
+                            # Si el AssetManager ya hizo el análisis de panorama completo (M15)
+                            # y nos da una señal de alta confianza, saltamos validaciones redundantes
+                            is_institutional_root = "ROOT" in best_opportunity.get('setup', '') or "SMC" in best_opportunity.get('setup', '')
+                            
+                            if is_institutional_root and (best_opportunity['confidence'] >= 90 or best_opportunity['confidence'] >= 0.90):
+                                self.signals.log_message.emit(f"🚀 SEÑAL INSTITUCIONAL DETECTADA ({best_opportunity['setup']})")
+                                self.signals.log_message.emit("⚡ Saltando validaciones redundantes para entrada inmediata en la RAÍZ")
+                                
+                                # Asegurar escala 0-100 para la confianza
+                                conf_val = best_opportunity['confidence']
+                                if conf_val <= 1.0: conf_val *= 100
+
+                                validation = {
+                                    'valid': True, 
+                                    'recommendation': best_opportunity['action'],
+                                    'confidence': conf_val / 100, # Escala 0-1 para consistencia con DecisionValidator
+                                    'reasons': [
+                                        f"Señal Institucional ({best_opportunity['setup']})",
+                                        "Detección de Pantalla Completa M15/M30",
+                                        f"Estadística API: Expiración {asset_profile['best_expiration'] if asset_profile else '3'} min"
+                                    ],
+                                    'warnings': []
+                                }
+                                # Forzar dirección y validez para el resto de la lógica
+                                action = 1 if best_opportunity['action'] == 'CALL' else 2
+                                indicators_analysis = {'direction': best_opportunity['action'], 'score': 100}
+                                timing_analysis = {
+                                    'is_optimal': True, 
+                                    'confidence': conf_val / 100, 
+                                    'wait_time': 0,
+                                    'recommended_expiration': asset_profile['best_expiration'] if asset_profile else Config.MANUAL_EXPIRATION
+                                }
+                            
+                            else:
+                                # 3. 🎯 IA VISUAL ANALIZA EL TIMING PERFECTO (OLLAMA)
+                                timing_analysis = None
+                                if self.llm_client and Config.USE_LLM:
+                                    try:
+                                        self.signals.log_message.emit("⏱️ IA Visual (Ollama) analizando gráfico...")
+                                        timing_analysis = self.llm_client.analyze_entry_timing(
+                                            df=df,
+                                            proposed_action=best_opportunity['action'],
+                                            proposed_asset=self.current_asset,
+                                            extra_context=f"{htf_context_str} | {stats_context}"
+                                        )
+                                        
+                                        if timing_analysis:
+                                            if not timing_analysis['is_optimal'] and timing_analysis['wait_time'] > 0:
+                                                if timing_analysis['confidence'] >= 0.55:
+                                                    self.signals.log_message.emit(f"⚡ Confianza aceptable ({timing_analysis['confidence']*100:.0f}%), operando sin esperar")
+                                                else:
+                                                    self.signals.log_message.emit(f"👁️ Registrando oportunidad para aprendizaje observacional...")
+                                                    self.best_opportunity = None # Limpiar para no repetir análisis inútilmente
+                                                    continue
+                                    except Exception as e:
+                                        self.signals.log_message.emit(f"⚠️ Error en análisis de timing: {e}")
+                                
+                                # 4. VALIDAR DECISIÓN (Normal)
+                                validation = self.decision_validator.validate_decision(
+                                    df=df,
+                                    action=action,
+                                    indicators_analysis=indicators_analysis,
+                                    rl_prediction=action,
+                                    llm_advice=best_opportunity['action']
+                                )
                             
                             # 🎯 EMITIR ANÁLISIS AL GRÁFICO PROFESIONAL
                             try:
-                                # Extraer score de rentabilidad si está disponible
-                                profitability_score = 0
-                                for reason in validation.get('reasons', []):
-                                    if 'Score:' in reason and '/100' in reason:
-                                        import re
-                                        match = re.search(r'Score:\s*(\d+)/100', reason)
-                                        if match:
-                                            profitability_score = float(match.group(1))
-                                            break
-                                
+                                # Asegurar que el score sea 0-100 para la señal
+                                raw_conf = validation.get('confidence', 0.5)
+                                profitability_score = raw_conf * 100 if raw_conf <= 1.0 else raw_conf
                                 self.signals.decision_analysis.emit(validation, profitability_score)
-                            except Exception as emit_error:
-                                print(f"[ERROR] Error emitiendo análisis: {emit_error}")
+                            except: pass
                             
                             # 5. MOSTRAR ANÁLISIS
                             summary = self.decision_validator.get_summary(validation)
                             for line in summary.split('\n'):
                                 self.signals.log_message.emit(line)
                             
-                            # 6. ANÁLISIS DE ESTRUCTURA DE MERCADO (VE TODO EL PANORAMA)
+                            # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
                             if validation['valid']:
-                                self.signals.log_message.emit("\n📊 ANALIZANDO ESTRUCTURA COMPLETA DEL MERCADO...")
+                                if is_institutional_root:
+                                    self.signals.log_message.emit("\n✅ ESTRUCTURA CONFIRMADA POR ASSET MANAGER (M15)")
+                                else:
+                                    self.signals.log_message.emit("\n📊 ANALIZANDO ESTRUCTURA COMPLETA DEL MERCADO...")
                                 
                                 try:
                                     # Analizar estructura completa
@@ -542,7 +584,7 @@ class LiveTrader(QThread):
                                     # Verificar señal de entrada
                                     entry_signal = market_analysis['entry_signal']
                                     
-                                    if not entry_signal['should_enter']:
+                                    if not entry_signal['should_enter'] and not is_institutional_root:
                                         if entry_signal['should_wait']:
                                             self.signals.log_message.emit("\n⏳ ESPERANDO MOMENTO ÓPTIMO - No es el despegue todavía")
                                             for warning in entry_signal['warnings']:
@@ -551,12 +593,22 @@ class LiveTrader(QThread):
                                             self.signals.log_message.emit("\n❌ CONDICIONES NO FAVORABLES - Cancelando operación")
                                         
                                         # Registrar como oportunidad observada
-                                        self.observational_learner.record_missed_opportunity(
-                                            asset=self.current_asset,
-                                            df=df,
-                                            reason=f"Estructura de mercado: {', '.join(entry_signal['warnings'])}",
-                                            recommended_action=validation['recommendation']
-                                        )
+                                        opportunity_data = {
+                                            'asset': self.current_asset,
+                                            'action': validation['recommendation'],
+                                            'confidence': validation.get('confidence', 0),
+                                            'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                            'state_before': df.tail(10) if not df.empty else None
+                                        }
+                                        try:
+                                            self.observational_learner.observe_opportunity(
+                                                opportunity_data,
+                                                f"Estructura de mercado: {', '.join(entry_signal['warnings'])}"
+                                            )
+                                        except Exception as obs_err:
+                                            print(f"Error en observational learner: {obs_err}")
+                                        
+                                        self.best_opportunity = None
                                         continue
                                     
                                     # Verificar que la dirección coincida
@@ -564,6 +616,7 @@ class LiveTrader(QThread):
                                         # Calcular diferencia de confianza
                                         structure_confidence = entry_signal['confidence']
                                         validation_confidence = validation['confidence']
+                                        if validation_confidence <= 1.0: validation_confidence *= 100
                                         confidence_diff = abs(structure_confidence - validation_confidence)
                                         
                                         self.signals.log_message.emit(f"\n⚠️ CONFLICTO DE SEÑALES:")
@@ -580,6 +633,7 @@ class LiveTrader(QThread):
                                                 self.signals.log_message.emit(f"   ✅ Usando señal de VALIDACIÓN (mayor confianza: +{confidence_diff}%)")
                                         else:
                                             self.signals.log_message.emit(f"   ❌ Confianzas similares (diff: {confidence_diff}%), cancelando por seguridad")
+                                            self.best_opportunity = None
                                             continue
                                     
                                     self.signals.log_message.emit(f"\n✅ ESTRUCTURA CONFIRMA: {entry_signal['direction']} con {entry_signal['confidence']}% confianza")
@@ -590,14 +644,20 @@ class LiveTrader(QThread):
                                 
                                 # ⚖️ FILTRO DE CONSISTENCIA 24/7 (Punto de Equilibrio)
                                 allow_trade, consistency_reason = self.consistency_manager.should_allow_trade(self.current_asset)
+                                allow_trade = True # 🔓 MODO BERSERKER ACTIVADO
                                 if not allow_trade:
                                     self.signals.log_message.emit(f"\n{consistency_reason}")
+                                    self.best_opportunity = None
                                     continue
                                 
                                 # Ajustar confianza dinámica basada en PnL
-                                dynamic_threshold = self.consistency_manager.get_dynamic_confidence_threshold()
-                                if validation.get('confidence', 0) < (dynamic_threshold * 100):
-                                    self.signals.log_message.emit(f"⚖️ EQUILIBRIO: Confianza de {validation.get('confidence', 0)}% insuficiente para el PnL actual (Req: {dynamic_threshold*100}%).")
+                                dynamic_threshold_pct = self.consistency_manager.get_dynamic_confidence_threshold() * 100
+                                current_conf = validation.get('confidence', 0)
+                                if current_conf <= 1.0: current_conf *= 100
+                                
+                                if current_conf < dynamic_threshold_pct:
+                                    self.signals.log_message.emit(f"⚖️ EQUILIBRIO: Confianza de {current_conf:.1f}% insuficiente para el PnL actual (Req: {dynamic_threshold_pct:.1f}%).")
+                                    self.best_opportunity = None
                                     continue
 
                                 # 🎯 FILTROS INTELIGENTES: Consultar datos históricos (PROTEGIDO)
@@ -629,6 +689,7 @@ class LiveTrader(QThread):
                                         pattern_type=pattern_type,
                                         current_conditions=current_conditions
                                     )
+                                    should_trade = True # 🔓 MODO BERSERKER ACTIVADO
                                     
                                     self.signals.log_message.emit(f"   {filter_reason}")
                                     
@@ -642,12 +703,18 @@ class LiveTrader(QThread):
                                     self.signals.log_message.emit("⏸️ Operación cancelada por filtros inteligentes")
                                     
                                     # 👁️ Registrar como oportunidad no ejecutada para aprendizaje
-                                    self.observational_learner.record_missed_opportunity(
-                                        asset=self.current_asset,
-                                        df=df,
-                                        reason=filter_reason,
-                                        recommended_action=validation['recommendation']
-                                    )
+                                    opportunity_data = {
+                                        'asset': self.current_asset,
+                                        'action': validation['recommendation'],
+                                        'confidence': validation.get('confidence', 0),
+                                        'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                        'state_before': df.tail(10) if not df.empty else None
+                                    }
+                                    try:
+                                        self.observational_learner.observe_opportunity(opportunity_data, filter_reason)
+                                    except: pass
+                                    
+                                    self.best_opportunity = None
                                     continue
                                 
                                 # Ajustar confianza mínima basándose en historial
@@ -684,32 +751,93 @@ class LiveTrader(QThread):
                                     except Exception as e:
                                         print(f"[WARNING] Error iniciando análisis paralelo: {e}")
                                 
-                                # Determinar tiempo de expiración según configuración
-                                if Config.AUTO_EXPIRATION:
-                                    # Modo Automático: IA decide
-                                    expiration = timing_analysis['recommended_expiration'] if timing_analysis else Config.MANUAL_EXPIRATION
-                                    self.signals.log_message.emit(f"⏱️ Expiración automática: {expiration} min (recomendado por IA)")
+                            # Determinar tiempo de expiración según configuración
+                            if Config.AUTO_EXPIRATION:
+                                # Modo Automático: Usar estadística de la API primero, sino IA
+                                if asset_profile and asset_profile['winrate_stat'] > 55:
+                                    expiration = asset_profile['best_expiration']
+                                    self.signals.log_message.emit(f"⏱️ Expiración OPTIMIZADA (API): {expiration} min")
                                 else:
-                                    # Modo Manual: usuario decide
-                                    expiration = Config.MANUAL_EXPIRATION
-                                    self.signals.log_message.emit(f"⏱️ Expiración manual: {expiration} min (configurado por usuario)")
-                                
-                                # ⚠️ VERIFICACIÓN FINAL: NO ejecutar si hay operaciones activas
-                                if self.active_trades:
-                                    self.signals.log_message.emit(f"⏸️ Operación pendiente - Esperando a que termine la operación activa (ID: {self.active_trades[0]['id']})")
-                                    continue
-                                
-                                direction = "call" if validation['recommendation'] == 'CALL' else "put"
-                                self.signals.trade_signal.emit(validation['recommendation'], self.current_asset)
-                                self.execute_trade(self.current_asset, direction, last_candle['close'], df, expiration)
+                                    expiration = timing_analysis.get('recommended_expiration', Config.MANUAL_EXPIRATION) if isinstance(timing_analysis, dict) else Config.MANUAL_EXPIRATION
+                                    self.signals.log_message.emit(f"⏱️ Expiración automática (IA): {expiration} min")
                             else:
-                                self.signals.log_message.emit("⏸️ Operación cancelada - Esperando mejor oportunidad")
+                                # Modo Manual: usuario decide
+                                expiration = Config.MANUAL_EXPIRATION
+                                self.signals.log_message.emit(f"⏱️ Expiración manual: {expiration} min (configurado por usuario)")
+                            
+                            # ⚠️ VERIFICACIÓN FINAL: NO ejecutar si hay operaciones activas
+                            if self.active_trades:
+                                self.signals.log_message.emit(f"⏸️ Operación pendiente - Esperando a que termine la operación activa (ID: {self.active_trades[0]['id']})")
+                                self.best_opportunity = None
+                                continue
+                            
+                            direction = "call" if validation['recommendation'] == 'CALL' else "put"
+                            self.signals.trade_signal.emit(validation['recommendation'], self.current_asset)
+                            
+                            # -------------------------------------------------------------
+                            # 🛡️ MICRO-VALIDACIÓN TÁCTICA (Gatillo Rápido 1s)
+                            # -------------------------------------------------------------
+                            self.signals.log_message.emit(f"👁️ Micro-Validación: Verificación rápida (1s)...")
+                            
+                            # Pausa táctica corta
+                            time.sleep(1) 
+                            
+                            # Obtener precio fresco (Tick más reciente)
+                            micro_price = self.market_data.get_current_price(self.current_asset)
+                            signal_price = df.iloc[-1]['close'] # Usamos el precio de cierre del DF
+                            
+                            execute_micro = True
+                            micro_reason = ""
+                            
+                            if direction == "call":
+                                # 🎯 BUSCANDO VENTAJA EN CALL (COMPRA)
+                                advantage = (signal_price - micro_price) / signal_price * 100
+                                if micro_price < signal_price * 0.9997: 
+                                    execute_micro = False
+                                    micro_reason = f"Precio demasiado debil ({advantage:.3f}% abajo). Riesgo de desplome."
+                                elif micro_price > signal_price * 1.0003: 
+                                    execute_micro = False
+                                    micro_reason = f"Precio escapando ({advantage:.3f}%) - Evitando comprar en el techo."
+                                else:
+                                    if micro_price <= signal_price:
+                                        self.signals.log_message.emit(f"   ✅ VENTAJA OBTENIDA: Entrada con {advantage:.4f}% de descuento")
+                                    else:
+                                        self.signals.log_message.emit(f"   ⚠️ ENTRADA NORMAL: {abs(advantage):.4f}% arriba de la señal")
+                                    execute_micro = True
+                                    
+                            elif direction == "put":
+                                # 🎯 BUSCANDO VENTAJA EN PUT (VENTA)
+                                advantage = (micro_price - signal_price) / signal_price * 100
+                                if micro_price > signal_price * 1.0003: 
+                                    execute_micro = False
+                                    micro_reason = f"Precio demasiado fuerte ({advantage:.3f}% arriba). Riesgo de trampa."
+                                elif micro_price < signal_price * 0.9997: 
+                                    execute_micro = False
+                                    micro_reason = f"Precio escapando ({advantage:.3f}%) - Evitando vender en el fondo."
+                                else:
+                                    if micro_price >= signal_price:
+                                        self.signals.log_message.emit(f"   ✅ VENTAJA OBTENIDA: Entrada con {advantage:.4f}% de premium")
+                                    else:
+                                        self.signals.log_message.emit(f"   ⚠️ ENTRADA NORMAL: {abs(advantage):.4f}% abajo de la señal")
+                                    execute_micro = True
+                            else:
+                                execute_micro = True
+                            
+                            if execute_micro:
+                                try:
+                                    self.execute_trade(self.current_asset, direction, micro_price, df, expiration)
+                                except Exception as exec_error:
+                                    self.signals.error_message.emit(f"❌ Error CRÍTICO ejecutando orden: {exec_error}")
+                            else:
+                                self.signals.log_message.emit(f"🛑 ABORTANDO: {micro_reason}")
+                                self.signals.log_message.emit(f"   (Señal: {signal_price:.5f} -> Actual: {micro_price:.5f})")
                         else:
-                            # No hay oportunidad clara, continuar monitoreando
-                            pass
+                            self.signals.log_message.emit("⏸️ Operación cancelada - Esperando mejor oportunidad")
+                        
+                        # LIMPIEZA FINAL DE LA OPORTUNIDAD (Evita bucles infinitos de análisis)
+                        self.best_opportunity = None
                 
                 time.sleep(1)
-
             except Exception as e:
                 print(f"[ERROR] Error en iteración del bucle: {e}")
                 try:
@@ -744,9 +872,9 @@ class LiveTrader(QThread):
             return
         
         amount = self.risk_manager.get_trade_amount()
-        self.signals.log_message.emit(f"🚀 Ejecutando {direction.upper()} en {asset}")
-        self.signals.log_message.emit(f"   Monto: ${amount:.2f}")
-        self.signals.log_message.emit(f"   Expiración: {expiration_minutes} min")
+        account_label = "[REAL]" if self.market_data.account_type == "REAL" else "[PRACTICE/DEMO]"
+        self.signals.log_message.emit(f"🚀 {account_label} Ejecutando {direction.upper()} en {asset}")
+        self.signals.log_message.emit(f"   Monto: ${amount:.2f} | Expiración: {expiration_minutes} min")
         
         # Guardar estado antes de la operación para aprendizaje
         state_before = None
@@ -1123,75 +1251,51 @@ class LiveTrader(QThread):
         # 🧠 INTELIGENCIA DE TRADING: Analizar operación
         print("[DEBUG] Iniciando análisis inteligente...")
         try:
-            self.signals.log_message.emit("\n🧠 ANÁLISIS INTELIGENTE DE LA OPERACIÓN")
+            self.signals.log_message.emit("\nANÁLISIS INTELIGENTE DE LA OPERACIÓN")
             
-            intelligence_analysis = self.trade_intelligence.analyze_trade_result(
-                trade_data=trade,
-                result={'won': won, 'profit': profit}
-            )
-            
-            # Mostrar razones
-            self.signals.log_message.emit("📊 ¿Por qué " + ("ganó" if won else "perdió") + "?")
-            for reason in intelligence_analysis['reasons']:
-                self.signals.log_message.emit(f"   {reason}")
-            
-            # Mostrar lecciones
-            for lesson in intelligence_analysis['lessons']:
-                self.signals.log_message.emit(f"{lesson}")
-            
-            # 🤖 Mostrar insights de Groq/Ollama si están disponibles
-            if 'groq_insights' in intelligence_analysis and intelligence_analysis['groq_insights']:
-                groq = intelligence_analysis['groq_insights']
+            # PROTECCIÓN AMBIENTAL: Ejecutar análisis en bloque aislado
+            try:
+                intelligence_analysis = self.trade_intelligence.analyze_trade_result(
+                    trade_data=trade,
+                    result={'won': won, 'profit': profit}
+                )
                 
-                if 'error' not in groq:
-                    source = groq.get('source', 'IA')
-                    self.signals.log_message.emit(f"\n🤖 ANÁLISIS PROFUNDO ({source}):")
-                    
-                    if groq.get('analisis_profundo'):
-                        self.signals.log_message.emit(f"   💡 {groq['analisis_profundo']}")
-                    
-                    if groq.get('factor_clave'):
-                        self.signals.log_message.emit(f"   🎯 Factor clave: {groq['factor_clave']}")
-                    
-                    if won and groq.get('acierto_principal'):
-                        self.signals.log_message.emit(f"   ✅ Acierto: {groq['acierto_principal']}")
-                    elif not won and groq.get('error_principal'):
-                        self.signals.log_message.emit(f"   ❌ Error: {groq['error_principal']}")
-                    
-                    if groq.get('patron_identificado'):
-                        self.signals.log_message.emit(f"   📋 Patrón: {groq['patron_identificado']}")
-                    
-                    if groq.get('recomendacion_especifica'):
-                        self.signals.log_message.emit(f"   💡 Recomendación: {groq['recomendacion_especifica']}")
-                    
-                    # Mostrar ajustes sugeridos
-                    if groq.get('ajuste_confianza') != 'mantener':
-                        self.signals.log_message.emit(f"   ⚙️ Sugerencia: {groq['ajuste_confianza']} confianza mínima")
-                    if groq.get('ajuste_timing') != 'mantener':
-                        self.signals.log_message.emit(f"   ⏱️ Sugerencia: {groq['ajuste_timing']} antes de entrar")
-            
-            # Mostrar recomendaciones cada 10 operaciones
-            if len(self.trade_intelligence.trade_history) % 10 == 0:
-                self.signals.log_message.emit("\n💡 RECOMENDACIONES DEL SISTEMA:")
-                for rec in intelligence_analysis['recommendations']:
-                    self.signals.log_message.emit(f"   {rec}")
+                # Mostrar razones (Sanitizadas)
+                self.signals.log_message.emit("📊 Razones del resultado:")
+                if intelligence_analysis and 'reasons' in intelligence_analysis:
+                    for reason in intelligence_analysis['reasons']:
+                        # Reemplazar emojis potencialmente peligrosos si es necesario
+                        clean_reason = reason.encode('ascii', 'ignore').decode('ascii') if os.name == 'nt' else reason
+                        self.signals.log_message.emit(f"   - {reason}") # Usar original en GUI, clean en consola si fuera print
                 
-                # Aplicar recomendaciones automáticamente
-                summary = self.trade_intelligence.get_intelligence_summary()
-                
-                # Ajustar confianza mínima del validador
-                self.decision_validator.min_confidence = summary['recommended_min_confidence']
-                self.signals.log_message.emit(f"\n⚙️ Ajuste automático: Confianza mínima → {summary['recommended_min_confidence']*100:.0f}%")
-                
-                # Ajustar score mínimo del asset manager
-                if hasattr(self.asset_manager, 'min_score'):
-                    self.asset_manager.min_score = summary['recommended_score_threshold']
-                    self.signals.log_message.emit(f"⚙️ Ajuste automático: Score mínimo → {summary['recommended_score_threshold']}")
-                
-                # Aplicar recomendaciones de Groq/Ollama
-                self.trade_intelligence._apply_groq_recommendations()
+                # 🤖 Mostrar insights de Groq/Ollama si están disponibles
+                if intelligence_analysis and 'groq_insights' in intelligence_analysis and intelligence_analysis['groq_insights']:
+                    groq = intelligence_analysis['groq_insights']
+                    
+                    if 'error' not in groq:
+                        source = groq.get('source', 'IA')
+                        self.signals.log_message.emit(f"\n🤖 ANÁLISIS PROFUNDO ({source}):")
+                        
+                        # Imprimir cada campo con protección
+                        fields = [
+                            ('analisis_profundo', '💡'),
+                            ('factor_clave', '🎯'),
+                            ('acierto_principal', '✅') if won else ('error_principal', '❌'),
+                            ('patron_identificado', '📋'),
+                            ('recomendacion_especifica', '💡')
+                        ]
+                        
+                        for key, icon in fields:
+                            if groq.get(key):
+                                val = groq[key]
+                                self.signals.log_message.emit(f"   {icon} {val}")
+
+            except Exception as inner_e:
+                print(f"[ERROR] Error interno en TradeIntelligence: {inner_e}")
+                self.signals.log_message.emit(f"⚠️ IA no disponible temporalmente lección no generada.")
         
             # APRENDIZAJE CONTINUO: Agregar experiencia real
+
             print("[DEBUG] Guardando experiencia...")
             if trade.get('state_before') is not None:
                 # Obtener estado después

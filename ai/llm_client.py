@@ -86,6 +86,27 @@ class LLMClient:
             
         return " | ".join(desc)
 
+    def _get_recent_lessons(self):
+        """Carga las lecciones aprendidas del historial del bot para entrenamiento continuo"""
+        try:
+            # Buscar en la carpeta data
+            history_path = os.path.join(os.getcwd(), 'data', 'trade_history.json')
+            if os.path.exists(history_path):
+                with open(history_path, 'r') as f:
+                    history = json.load(f)
+                    # Extraer las últimas 5 lecciones clave (Wins y Losses)
+                    lessons = []
+                    for trade in reversed(history[-15:]):
+                        if 'lessons' in trade and trade['lessons']:
+                            status = "WIN ✅" if trade.get('won') else "LOSS ❌"
+                            lessons.append(f"{status}: {trade['lessons'][0]}")
+                    
+                    if lessons:
+                        return "\n".join(lessons[:6])
+        except:
+            pass
+        return "Sin lecciones previas aún. Prioriza niveles institucionales (M15) y evita el agotamiento."
+
     def analyze_entry_timing(self, df, proposed_action, proposed_asset, extra_context=""):
         """
         Analiza el timing con enfoque VISUAL humano.
@@ -94,6 +115,7 @@ class LLMClient:
             return {'is_optimal': True, 'confidence': 0.5, 'reasoning': "Sin datos"}
         
         visual_desc = self.get_visual_description(df)
+        recent_lessons = self._get_recent_lessons()
         last = df.iloc[-1]
         
         # Calcular inercia reciente
@@ -101,29 +123,32 @@ class LLMClient:
         momentum_dir = "ALCISTA" if momentum > 0 else "BAJISTA"
         
         prompt = f"""
-        ACTÚA COMO UN TRADER VISUAL EXPERTO. Tienes el gráfico frente a ti (descrito abajo).
+        ACTÚA COMO UN TRADER PROFESIONAL DE ÉLITE (SMC/Price Action).
         
-        TU MISIÓN: Validar si el PATRÓN VISUAL confirma una entrada {proposed_action} en {proposed_asset}.
+        MEMORIA DE OPERACIONES (Lecciones de tus propios trades):
+        {recent_lessons}
+        
+        TU MISIÓN: Detectar si esta entrada {proposed_action} es una TRAMPA o una OPORTUNIDAD REAL en {proposed_asset}.
         
         DESCRIPCIÓN VISUAL DEL GRÁFICO (M1):
         {visual_desc}
         
-        DATOS TÉCNICOS:
+        DATOS DE BORDE (CRÍTICOS):
         - RSI (14): {last.get('rsi', 50):.1f}
-        - Tendencia (5 velas): {momentum_dir}
-        - Contexto Extra: {extra_context}
+        - Momento (5 velas): {momentum_dir}
+        - Información de Contexto: {extra_context}
         
-        REGLAS DE TRADER HUMANO:
-        1. ¿Hay RECHAZO VISUAL claro (mechas) contra el movimiento opuesto?
-        2. ¿Vemos velas de agotamiento o velas de fuerza a nuestro favor?
-        3. Si la operación es CALL, ¿Vemos que el precio dejó de caer y empieza a subir (velas verdes, mechas abajo)?
-        4. Si la operación es PUT, ¿Vemos que el precio dejó de subir y empieza a caer (velas rojas, mechas arriba)?
+        REGLAS DE ORO (SMC/LIQUIDEZ):
+        1. ¿TRAMPA DE LIQUIDEZ? Si hay un soporte/resistencia más fuerte MUY CERCA del actual, es probable que el mercado barra el primero para ir al segundo. RECHAZA (is_optimal=False).
+        2. ¿BARRIDO DE STOPS (Sweep)? Si el precio acaba de romper un nivel y está regresando con fuerza y mecha larga, eso es ORO. ACEPTA (is_optimal=True).
+        3. ¿NIVEL FRESCO O MITIGADO? Si el precio ha golpeado el nivel muchas veces, el muro está débil. Busca niveles "frescos" no tocados.
+        4. No persigas velas gigantes de agotamiento. Espera el retroceso a la RAÍZ.
         
-        RESPONDE SOLO EN JSON:
+        RESPONDE ÚNICAMENTE CON ESTE JSON:
         {{
-            "is_optimal": bool, (True si el patrón visual es claro y favorable)
+            "is_optimal": bool, (SOLO True si hay ventaja de precio y no chocamos con niveles)
             "confidence": 0-100,
-            "reasoning": "Breve explicación visual (ej: 'Claramente rechazó el soporte con mecha larga en vela 4')"
+            "reasoning": "Resumen técnico de 1 frase (ej: 'Nivel saturado, esperando retroceso válido')"
         }}
         """
         
@@ -134,7 +159,18 @@ class LLMClient:
             end = response.rfind('}') + 1
             if start >= 0 and end > start:
                 json_str = response[start:end]
-                data = json.loads(json_str)
+                try:
+                    data = json.loads(json_str)
+                except json.JSONDecodeError:
+                    # Intento de reparación común: comillas simples
+                    import ast
+                    try:
+                        data = ast.literal_eval(json_str)
+                    except:
+                        # Fallback a estructura regex o simple
+                        print(f"[WARNING] Falló parseo JSON/AST de IA. Respuesta raw: {json_str[:50]}...")
+                        return {'is_optimal': True, 'confidence': 60, 'reasoning': "Parse Error (Safe Default)"}
+
                 is_optimal = data.get('is_optimal', False)
                 if isinstance(is_optimal, str):
                     is_optimal = is_optimal.lower() == 'true'
@@ -145,7 +181,7 @@ class LLMClient:
                     'reasoning': data.get('reasoning', 'AI Visual Check')
                 }
         except Exception as e:
-            print(f"Error parseando AI response: {e}")
+            print(f"[WARNING] Error procesando respuesta AI: {e}")
             pass
         
         return {'is_optimal': True, 'confidence': 50, 'reasoning': 'Fallback Analysis'}

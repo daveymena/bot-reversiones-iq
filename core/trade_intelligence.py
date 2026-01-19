@@ -489,25 +489,40 @@ Responde en formato JSON:
             if start >= 0 and end > start:
                 json_str = response[start:end]
                 
-                # Intentar parsear
+                # Intentar parsear de forma robusta
                 try:
+                    import json
                     groq_data = json.loads(json_str)
+                except json.JSONDecodeError:
+                    try:
+                        import ast
+                        groq_data = ast.literal_eval(json_str)
+                    except:
+                        print(f"⚠️ Falló parseo total de JSON/AST de {source}")
+                        # Intentar extraer por texto si falla todo
+                        return {
+                            'source': f"{source} (Text Fallback)",
+                            'analisis_profundo': json_str[:500],
+                            'factor_clave': "Error de formato en IA",
+                            'error_principal': None,
+                            'acierto_principal': None,
+                            'ajuste_confianza': 'mantener',
+                            'ajuste_timing': 'mantener',
+                            'patron_identificado': '',
+                            'recomendacion_especifica': 'Revisar logs'
+                        }
                     
-                    return {
-                        'source': source,
-                        'analisis_profundo': groq_data.get('analisis_profundo', ''),
-                        'factor_clave': groq_data.get('factor_clave', ''),
-                        'error_principal': groq_data.get('error_principal'),
-                        'acierto_principal': groq_data.get('acierto_principal'),
-                        'ajuste_confianza': groq_data.get('ajuste_confianza', 'mantener'),
-                        'ajuste_timing': groq_data.get('ajuste_timing', 'mantener'),
-                        'patron_identificado': groq_data.get('patron_identificado', ''),
-                        'recomendacion_especifica': groq_data.get('recomendacion_especifica', '')
-                    }
-                except json.JSONDecodeError as je:
-                    print(f"⚠️ Error parseando JSON de {source}: {je}")
-                    print(f"   Respuesta recibida: {json_str[:200]}...")
-                    # Continuar con respuesta de texto
+                return {
+                    'source': source,
+                    'analisis_profundo': groq_data.get('analisis_profundo', ''),
+                    'factor_clave': groq_data.get('factor_clave', ''),
+                    'error_principal': groq_data.get('error_principal'),
+                    'acierto_principal': groq_data.get('acierto_principal'),
+                    'ajuste_confianza': groq_data.get('ajuste_confianza', 'mantener'),
+                    'ajuste_timing': groq_data.get('ajuste_timing', 'mantener'),
+                    'patron_identificado': groq_data.get('patron_identificado', ''),
+                    'recomendacion_especifica': groq_data.get('recomendacion_especifica', '')
+                }
             
             # Si no puede parsear JSON, usar respuesta como texto
             return {

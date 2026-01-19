@@ -29,7 +29,11 @@ class Config:
     
     # Expiración automática vs manual
     AUTO_EXPIRATION = True  # Por defecto, IA decide
-    MANUAL_EXPIRATION = 1   # Valor manual si AUTO_EXPIRATION = False
+    MANUAL_EXPIRATION = 3   # Default a 3 minutos (mejor estabilidad)
+    
+    # Rango permitido para expiración IA (2-5 min)
+    MIN_EXPIRATION_TIME = 2
+    MAX_EXPIRATION_TIME = 5
     
     # ============= RISK MANAGEMENT =============
     MAX_MARTINGALE = int(os.getenv("MAX_MARTINGALE", "0"))

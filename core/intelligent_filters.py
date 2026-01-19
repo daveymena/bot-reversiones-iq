@@ -78,8 +78,8 @@ class IntelligentFilters:
             return True, f"✅ {asset}: {win_rate}% win rate ({total_trades} trades)"
             
         except Exception as e:
-            # Si hay error consultando BD, permitir operar
-            print(f"[WARNING] Error consultando rendimiento de activo: {e}")
+            # Si hay error consultando BD, permitir operar (Silencioso)
+            # print(f"[WARNING] Error consultando rendimiento de activo: {e}")
             return True, "Sin datos históricos disponibles"
     
     def _check_pattern_performance(self, pattern_type: str, asset: str) -> Tuple[bool, str]:
@@ -111,7 +111,7 @@ class IntelligentFilters:
             return True, f"✅ Patrón {pattern_type}: {win_rate}% win rate"
             
         except Exception as e:
-            print(f"[WARNING] Error consultando rendimiento de patrón: {e}")
+            # print(f"[WARNING] Error consultando rendimiento de patrón: {e}")
             return True, "Sin datos de patrones disponibles"
     
     def _check_hourly_performance(self) -> Tuple[bool, str]:
@@ -146,7 +146,7 @@ class IntelligentFilters:
             return True, f"✅ Hora {current_hour}: {win_rate}% win rate"
             
         except Exception as e:
-            print(f"[WARNING] Error consultando rendimiento horario: {e}")
+            # print(f"[WARNING] Error consultando rendimiento horario: {e}")
             return True, "Sin datos horarios disponibles"
     
     def _check_common_errors(self, current_conditions: Dict) -> Tuple[bool, str]:
@@ -171,7 +171,7 @@ class IntelligentFilters:
             return True, "✅ No coincide con errores conocidos"
             
         except Exception as e:
-            print(f"[WARNING] Error consultando errores comunes: {e}")
+            # print(f"[WARNING] Error consultando errores comunes: {e}")
             return True, "Sin datos de errores disponibles"
     
     def _check_recent_streak(self, asset: str) -> Tuple[bool, str]:
@@ -196,7 +196,7 @@ class IntelligentFilters:
             return True, f"✅ Racha aceptable en {asset}"
             
         except Exception as e:
-            print(f"[WARNING] Error consultando racha reciente: {e}")
+            # print(f"[WARNING] Error consultando racha reciente: {e}")
             return True, "Sin datos de racha disponibles"
     
     def _conditions_match(self, current: Dict, historical: Dict, threshold: float = 0.8) -> bool:
@@ -257,7 +257,7 @@ class IntelligentFilters:
                 return 0.85  # Muy alta confianza si va mal
                 
         except Exception as e:
-            print(f"[WARNING] Error calculando confianza recomendada: {e}")
+            # print(f"[WARNING] Error calculando confianza recomendada: {e}")
             return 0.65
     
     def get_statistics_summary(self) -> Dict:
