@@ -375,62 +375,62 @@ class AssetManager:
             # CALL EN TENDENCIA (Pullback alcista) - Implícito en la lógica similar para alcista
             # (Se aplicaría lógica análoga si estuviera visible aquí, pero nos enfocamos en el PUT que falló)
 
-                # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
-                # ---------------------------------------------------------
-                # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
-                # ---------------------------------------------------------
-                if power_levels:
-                    target_supp = power_levels['major_supp'] if power_levels['is_trap_call'] else power_levels['recent_low']
-                    target_res  = power_levels['major_res'] if power_levels['is_trap_put'] else power_levels['recent_high']
+            # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
+            # ---------------------------------------------------------
+            # 🏢 ESTRATEGIA: PANORAMA COMPLETO (MTF REVERSAL)
+            # ---------------------------------------------------------
+            if power_levels:
+                target_supp = power_levels['major_supp'] if power_levels['is_trap_call'] else power_levels['recent_low']
+                target_res  = power_levels['major_res'] if power_levels['is_trap_put'] else power_levels['recent_high']
+                
+                dist_to_supp = abs(price - target_supp) / price
+                dist_to_res  = abs(price - target_res) / price
+                
+                # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% con verificación de mecha
+                # Queremos entrar cuando el precio esté "hundido" en el soporte (CALL)
+                if rsi < 42 and dist_to_supp < 0.0012:
+                    # Buscamos rechazo ya iniciado (mecha)
+                    lower_wick = min(last['open'], last['close']) - last['low']
+                    # SWEET SPOT: Si el precio actual está cerca del mínimo, tenemos ventaja
+                    is_in_sweet_spot = price <= last['open'] * 1.0005 
                     
-                    dist_to_supp = abs(price - target_supp) / price
-                    dist_to_res  = abs(price - target_res) / price
-                    
-                    # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% con verificación de mecha
-                    # Queremos entrar cuando el precio esté "hundido" en el soporte (CALL)
-                    if rsi < 42 and dist_to_supp < 0.0012:
-                        # Buscamos rechazo ya iniciado (mecha)
-                        lower_wick = min(last['open'], last['close']) - last['low']
-                        # SWEET SPOT: Si el precio actual está cerca del mínimo, tenemos ventaja
-                        is_in_sweet_spot = price <= last['open'] * 1.0005 
+                    if lower_wick > 0.00003 and is_in_sweet_spot:
+                        setup_found = "BALANCED_ROOT_CALL"
+                        if power_levels['is_trap_call']: setup_found = "SMC_SWEEP_CALL"
                         
-                        if lower_wick > 0.00003 and is_in_sweet_spot:
-                            setup_found = "BALANCED_ROOT_CALL"
-                            if power_levels['is_trap_call']: setup_found = "SMC_SWEEP_CALL"
-                            
-                            action = "CALL"
-                            confidence = 0.95
-                            reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
-                            reasons.append("Entrada en zona de mecha (Raíz)")
-                    
-                    # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% para PUT
-                    elif rsi > 58 and dist_to_res < 0.0012:
-                        upper_wick = last['high'] - max(last['open'], last['close'])
-                        is_in_sweet_spot = price >= last['open'] * 0.9995
-                        
-                        if upper_wick > 0.00003 and is_in_sweet_spot:
-                            setup_found = "BALANCED_ROOT_PUT"
-                            if power_levels['is_trap_put']: setup_found = "SMC_SWEEP_PUT"
-                            
-                            action = "PUT"
-                            confidence = 0.95
-                            reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
-                            reasons.append("Entrada en zona de mecha (Raíz)")
-
-                # ---------------------------------------------------------
-                # ESTRATEGIA: REVERSIÓN ESTÁNDAR M1 (Si no hay MTF cerca)
-                # ---------------------------------------------------------
-                if not setup_found:
-                    # REVERSIÓN ALCISTA (CALL)
-                    if rsi < 30 and price <= local_low * 1.0003:
-                        setup_found = "M1_REVERSAL_CALL"
                         action = "CALL"
-                        confidence = 0.85
-                    # REVERSIÓN BAJISTA (PUT)
-                    elif rsi > 70 and price >= local_high * 0.9997:
-                        setup_found = "M1_REVERSAL_PUT"
+                        confidence = 0.95
+                        reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
+                        reasons.append("Entrada en zona de mecha (Raíz)")
+                
+                # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% para PUT
+                elif rsi > 58 and dist_to_res < 0.0012:
+                    upper_wick = last['high'] - max(last['open'], last['close'])
+                    is_in_sweet_spot = price >= last['open'] * 0.9995
+                    
+                    if upper_wick > 0.00003 and is_in_sweet_spot:
+                        setup_found = "BALANCED_ROOT_PUT"
+                        if power_levels['is_trap_put']: setup_found = "SMC_SWEEP_PUT"
+                        
                         action = "PUT"
-                        confidence = 0.85
+                        confidence = 0.95
+                        reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
+                        reasons.append("Entrada en zona de mecha (Raíz)")
+
+            # ---------------------------------------------------------
+            # ESTRATEGIA: REVERSIÓN ESTÁNDAR M1 (Si no hay MTF cerca)
+            # ---------------------------------------------------------
+            if not setup_found:
+                # REVERSIÓN ALCISTA (CALL)
+                if rsi < 30 and price <= local_low * 1.0003:
+                    setup_found = "M1_REVERSAL_CALL"
+                    action = "CALL"
+                    confidence = 0.85
+                # REVERSIÓN BAJISTA (PUT)
+                elif rsi > 70 and price >= local_high * 0.9997:
+                    setup_found = "M1_REVERSAL_PUT"
+                    action = "PUT"
+                    confidence = 0.85
 
             # ---------------------------------------------------------
             # RESULTADO DEL ANÁLISIS

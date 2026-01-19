@@ -26,7 +26,5 @@ ENV HEADLESS_MODE=True
 # Crear directorios para persistencia
 RUN mkdir -p data models
 
-# Ejecutar el Bot de Aprendizaje Inteligente por defecto
-# Nota: Si prefieres ejecutar la API, puedes cambiar esto a:
-# CMD ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["python", "intelligent_learning.py"]
+# Ejecutar el Bot Orquestador (IA Central) por defecto
+CMD ["python", "main_headless.py"]

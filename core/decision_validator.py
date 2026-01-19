@@ -171,7 +171,11 @@ class DecisionValidator:
         result['reasons'].append(f"🎯 Filtros de rentabilidad PASADOS (Score: {profitability_check['score']:.0f}/100)")
         
         # Combinar confianza del análisis avanzado con score de filtros
-        combined_confidence = advanced_confidence * (profitability_check['score'] / 100)
+        # Asegurar que profitability_check['score'] esté en 0-100
+        p_score = profitability_check['score']
+        if p_score <= 1.0 and p_score > 0: p_score *= 100 # Si vino en decimal, pasar a 0-100
+        
+        combined_confidence = advanced_confidence * (p_score / 100)
         
         # SI PASA FILTROS Y TIENE CONFIANZA ACEPTABLE, APROBAR
         if combined_confidence >= 0.60:  # Reducido de 0.70 a 0.60

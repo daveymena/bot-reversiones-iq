@@ -93,7 +93,17 @@ class MarketDataHandler:
         try:
             if end_time is None:
                 end_time = time.time()
-            candles = self.api.get_candles(asset, timeframe, num_candles, end_time)
+            
+            if self.broker_name == "exnova":
+                try:
+                    # Intentar con 4 argumentos
+                    candles = self.api.get_candles(asset, timeframe, num_candles, end_time)
+                except TypeError:
+                    # Fallback a 3 argumentos si falla
+                    print(f"⚠️ Exnova get_candles falló con 4 args, intentando con 3...")
+                    candles = self.api.get_candles(asset, timeframe, num_candles)
+            else:
+                candles = self.api.get_candles(asset, timeframe, num_candles, end_time)
         except Exception as e:
             print(f"Error obteniendo velas: {e}")
             return pd.DataFrame()

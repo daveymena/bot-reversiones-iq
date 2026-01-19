@@ -657,6 +657,8 @@ class LiveTrader(QThread):
                                 
                                 if current_conf < dynamic_threshold_pct:
                                     self.signals.log_message.emit(f"⚖️ EQUILIBRIO: Confianza de {current_conf:.1f}% insuficiente para el PnL actual (Req: {dynamic_threshold_pct:.1f}%).")
+                                    # LOG EXTRA para depuración
+                                    print(f"[DEBUG] Reemplazando best_opportunity por falta de confianza: {current_conf}% < {dynamic_threshold_pct}%")
                                     self.best_opportunity = None
                                     continue
 
