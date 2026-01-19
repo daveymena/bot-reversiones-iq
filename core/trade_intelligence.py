@@ -22,6 +22,46 @@ class TradeIntelligence:
         self.recommended_wait_time = 0
         self.recommended_score_threshold = 50
         
+        # 🧠 PERSISTENCIA Y EVOLUCIÓN
+        from pathlib import Path
+        import json
+        self.db_path = Path("data/learning_database.json")
+        self.load_history()
+        
+        # Inicializar Refinador de Estrategia
+        try:
+            from ai_strategy_refiner import AIStrategyRefiner
+            self.refiner = AIStrategyRefiner(db_path=str(self.db_path))
+        except ImportError:
+            print("⚠️ No se pudo importar AIStrategyRefiner")
+            self.refiner = None
+        
+    def load_history(self):
+        """Carga historial persistente"""
+        import json
+        if self.db_path.exists():
+            try:
+                with open(self.db_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.trade_history = data.get('operations', [])
+                    print(f"🧠 Inteligencia cargada: {len(self.trade_history)} operaciones previas")
+            except Exception as e:
+                print(f"⚠️ Error cargando historia: {e}")
+                self.trade_history = []
+        else:
+            self.trade_history = []
+
+    def save_history(self):
+        """Guarda historial en disco"""
+        import json
+        try:
+            self.db_path.parent.mkdir(exist_ok=True)
+            data = {'operations': self.trade_history}
+            with open(self.db_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, default=str)
+        except Exception as e:
+            print(f"⚠️ Error guardando historia: {e}")
+
     def analyze_trade_result(self, trade_data, result):
         """
         Analiza una operación completada y aprende de ella
@@ -35,8 +75,12 @@ class TradeIntelligence:
         """
         analysis = {
             'timestamp': datetime.now().isoformat(),
+            'asset': trade_data.get('asset'),
+            'action': trade_data.get('direction', 'N/A').upper(), # Normalizar para el Refiner
+            'result': 'win' if result['won'] else 'loose',        # Normalizar para el Refiner
             'won': result['won'],
             'profit': result['profit'],
+            'strategy': {'confidence': 0}, # Placeholder para compatibilidad
             'reasons': [],
             'lessons': [],
             'recommendations': [],
@@ -46,6 +90,10 @@ class TradeIntelligence:
         # Extraer patrón de la operación
         pattern = self._extract_pattern(trade_data)
         analysis['pattern'] = pattern
+        
+        # Rellenar datos de estrategia si están disponibles en trade_data
+        if 'strategy_data' in trade_data:
+            analysis['strategy'] = trade_data['strategy_data']
         
         if result['won']:
             # GANÓ - Analizar por qué
@@ -73,10 +121,22 @@ class TradeIntelligence:
         # Guardar en historial
         self.trade_history.append(analysis)
         
-        # Limitar historial a últimas 100 operaciones
-        if len(self.trade_history) > 100:
-            self.trade_history = self.trade_history[-100:]
+        # Limitar historial a últimas 500 operaciones (aumentado para mejor aprendizaje)
+        if len(self.trade_history) > 500:
+            self.trade_history = self.trade_history[-500:]
+            
+        # 💾 PERSISTIR DATOS INMEDIATAMENTE
+        self.save_history()
         
+        # 🧠 TRIGGER DE EVOLUCIÓN (Cada 5 operaciones)
+        if len(self.trade_history) >= 10 and len(self.trade_history) % 5 == 0:
+            if self.refiner:
+                print("\n🧠 DETONANDO AUTO-EVOLUCIÓN DE ESTRATEGIA...")
+                try:
+                    self.refiner.analyze_and_evolve()
+                except Exception as e:
+                    print(f"⚠️ Error en evolución: {e}")
+
         return analysis
     
     def _extract_pattern(self, trade_data):
