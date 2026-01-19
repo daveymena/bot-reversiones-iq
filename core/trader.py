@@ -209,8 +209,20 @@ class LiveTrader(QThread):
 
         # 📊 PERFILADO INICIAL (Estudiar el mercado antes de operar)
         self.signals.log_message.emit("🧪 Generando Mapa de Rentabilidad estadístico (API)...")
+        strong_assets = []
         for asset in self.asset_manager.monitored_assets:
-            self.market_profiler.profile_asset(asset)
+            profile = self.market_profiler.profile_asset(asset)
+            # 🛡️ FILTRO DE CONFIRMACIÓN ESTADÍSTICA
+            if profile and profile.get('winrate_stat', 0) >= 53.0: 
+                strong_assets.append(asset)
+            else:
+                self.signals.log_message.emit(f"   📉 {asset} DESCARTADO por bajo rendimiento estadístico (< 53%)")
+        
+        if strong_assets:
+            self.asset_manager.monitored_assets = strong_assets
+            self.signals.log_message.emit(f"✅ Lista optimizada: {len(strong_assets)} activos fuertes")
+        else:
+             self.signals.log_message.emit("⚠️ Ningún activo supera el 53% Winrate. Operando con precaución en todos los disponibles.")
         
         print("[DEBUG] Entrando al bucle principal while...")
         iteration_count = 0

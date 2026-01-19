@@ -68,5 +68,19 @@
             "3": 50.14,
             "5": 49.57
         }
+    },
+    "AUDJPY-OTC": {
+        "asset": "AUDJPY-OTC",
+        "best_expiration": 1,
+        "winrate_stat": 50.91,
+        "reversal_quality": "NORMAL",
+        "last_update": 1768864081.015879,
+        "analysis_timestamp": "2026-01-19 18:08:01",
+        "raw_stats": {
+            "1": 50.91,
+            "2": 46.95,
+            "3": 45.73,
+            "5": 44.51
+        }
     }
 }
