@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
-from env.trading_env import BinaryOptionsEnv
+from trading_gym.trading_env import BinaryOptionsEnv
 from core.experience_buffer import ExperienceBuffer
 
 class ContinuousLearner:

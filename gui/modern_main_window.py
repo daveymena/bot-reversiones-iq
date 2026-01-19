@@ -1846,7 +1846,7 @@ class ModernMainWindow(QMainWindow):
                                         Qt.QueuedConnection,
                                         Q_ARG(str, "Creando entorno de simulación..."))
                 
-                from env.trading_env import BinaryOptionsEnv
+                from trading_gym.trading_env import BinaryOptionsEnv
                 from stable_baselines3.common.vec_env import DummyVecEnv
                 
                 env = DummyVecEnv([lambda: BinaryOptionsEnv(

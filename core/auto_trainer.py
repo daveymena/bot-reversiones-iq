@@ -1,7 +1,7 @@
 import pandas as pd
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
-from env.trading_env import BinaryOptionsEnv
+from trading_gym.trading_env import BinaryOptionsEnv
 from strategies.technical import FeatureEngineer
 from config import Config
 import os

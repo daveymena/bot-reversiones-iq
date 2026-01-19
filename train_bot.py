@@ -8,7 +8,7 @@ from config import Config
 from data.market_data import MarketDataHandler
 from strategies.technical import FeatureEngineer
 from core.agent import RLAgent
-from env.trading_env import BinaryOptionsEnv
+from trading_gym.trading_env import BinaryOptionsEnv
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 def train_bot(asset="EURUSD-OTC", num_candles=2000, timesteps=10000, broker="exnova"):
