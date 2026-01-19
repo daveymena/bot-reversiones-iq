@@ -2,71 +2,71 @@
     "EURUSD-OTC": {
         "asset": "EURUSD-OTC",
         "best_expiration": 5,
-        "winrate_stat": 56.45,
+        "winrate_stat": 56.16,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863505.412997,
-        "analysis_timestamp": "2026-01-19 17:58:25",
+        "last_update": 1768863758.8117707,
+        "analysis_timestamp": "2026-01-19 18:02:38",
         "raw_stats": {
-            "1": 47.85,
-            "2": 51.0,
-            "3": 50.72,
-            "5": 56.45
+            "1": 47.28,
+            "2": 50.72,
+            "3": 50.43,
+            "5": 56.16
         }
     },
     "GBPUSD-OTC": {
         "asset": "GBPUSD-OTC",
         "best_expiration": 5,
-        "winrate_stat": 53.66,
+        "winrate_stat": 53.5,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863505.9990199,
-        "analysis_timestamp": "2026-01-19 17:58:25",
+        "last_update": 1768863759.2794685,
+        "analysis_timestamp": "2026-01-19 18:02:39",
         "raw_stats": {
-            "1": 51.52,
-            "2": 53.35,
-            "3": 48.48,
-            "5": 53.66
+            "1": 51.37,
+            "2": 52.89,
+            "3": 48.63,
+            "5": 53.5
         }
     },
     "USDJPY-OTC": {
         "asset": "USDJPY-OTC",
         "best_expiration": 5,
-        "winrate_stat": 51.48,
+        "winrate_stat": 51.33,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863506.414358,
-        "analysis_timestamp": "2026-01-19 17:58:26",
+        "last_update": 1768863759.7526565,
+        "analysis_timestamp": "2026-01-19 18:02:39",
         "raw_stats": {
-            "1": 50.3,
-            "2": 50.89,
-            "3": 50.0,
-            "5": 51.48
+            "1": 50.15,
+            "2": 50.74,
+            "3": 49.85,
+            "5": 51.33
         }
     },
     "AUDUSD-OTC": {
         "asset": "AUDUSD-OTC",
         "best_expiration": 3,
-        "winrate_stat": 51.01,
+        "winrate_stat": 50.43,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863506.8504093,
-        "analysis_timestamp": "2026-01-19 17:58:26",
+        "last_update": 1768863760.2163455,
+        "analysis_timestamp": "2026-01-19 18:02:40",
         "raw_stats": {
-            "1": 45.82,
-            "2": 49.28,
-            "3": 51.01,
-            "5": 49.57
+            "1": 46.11,
+            "2": 48.99,
+            "3": 50.43,
+            "5": 48.99
         }
     },
     "EURJPY-OTC": {
         "asset": "EURJPY-OTC",
-        "best_expiration": 3,
-        "winrate_stat": 50.42,
+        "best_expiration": 1,
+        "winrate_stat": 50.14,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863507.3291764,
-        "analysis_timestamp": "2026-01-19 17:58:27",
+        "last_update": 1768863760.6766028,
+        "analysis_timestamp": "2026-01-19 18:02:40",
         "raw_stats": {
-            "1": 49.86,
-            "2": 49.58,
-            "3": 50.42,
-            "5": 49.86
+            "1": 50.14,
+            "2": 49.57,
+            "3": 50.14,
+            "5": 49.57
         }
     }
 }

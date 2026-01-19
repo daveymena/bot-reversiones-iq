@@ -440,6 +440,27 @@ class AssetManager:
                     confidence = 0.85
 
             # ---------------------------------------------------------
+            # 🛡️ PROTECCIÓN DE "NIVEL MEJOR" (Avoid Liquidity Traps)
+            # Si hay una reversión M1, verificar que no haya un muro grande "justo arriba"
+            # ---------------------------------------------------------
+            if setup_found and "M1_REVERSAL" in setup_found and power_levels:
+                # Caso PUT: Verificar si hay resistencia mayor cerca
+                if action == "PUT":
+                    dist_major_res = (power_levels['major_res'] - price) / price
+                    # Si la resistencia mayor está entre 0.05% y 0.2% arriba, ES UNA TRAMPA. El precio irá a buscarla.
+                    if 0.0005 < dist_major_res < 0.0020:
+                        print(f"      🛡️ TRAMPA EVITADA: Resistencia Mayor a {dist_major_res*100:.3f}% arriba. Esperando barrido.")
+                        setup_found = None # Anular señal
+                
+                # Caso CALL: Verificar si hay soporte mayor cerca
+                elif action == "CALL":
+                    dist_major_supp = (price - power_levels['major_supp']) / price
+                    # Si el soporte mayor está entre 0.05% y 0.2% abajo, ES UNA TRAMPA.
+                    if 0.0005 < dist_major_supp < 0.0020:
+                        print(f"      🛡️ TRAMPA EVITADA: Soporte Mayor a {dist_major_supp*100:.3f}% abajo. Esperando barrido.")
+                        setup_found = None # Anular señal
+
+            # ---------------------------------------------------------
             # RESULTADO DEL ANÁLISIS
             # ---------------------------------------------------------
             if setup_found:
