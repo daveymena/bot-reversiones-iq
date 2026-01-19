@@ -463,6 +463,14 @@ class LiveTrader(QThread):
                 
                 # REGLA 3: Verificar datos suficientes
                 window_size = 10
+                # REGLA 5: Verificar rentabilidad horaria (Deep Dive - Massive Training)
+                is_profitable_hour, reason_hour = self.market_profiler.check_hour_profitability(self.current_asset)
+                if not is_profitable_hour:
+                    if iteration_count % 60 == 0:
+                        self.signals.log_message.emit(f"⏸️ Omitiendo {self.current_asset}: {reason_hour}")
+                    time.sleep(1)
+                    continue
+
                 if len(df) >= window_size:
                         # Si hay una oportunidad detectada por el scanner, usarla
                         if best_opportunity and best_opportunity['asset'] == self.current_asset:

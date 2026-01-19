@@ -11,6 +11,44 @@ class MarketProfiler:
     def __init__(self, market_data):
         self.market_data = market_data
         self.profiles = {} # Cache de perfiles por activo
+        self.deep_dive_data = self._load_deep_dive()
+
+    def _load_deep_dive(self):
+        """Carga el análisis masivo de horarios si existe"""
+        import json
+        import os
+        path = os.path.join(os.getcwd(), 'data', 'market_deep_dive.json')
+        if os.path.exists(path):
+            try:
+                with open(path, 'r') as f:
+                    return json.load(f)
+            except:
+                return None
+        return None
+
+    def check_hour_profitability(self, asset):
+        """
+        Verifica si la hora actual es rentable para el activo dado
+        según el análisis masivo (Deep Dive).
+        """
+        if not self.deep_dive_data or asset not in self.deep_dive_data:
+            return True, "No hay datos históricos profundos, operando por defecto."
+
+        current_hour = str(datetime.now().hour)
+        asset_stats = self.deep_dive_data[asset]
+        
+        if current_hour in asset_stats:
+            stats = asset_stats[current_hour]
+            winrate = stats.get('winrate', 0)
+            trades = stats.get('trades', 0)
+            
+            # Umbral de rentabilidad: 55% winrate y al menos 5 trades históricos
+            if winrate >= 55 and trades >= 5:
+                return True, f"Hora RENTABLE: {winrate}% Winrate histórico en esta hora."
+            else:
+                return False, f"Hora NO RENTABLE: {winrate}% Winrate histórico insuficiente."
+        
+        return True, "Hora sin datos específicos, permitiendo operación."
 
     def profile_asset(self, asset):
         """Descarga datos y encuentra el 'Punto Dulce' de rentabilidad"""

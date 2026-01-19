@@ -119,6 +119,12 @@ def main():
         trader.signals.error_message.connect(lambda msg: print(f"❌ {msg}"))
         trader.signals.trade_signal.connect(lambda action, asset: print(f"\n🚨 SEÑAL: {action} en {asset} 🚨\n"))
         
+        # Verificar si existe el análisis profundo de horarios
+        if not os.path.exists('data/market_deep_dive.json'):
+            print("\n💡 TIP: Ejecuta 'python scripts/market_deep_dive.py' para activar el filtro de ELITE HOURS.")
+        else:
+            print("\n✅ Filtro de ELITE HOURS activado (Usando datos de análisis profundo)")
+        
         # Iniciar trading
         print("\n🚀 Iniciando motor de trading...")
         trader.start()
