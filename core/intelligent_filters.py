@@ -1,20 +1,63 @@
 """
-Filtros Inteligentes basados en Datos Históricos
-Consulta la base de datos para tomar decisiones informadas
+Filtros Inteligentes basados en Datos Históricos (JSON)
+Consulta la base de conocimientos JSON para tomar decisiones informadas
 """
-from database.db_manager import db
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
+import json
+from pathlib import Path
 
 class IntelligentFilters:
     """
-    Filtros que aprenden de datos históricos para mejorar decisiones
+    Filtros que aprenden de datos históricos (JSON) para mejorar decisiones
     """
     
-    def __init__(self):
-        self.min_pattern_win_rate = 55.0  # Mínimo 55% win rate
-        self.min_pattern_occurrences = 10  # Mínimo 10 ocurrencias para confiar
-        self.min_hourly_win_rate = 50.0  # Mínimo 50% win rate por hora
+    def __init__(self, db_path: str = "data/learning_database.json"):
+        self.min_pattern_win_rate = 55.0
+        self.min_pattern_occurrences = 10
+        self.min_hourly_win_rate = 50.0
+        self.db_path = Path(db_path)
+        self.history_cache = []
+        self.last_load_time = 0
+        self.load_history()
+        
+    def load_history(self):
+        """Carga o recarga el historial JSON"""
+        import time
+        if time.time() - self.last_load_time < 30: # Cache por 30s
+            return
+            
+        if self.db_path.exists():
+            try:
+                with open(self.db_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.history_cache = data.get('operations', [])
+                self.last_load_time = time.time()
+            except Exception as e:
+                print(f"⚠️ Error cargando cache de filtros: {e}")
+                self.history_cache = []
+        else:
+            self.history_cache = []
+
+    def _get_matches(self, asset=None, days=30):
+        """Filtra operaciones relevantes de la cache"""
+        self.load_history() # Asegurar datos frescos
+        matches = []
+        limit_date = datetime.now() - timedelta(days=days)
+        
+        for op in self.history_cache:
+            # Filtro fecha
+            try:
+                op_date = datetime.fromisoformat(op.get('timestamp', ''))
+                if op_date < limit_date: continue
+            except: continue
+            
+            # Filtro activo
+            if asset and op.get('asset') != asset:
+                continue
+                
+            matches.append(op)
+        return matches
         
     def should_trade(self, asset: str, pattern_type: Optional[str] = None, 
                     current_conditions: Optional[Dict] = None) -> Tuple[bool, str]:
@@ -57,208 +100,158 @@ class IntelligentFilters:
         return True, "✅ Todas las validaciones pasadas"
     
     def _check_asset_performance(self, asset: str) -> Tuple[bool, str]:
-        """Verifica el rendimiento histórico del activo"""
-        try:
-            stats = db.get_performance_stats(days=30, asset=asset)
-            
-            if not stats or stats.get('total_trades', 0) == 0:
-                # No hay datos suficientes, permitir operar
-                return True, f"Sin historial para {asset}"
-            
-            win_rate = stats.get('win_rate', 0)
-            total_trades = stats.get('total_trades', 0)
-            
-            if total_trades < 10:
-                # Pocos datos, permitir operar
-                return True, f"{asset}: Solo {total_trades} trades históricos"
-            
-            if win_rate < 45:
-                return False, f"❌ {asset} tiene win rate bajo: {win_rate}% (últimos 30 días)"
-            
-            return True, f"✅ {asset}: {win_rate}% win rate ({total_trades} trades)"
-            
-        except Exception as e:
-            # Si hay error consultando BD, permitir operar (Silencioso)
-            # print(f"[WARNING] Error consultando rendimiento de activo: {e}")
-            return True, "Sin datos históricos disponibles"
-    
+        """Verifica el rendimiento histórico del activo (JSON)"""
+        matches = self._get_matches(asset=asset, days=30)
+        
+        if not matches:
+             return True, f"Sin historial para {asset}"
+             
+        wins = sum(1 for op in matches if op.get('won', False))
+        total = len(matches)
+        win_rate = (wins / total) * 100
+        
+        if total < 10:
+             return True, f"{asset}: Solo {total} trades (Datos insuficientes)"
+             
+        if win_rate < 45:
+             return False, f"❌ {asset} tiene Win Rate Pobre: {win_rate:.1f}% ({wins}/{total})"
+             
+        return True, f"✅ {asset}: {win_rate:.1f}% WR ({total} trades)"
+
     def _check_pattern_performance(self, pattern_type: str, asset: str) -> Tuple[bool, str]:
-        """Verifica el rendimiento histórico del patrón"""
-        try:
-            patterns = db.get_best_patterns(asset=asset, min_occurrences=5)
+        """Verifica el rendimiento histórico del patrón (JSON)"""
+        # Filtrar por activo y patrón
+        matches = [op for op in self._get_matches(asset=asset, days=90) 
+                  if op.get('pattern', {}).get('type') == pattern_type]
+                  
+        if not matches:
+            return True, f"Sin datos para patrón {pattern_type}"
             
-            # Buscar el patrón específico
-            pattern_stats = None
-            for p in patterns:
-                if p['pattern_type'] == pattern_type:
-                    pattern_stats = p
-                    break
+        wins = sum(1 for op in matches if op.get('won', False))
+        total = len(matches)
+        
+        if total == 0: return True, "N/A"
+        win_rate = (wins / total) * 100
+        
+        if total < 5:
+            return True, f"Patrón {pattern_type}: Solo {total} obs."
             
-            if not pattern_stats:
-                # No hay datos del patrón, permitir operar
-                return True, f"Sin historial para patrón {pattern_type}"
+        if win_rate < self.min_pattern_win_rate:
+            return False, f"❌ Patrón {pattern_type} rinde mal: {win_rate:.1f}%"
             
-            win_rate = pattern_stats.get('win_rate', 0)
-            occurrences = pattern_stats.get('total_occurrences', 0)
-            
-            if occurrences < self.min_pattern_occurrences:
-                # Pocos datos, permitir operar
-                return True, f"Patrón {pattern_type}: Solo {occurrences} ocurrencias"
-            
-            if win_rate < self.min_pattern_win_rate:
-                return False, f"❌ Patrón {pattern_type} tiene win rate bajo: {win_rate}%"
-            
-            return True, f"✅ Patrón {pattern_type}: {win_rate}% win rate"
-            
-        except Exception as e:
-            # print(f"[WARNING] Error consultando rendimiento de patrón: {e}")
-            return True, "Sin datos de patrones disponibles"
-    
+        return True, f"✅ Patrón {pattern_type}: {win_rate:.1f}% WR"
+
     def _check_hourly_performance(self) -> Tuple[bool, str]:
-        """Verifica el rendimiento en la hora actual"""
-        try:
-            hourly_stats = db.get_performance_by_hour()
+        """Verifica el rendimiento en la hora actual (JSON)"""
+        current_hour = datetime.now().hour
+        matches = self._get_matches(days=30) # Todos los activos
+        
+        # Filtrar por hora
+        hour_matches = []
+        for op in matches:
+            try:
+                op_hour = datetime.fromisoformat(op.get('timestamp', '')).hour
+                if op_hour == current_hour:
+                    hour_matches.append(op)
+            except: continue
             
-            if not hourly_stats:
-                return True, "Sin datos horarios"
+        if not hour_matches:
+            return True, f"Sin historial hora {current_hour}:00"
             
-            current_hour = datetime.now().hour
+        wins = sum(1 for op in hour_matches if op.get('won', False))
+        total = len(hour_matches)
+        if total == 0: return True, "N/A"
+        
+        win_rate = (wins / total) * 100
+        
+        if total < 5:
+            return True, f"Hora {current_hour}: Pocos datos ({total})"
             
-            # Buscar estadísticas de la hora actual
-            hour_stats = None
-            for h in hourly_stats:
-                if int(h['hour']) == current_hour:
-                    hour_stats = h
-                    break
+        if win_rate < self.min_hourly_win_rate:
+            return False, f"❌ Hora {current_hour} es MALA para operar: {win_rate:.1f}%"
             
-            if not hour_stats:
-                return True, f"Sin datos para hora {current_hour}"
-            
-            win_rate = hour_stats.get('win_rate', 0)
-            total_trades = hour_stats.get('total_trades', 0)
-            
-            if total_trades < 5:
-                return True, f"Hora {current_hour}: Solo {total_trades} trades históricos"
-            
-            if win_rate < self.min_hourly_win_rate:
-                return False, f"❌ Hora {current_hour} tiene win rate bajo: {win_rate}%"
-            
-            return True, f"✅ Hora {current_hour}: {win_rate}% win rate"
-            
-        except Exception as e:
-            # print(f"[WARNING] Error consultando rendimiento horario: {e}")
-            return True, "Sin datos horarios disponibles"
+        return True, f"✅ Hora {current_hour} es segura ({win_rate:.1f}%)"
     
     def _check_common_errors(self, current_conditions: Dict) -> Tuple[bool, str]:
-        """Verifica si las condiciones actuales coinciden con errores comunes"""
-        try:
-            common_errors = db.get_common_errors(limit=10)
+        """Verifica si las condiciones actuales coinciden con errores comunes (JSON)"""
+        # Buscar operaciones perdedoras recientes
+        losses = [op for op in self._get_matches(days=30) if not op.get('won', False)]
+        
+        matches_found = 0
+        for loss in losses:
+            loss_conditions = loss.get('market_context', {})
+            # Si no hay contexto, buscar en 'state_before' si es legible, o patterns
+            if not loss_conditions and 'pattern' in loss:
+                 pass # Simple pattern match check could be done here
             
-            if not common_errors:
-                return True, "Sin errores históricos"
-            
-            # Verificar si las condiciones actuales son similares a errores pasados
-            for error in common_errors:
-                if error['occurrences'] < 3:
-                    continue  # Ignorar errores poco frecuentes
+            # Comparativo simplificado de indicadores clave
+            if self._conditions_match(current_conditions, loss_conditions):
+                matches_found += 1
                 
-                error_conditions = error.get('common_conditions', {})
-                
-                # Comparar condiciones (simplificado)
-                if self._conditions_match(current_conditions, error_conditions):
-                    return False, f"❌ Condiciones similares a error: {error['error_type']}"
-            
-            return True, "✅ No coincide con errores conocidos"
-            
-        except Exception as e:
-            # print(f"[WARNING] Error consultando errores comunes: {e}")
-            return True, "Sin datos de errores disponibles"
-    
+        if matches_found >= 3:
+             return False, f"❌ Condiciones similares a {matches_found} pérdidas recientes"
+             
+        return True, "✅ No coincide con errores conocidos"
+
     def _check_recent_streak(self, asset: str) -> Tuple[bool, str]:
-        """Verifica la racha reciente en el activo"""
-        try:
-            recent_trades = db.get_recent_trades(limit=5, asset=asset)
+        """Verifica la racha reciente en el activo (JSON)"""
+        # Obtener ultimas 5 operaciones del activo
+        matches = self._get_matches(asset=asset, days=7)
+        matches.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        recent = matches[:5]
+        
+        if len(recent) < 3:
+            return True, "Sin racha reciente"
             
-            if not recent_trades or len(recent_trades) < 3:
-                return True, "Sin racha reciente"
+        consecutive_losses = 0
+        for op in recent:
+            if not op.get('won', False):
+                consecutive_losses += 1
+            else:
+                break
+                
+        if consecutive_losses >= 3:
+            return False, f"❌ {consecutive_losses} pérdidas consecutivas en {asset}"
             
-            # Contar pérdidas consecutivas
-            consecutive_losses = 0
-            for trade in recent_trades:
-                if trade['result'] == 'loss':
-                    consecutive_losses += 1
-                else:
-                    break
-            
-            if consecutive_losses >= 3:
-                return False, f"❌ {consecutive_losses} pérdidas consecutivas en {asset}"
-            
-            return True, f"✅ Racha aceptable en {asset}"
-            
-        except Exception as e:
-            # print(f"[WARNING] Error consultando racha reciente: {e}")
-            return True, "Sin datos de racha disponibles"
-    
+        return True, f"✅ Racha aceptable en {asset}"
+
     def _conditions_match(self, current: Dict, historical: Dict, threshold: float = 0.8) -> bool:
-        """
-        Compara condiciones actuales con históricas
-        Retorna True si son similares (>80% de coincidencia)
-        """
-        if not historical:
-            return False
+        """Compara condiciones actuales con históricas"""
+        if not historical: return False
         
         matches = 0
         total = 0
+        key_indicators = ['rsi', 'macd', 'volatility']
         
-        # Comparar indicadores clave
-        key_indicators = ['rsi', 'macd', 'volatility', 'trend']
-        
-        for indicator in key_indicators:
-            if indicator in current and indicator in historical:
+        for k in key_indicators:
+            if k in current and k in historical:
                 total += 1
-                current_val = current[indicator]
-                historical_val = historical[indicator]
-                
-                # Para valores numéricos, verificar si están en rango similar
-                if isinstance(current_val, (int, float)) and isinstance(historical_val, (int, float)):
-                    # Considerar match si están dentro del 20% de diferencia
-                    if abs(current_val - historical_val) / max(abs(historical_val), 1) < 0.2:
+                try:
+                    v1 = float(current[k])
+                    v2 = float(historical[k])
+                    # Si están cerca (20% margen)
+                    if abs(v1 - v2) / (abs(v2) + 0.0001) < 0.2:
                         matches += 1
-                # Para valores string, comparar directamente
-                elif current_val == historical_val:
-                    matches += 1
-        
-        if total == 0:
-            return False
-        
-        similarity = matches / total
-        return similarity >= threshold
-    
-    def get_recommended_confidence(self, asset: str) -> float:
-        """
-        Recomienda nivel de confianza mínimo basado en rendimiento histórico
-        """
-        try:
-            stats = db.get_performance_stats(days=30, asset=asset)
-            
-            if not stats or stats.get('total_trades', 0) < 10:
-                return 0.65  # Confianza por defecto
-            
-            win_rate = stats.get('win_rate', 0)
-            
-            # Ajustar confianza basándose en win rate
-            if win_rate >= 70:
-                return 0.55  # Relajar confianza si va bien
-            elif win_rate >= 60:
-                return 0.65  # Confianza normal
-            elif win_rate >= 50:
-                return 0.75  # Aumentar confianza si va regular
-            else:
-                return 0.85  # Muy alta confianza si va mal
+                except: pass
                 
-        except Exception as e:
-            # print(f"[WARNING] Error calculando confianza recomendada: {e}")
-            return 0.65
+        if total == 0: return False
+        return (matches / total) >= threshold
+
+    def get_recommended_confidence(self, asset: str) -> float:
+        """Recomienda nivel de confianza mínimo basado en rendimiento (JSON)"""
+        matches = self._get_matches(asset=asset, days=30)
+        if not matches: return 0.65
+        
+        wins = sum(1 for op in matches if op.get('won', False))
+        total = len(matches)
+        if total < 10: return 0.65
+        
+        win_rate = (wins / total) * 100
+        
+        if win_rate >= 70: return 0.55
+        elif win_rate >= 60: return 0.65
+        elif win_rate >= 50: return 0.75
+        else: return 0.85 
     
     def get_statistics_summary(self) -> Dict:
         """Obtiene resumen de estadísticas para mostrar en GUI"""
