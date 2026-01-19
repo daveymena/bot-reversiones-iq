@@ -72,6 +72,8 @@ def main():
         feature_engineer = FeatureEngineer()
         
         print("🛡️ Inicializando gestores de riesgo...")
+        print(f"   - Capital Base: ${Config.CAPITAL_PER_TRADE}")
+        print(f"   - Martingala Max Pasos: {Config.MAX_MARTINGALE} (0 = Desactivado)")
         risk_manager = RiskManager(
             capital_per_trade=Config.CAPITAL_PER_TRADE,
             stop_loss_pct=Config.STOP_LOSS_PERCENT,

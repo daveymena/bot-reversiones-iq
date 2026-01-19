@@ -184,7 +184,7 @@ class LLMClient:
             print(f"[WARNING] Error procesando respuesta AI: {e}")
             pass
         
-        return {'is_optimal': True, 'confidence': 50, 'reasoning': 'Fallback Analysis'}
+        return {'is_optimal': False, 'confidence': 0.0, 'reasoning': 'Fallback: AI Error/Timeout'}
 
     def _safe_query(self, prompt, retries=1):
         """Intenta Groq con rotación, si falla usa Ollama"""

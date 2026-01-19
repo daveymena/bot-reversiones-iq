@@ -38,7 +38,7 @@ class DecisionValidator:
         
         # 🆕 MEJORA 4: Parámetros para análisis de momentum
         self.momentum_lookback = 10  # Velas para calcular momentum
-        self.strong_momentum_threshold = 0.5  # Umbral de momentum fuerte
+        self.strong_momentum_threshold = 0.3  # Umbral de momentum fuerte (Reducido de 0.5 para ser más estricto)
         
         # 🆕 MEJORA 6: Parámetros para volatilidad mínima
         self.require_min_volatility = True

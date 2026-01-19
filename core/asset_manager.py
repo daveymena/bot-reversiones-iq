@@ -388,7 +388,7 @@ class AssetManager:
                 
                 # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% con verificación de mecha
                 # Queremos entrar cuando el precio esté "hundido" en el soporte (CALL)
-                if rsi < 42 and dist_to_supp < 0.0012:
+                if rsi < 30 and dist_to_supp < 0.0012:
                     # Buscamos rechazo ya iniciado (mecha)
                     lower_wick = min(last['open'], last['close']) - last['low']
                     # SWEET SPOT: Si el precio actual está cerca del mínimo, tenemos ventaja
@@ -400,11 +400,11 @@ class AssetManager:
                         
                         action = "CALL"
                         confidence = 0.95
-                        reasons.append("Equilibrio: Nivel MTF + Sweet Spot")
+                        reasons.append("Equilibrio: Nivel MTF + Sweet Spot + RSI < 30")
                         reasons.append("Entrada en zona de mecha (Raíz)")
                 
                 # 🎯 PUNTO DE EQUILIBRIO: Margen de 0.12% para PUT
-                elif rsi > 58 and dist_to_res < 0.0012:
+                elif rsi > 70 and dist_to_res < 0.0012:
                     upper_wick = last['high'] - max(last['open'], last['close'])
                     is_in_sweet_spot = price >= last['open'] * 0.9995
                     
