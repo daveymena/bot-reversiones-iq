@@ -794,6 +794,12 @@ class LiveTrader(QThread):
                                     except Exception as e:
                                         print(f"[WARNING] Error iniciando análisis paralelo: {e}")
                                 
+                            # 🛡️ PROTECCIÓN FINAL: Asegurar que ES VÁLIDA antes de proceder
+                            if not validation.get('valid', False):
+                                self.signals.log_message.emit("⏸️ Operación inválida/HOLD - No ejecutar")
+                                self.best_opportunity = None
+                                continue
+
                             # Determinar tiempo de expiración según configuración
                             if Config.AUTO_EXPIRATION:
                                 # Modo Automático: Usar estadística de la API primero, sino IA
