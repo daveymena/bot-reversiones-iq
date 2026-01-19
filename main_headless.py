@@ -135,9 +135,14 @@ def main():
         while running:
             # En modo headless no necesitamos hacer mucho, el hilo del trader hace el trabajo
             # Solo vigilamos que el hilo siga vivo
+            # Solo vigilamos que el hilo siga vivo y lo reiniciamos si cae
             if not trader.isRunning():
-                print("⚠️ El hilo del trader se detuvo inesperadamente.")
-                break
+                print("⚠️ El hilo del trader se detuvo inesperadamente. REINICIANDO...")
+                try:
+                    trader.start()
+                except Exception as e:
+                    print(f"❌ Error reiniciando hilo: {e}")
+                    break
                 
             time.sleep(1)
             if PYSIDE_AVAILABLE and app:
