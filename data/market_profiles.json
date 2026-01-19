@@ -2,85 +2,99 @@
     "EURUSD-OTC": {
         "asset": "EURUSD-OTC",
         "best_expiration": 5,
-        "winrate_stat": 56.16,
+        "winrate_stat": 55.11,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863758.8117707,
-        "analysis_timestamp": "2026-01-19 18:02:38",
+        "last_update": 1768864230.7920122,
+        "analysis_timestamp": "2026-01-19 18:10:30",
         "raw_stats": {
-            "1": 47.28,
-            "2": 50.72,
-            "3": 50.43,
-            "5": 56.16
+            "1": 46.59,
+            "2": 49.72,
+            "3": 49.72,
+            "5": 55.11
         }
     },
     "GBPUSD-OTC": {
         "asset": "GBPUSD-OTC",
         "best_expiration": 5,
-        "winrate_stat": 53.5,
+        "winrate_stat": 53.66,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863759.2794685,
-        "analysis_timestamp": "2026-01-19 18:02:39",
+        "last_update": 1768864231.2324107,
+        "analysis_timestamp": "2026-01-19 18:10:31",
         "raw_stats": {
-            "1": 51.37,
-            "2": 52.89,
-            "3": 48.63,
-            "5": 53.5
+            "1": 51.52,
+            "2": 52.44,
+            "3": 48.17,
+            "5": 53.66
         }
     },
     "USDJPY-OTC": {
         "asset": "USDJPY-OTC",
         "best_expiration": 5,
-        "winrate_stat": 51.33,
+        "winrate_stat": 51.63,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863759.7526565,
-        "analysis_timestamp": "2026-01-19 18:02:39",
+        "last_update": 1768864231.6904182,
+        "analysis_timestamp": "2026-01-19 18:10:31",
         "raw_stats": {
-            "1": 50.15,
-            "2": 50.74,
+            "1": 50.45,
+            "2": 50.45,
             "3": 49.85,
-            "5": 51.33
+            "5": 51.63
         }
     },
     "AUDUSD-OTC": {
         "asset": "AUDUSD-OTC",
         "best_expiration": 3,
-        "winrate_stat": 50.43,
+        "winrate_stat": 50.58,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863760.2163455,
-        "analysis_timestamp": "2026-01-19 18:02:40",
+        "last_update": 1768864232.1583686,
+        "analysis_timestamp": "2026-01-19 18:10:32",
         "raw_stats": {
-            "1": 46.11,
-            "2": 48.99,
-            "3": 50.43,
-            "5": 48.99
+            "1": 45.66,
+            "2": 48.55,
+            "3": 50.58,
+            "5": 49.42
         }
     },
     "EURJPY-OTC": {
         "asset": "EURJPY-OTC",
-        "best_expiration": 1,
-        "winrate_stat": 50.14,
+        "best_expiration": 3,
+        "winrate_stat": 51.85,
         "reversal_quality": "NORMAL",
-        "last_update": 1768863760.6766028,
-        "analysis_timestamp": "2026-01-19 18:02:40",
+        "last_update": 1768864232.6292765,
+        "analysis_timestamp": "2026-01-19 18:10:32",
         "raw_stats": {
-            "1": 50.14,
-            "2": 49.57,
-            "3": 50.14,
-            "5": 49.57
+            "1": 50.71,
+            "2": 50.14,
+            "3": 51.85,
+            "5": 51.0
+        }
+    },
+    "GBPJPY-OTC": {
+        "asset": "GBPJPY-OTC",
+        "best_expiration": 5,
+        "winrate_stat": 55.15,
+        "reversal_quality": "NORMAL",
+        "last_update": 1768865307.3385603,
+        "analysis_timestamp": "2026-01-19 18:28:27",
+        "raw_stats": {
+            "1": 47.35,
+            "2": 50.97,
+            "3": 50.7,
+            "5": 55.15
         }
     },
     "AUDJPY-OTC": {
         "asset": "AUDJPY-OTC",
         "best_expiration": 1,
-        "winrate_stat": 50.91,
+        "winrate_stat": 50.45,
         "reversal_quality": "NORMAL",
-        "last_update": 1768864081.015879,
-        "analysis_timestamp": "2026-01-19 18:08:01",
+        "last_update": 1768865673.9011998,
+        "analysis_timestamp": "2026-01-19 18:34:33",
         "raw_stats": {
-            "1": 50.91,
-            "2": 46.95,
-            "3": 45.73,
-            "5": 44.51
+            "1": 50.45,
+            "2": 47.13,
+            "3": 45.32,
+            "5": 43.5
         }
     }
 }

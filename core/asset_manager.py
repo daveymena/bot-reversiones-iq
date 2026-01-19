@@ -240,12 +240,21 @@ class AssetManager:
             major_supp = df_m15['low'].min()
             
             # Niveles Recientes (Posibles trampas de liquidez)
-            recent_high = df_m15['high'].tail(10).max()
-            recent_low = df_m15['low'].tail(10).min()
+            recent_high = df_m15['high'].tail(15).max() # Aumentado a 15 velas
+            recent_low = df_m15['low'].tail(15).min()
             
             # Detectar si el nivel reciente es una trampa (hay uno más extremo muy cerca)
-            is_trap_call = abs(recent_low - major_supp) / major_supp < 0.001 and recent_low != major_supp
-            is_trap_put = abs(recent_high - major_res) / major_res < 0.001 and recent_high != major_res
+            # RANGO TRAP: 0.1% a 0.3% (Aumentado para detectar trampas visuales claras como la del usuario)
+            trap_margin_min = 0.0005 # 0.05%
+            trap_margin_max = 0.0030 # 0.30%
+            
+            # CALL TRAP: Low reciente es falso, hay un soporte mayor un poco más abajo
+            dist_supp = abs(recent_low - major_supp) / major_supp
+            is_trap_call = (dist_supp > trap_margin_min and dist_supp < trap_margin_max)
+            
+            # PUT TRAP: High reciente es falso, hay una resistencia mayor un poco más arriba
+            dist_res = abs(major_res - recent_high) / major_res
+            is_trap_put = (dist_res > trap_margin_min and dist_res < trap_margin_max)
             
             return {
                 'major_res': major_res,
@@ -447,16 +456,16 @@ class AssetManager:
                 # Caso PUT: Verificar si hay resistencia mayor cerca
                 if action == "PUT":
                     dist_major_res = (power_levels['major_res'] - price) / price
-                    # Si la resistencia mayor está entre 0.05% y 0.2% arriba, ES UNA TRAMPA. El precio irá a buscarla.
-                    if 0.0005 < dist_major_res < 0.0020:
+                    # Si la resistencia mayor está entre 0.05% y 0.3% arriba, ES UNA TRAMPA.
+                    if 0.0005 < dist_major_res < 0.0030:
                         print(f"      🛡️ TRAMPA EVITADA: Resistencia Mayor a {dist_major_res*100:.3f}% arriba. Esperando barrido.")
                         setup_found = None # Anular señal
                 
                 # Caso CALL: Verificar si hay soporte mayor cerca
                 elif action == "CALL":
                     dist_major_supp = (price - power_levels['major_supp']) / price
-                    # Si el soporte mayor está entre 0.05% y 0.2% abajo, ES UNA TRAMPA.
-                    if 0.0005 < dist_major_supp < 0.0020:
+                    # Si el soporte mayor está entre 0.05% y 0.3% abajo, ES UNA TRAMPA.
+                    if 0.0005 < dist_major_supp < 0.0030:
                         print(f"      🛡️ TRAMPA EVITADA: Soporte Mayor a {dist_major_supp*100:.3f}% abajo. Esperando barrido.")
                         setup_found = None # Anular señal
 
