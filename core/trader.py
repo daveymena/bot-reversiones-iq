@@ -669,10 +669,32 @@ class LiveTrader(QThread):
                                     self.best_opportunity = None
                                     continue
                                 
-                                # Ajustar confianza dinámica basada en PnL
+                                # Adjust dynamic confidence based on PnL
                                 dynamic_threshold_pct = self.consistency_manager.get_dynamic_confidence_threshold() * 100
                                 current_conf = validation.get('confidence', 0)
                                 if current_conf <= 1.0: current_conf *= 100
+                                
+                                # 🤝 INTEGRACIÓN CON ENTRENADOR PARALELO
+                                # Consultar qué estrategia está ganando en la simulación reciente
+                                best_sim_strat, sim_win_rate = self.parallel_trainer.get_best_current_strategy()
+                                
+                                if best_sim_strat:
+                                    self.signals.log_message.emit(f"   🤖 Shadow Insight: Estrategia '{best_sim_strat}' tiene {sim_win_rate*100:.1f}% WR en simulación")
+                                    
+                                    # Lógica de Adaptación
+                                    is_reversion = 'rsi' in validation.get('reasons', [''])[0].lower() or 'bandas' in validation.get('reasons', [''])[0].lower()
+                                    is_continuation = 'tendencia' in validation.get('reasons', [''])[0].lower()
+                                    
+                                    if best_sim_strat == 'reversion' and is_reversion and sim_win_rate >= 0.7:
+                                        self.signals.log_message.emit("   🚀 BOOST: La simulación confirma que las REVERSIONES están funcionando hoy.")
+                                        validation['confidence'] = min(0.99, validation['confidence'] + 0.10) # +10% boost
+                                        current_conf = validation['confidence'] * 100
+                                        
+                                    elif best_sim_strat == 'continuation' and is_reversion and sim_win_rate >= 0.7:
+                                        self.signals.log_message.emit("   ⚠️ ADVERTENCIA: La simulación dice que solo las CONTINUACIONES funcionan.")
+                                        # No bloquear, pero no dar boost. O penalizar levemente:
+                                        validation['confidence'] *= 0.90 
+                                        current_conf = validation['confidence'] * 100
                                 
                                 if current_conf < dynamic_threshold_pct:
                                     self.signals.log_message.emit(f"⚖️ EQUILIBRIO: Confianza de {current_conf:.1f}% insuficiente para el PnL actual (Req: {dynamic_threshold_pct:.1f}%).")

@@ -278,6 +278,13 @@ class IntelligentLearningSystem:
         # Obtener refinamientos del optimizador
         refinements = self.knowledge_optimizer.get_refinements_for_asset(asset)
         
+        # 🔄 RELOAD: Verificar si hay nuevas reglas de IA (cada 60s)
+        if not hasattr(self, 'last_meta_check'): self.last_meta_check = 0
+        import time
+        if time.time() - self.last_meta_check > 60:
+            self.load_meta_rules()
+            self.last_meta_check = time.time()
+        
         # 1. Filtro de Activo Tóxico
         if False: # refinements['is_toxic']:
             strategy['confidence'] *= 0.7

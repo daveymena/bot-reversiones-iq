@@ -38,6 +38,27 @@ class ParallelTrainer:
         self.last_analysis_time = 0
         self.analysis_interval = 60  # Analizar cada 60 segundos
         
+        # 🧠 MEMORIA DE CORTO PLAZO (Últimas 20 simulaciones por estrategia)
+        self.strategy_performance = {
+            'reversion': [],    # [True, False, True...]
+            'continuation': []
+        }
+
+    def get_best_current_strategy(self):
+        """Retorna la estrategia con mejor rendimiento actual (>60% WR)"""
+        strategies = {}
+        for stra, results in self.strategy_performance.items():
+            if len(results) >= 5: # Mínimo 5 muestras
+                recent = results[-10:] # Últimas 10
+                win_rate = sum(recent) / len(recent)
+                strategies[stra] = win_rate
+        
+        if not strategies:
+            return None, 0.0
+            
+        best_strat = max(strategies.items(), key=lambda x: x[1])
+        return best_strat[0], best_strat[1] # (nombre, win_rate)
+        
     def analyze_opportunity(self, asset: str, df: pd.DataFrame, 
                            real_decision: Optional[str] = None) -> Dict:
         """
@@ -365,6 +386,14 @@ class ParallelTrainer:
             else:
                 self.training_stats['losses'] += 1
             
+            # 🧠 ACTUALIZAR MEMORIA DE CORTO PLAZO
+            strat_type = trade['strategy'] # 'reversion' o 'continuation'
+            if strat_type in self.strategy_performance:
+                self.strategy_performance[strat_type].append(won)
+                # Mantener solo últimas 20
+                if len(self.strategy_performance[strat_type]) > 20:
+                    self.strategy_performance[strat_type].pop(0)
+
             # Calcular lección aprendida
             lesson = self._extract_lesson(trade, won, exit_price)
             self.training_stats['lessons_learned'].append(lesson)
