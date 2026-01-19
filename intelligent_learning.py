@@ -441,10 +441,12 @@ class IntelligentLearningSystem:
                     strategy['confidence'] *= 0.8
                     strategy['reason'] += f" (🤖 IA RSI Buffer: +{rsi_buffer})"
 
-            # Min Confidence Override
+            # Min Confidence Override (Ajustado para no ser tan punitivo en Testing)
             min_override = self.meta_rules.get('dynamic_adjustments', {}).get('min_confidence_override', 0)
             if min_override > 0 and strategy['confidence'] < min_override:
-                strategy['confidence'] *= 0.5
+                # Si estamos en modo testing, la penalización es menor
+                penalty = 0.8 if self.get_adaptive_threshold() < 60 else 0.5
+                strategy['confidence'] *= penalty
                 strategy['reason'] += f" (🤖 IA Min Confidence Check: {min_override}%)"
 
         # 5. NUEVO: FILTRO DE INTENCIÓN DE MERCADO (Inercia Insoportable)
@@ -697,8 +699,12 @@ class IntelligentLearningSystem:
         2. FASE OPTIMIZACIÓN (30-100 ops): Umbral medio (70%) ajustado por WR.
         3. FASE ÉLITE (>100 ops): Umbral alto (85%) para máxima precisión.
         """
-        # --- MODO AGRESIVO TEMPORAL PARA TESTING (v4) ---
-        print(f"   🧠 MODO TESTING AGRESIVO: Umbral forzado a 55% para ver operaciones.")
+        # --- MODO BALANCEADO PARA NUBE ---
+        total_ops = len(self.learning_database.get('operations', []))
+        if total_ops < 15:
+            print(f"   🧠 MODO INICIO RÁPIDO ({total_ops}/15 ops): Umbral de 50% para activar el bot.")
+            return 50.0
+        
         return 55.0
 
         # ops = self.learning_database.get('operations', [])
