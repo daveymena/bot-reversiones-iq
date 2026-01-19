@@ -12,7 +12,14 @@ import os
 # Asegurar que el directorio raíz está en el path
 sys.path.append(os.getcwd())
 
-from PySide6.QtCore import QCoreApplication
+# Importar PySide6 de forma opcional
+try:
+    from PySide6.QtCore import QCoreApplication
+    PYSIDE_AVAILABLE = True
+except ImportError:
+    PYSIDE_AVAILABLE = False
+    print("⚠️ PySide6 no detectado. Usando modo consola puro.")
+
 from core.trader import LiveTrader
 from data.market_data import MarketDataHandler # Usar la clase correcta
 from core.agent import RLAgent
@@ -36,7 +43,11 @@ def signal_handler(sig, frame):
 
 def main():
     global running, trader
-    app = QCoreApplication(sys.argv)
+    app = None
+    if PYSIDE_AVAILABLE:
+        app = QCoreApplication(sys.argv)
+    else:
+        print("ℹ️ Iniciando sin QCoreApplication (Modo Servidor)")
     
     # Registrar handlers de señales
     signal.signal(signal.SIGINT, signal_handler)
@@ -64,7 +75,8 @@ def main():
         risk_manager = RiskManager(
             capital_per_trade=Config.CAPITAL_PER_TRADE,
             stop_loss_pct=Config.STOP_LOSS_PERCENT,
-            take_profit_pct=Config.TAKE_PROFIT_PERCENT
+            take_profit_pct=Config.TAKE_PROFIT_PERCENT,
+            max_martingale_steps=Config.MAX_MARTINGALE
         )
         asset_manager = AssetManager(market_data)
         
@@ -120,7 +132,8 @@ def main():
                 break
                 
             time.sleep(1)
-            app.processEvents()
+            if PYSIDE_AVAILABLE and app:
+                app.processEvents()
             
             # Cada cierto tiempo podemos imprimir un heartbeat
             # if int(time.time()) % 60 == 0:

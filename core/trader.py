@@ -10,16 +10,27 @@ except Exception as e:
     # Capturar CUALQUIER error (ImportError, RuntimeError, OSError por falta de .so, etc.)
     print(f"⚠️ PySide6 no disponible ({type(e).__name__}: {e}). Ejecutando en modo HEADLESS (sin GUI)")
     GUI_AVAILABLE = False
-    # Mock classes para evitar errores en modo headless
+    class Signal:
+        def __init__(self, *args, **kwargs):
+            self.slots = []
+        def connect(self, slot):
+            self.slots.append(slot)
+        def emit(self, *args, **kwargs):
+            for slot in self.slots:
+                try:
+                    slot(*args, **kwargs)
+                except Exception as e:
+                    print(f"Error calling slot: {e}")
     class QThread:
         def __init__(self, *args, **kwargs): pass
-        def start(self): pass
-        def wait(self): pass
+        def start(self):
+            # En modo headless real, llamamos a run() directamente si no hay hilos
+            if hasattr(self, 'run'):
+                self.run()
+        def wait(self, *args, **kwargs): pass
+        def isRunning(self): return getattr(self, 'running', False)
     class QObject:
         def __init__(self, *args, **kwargs): pass
-    class Signal:
-        def __init__(self, *args, **kwargs): pass
-        def emit(self, *args, **kwargs): pass
 
 from core.risk import RiskManager
 from config import Config
