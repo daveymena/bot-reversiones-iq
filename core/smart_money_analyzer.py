@@ -80,7 +80,7 @@ class SmartMoneyAnalyzer:
             # Buscar vela de intención fuerte (Bullish OB)
             # Una vela bajista seguida de un movimiento alcista fuerte que rompe su máximo
             if candle['close'] < candle['open'] and next_candle['close'] > candle['high']:
-                if body_size > avg_body * 1.5:
+                if body_size > avg_body * 1.1:
                     obs.append({
                         'type': 'bullish',
                         'price': candle['low'],
@@ -94,7 +94,7 @@ class SmartMoneyAnalyzer:
             
             # Bearish OB
             elif candle['close'] > candle['open'] and next_candle['close'] < candle['low']:
-                if body_size > avg_body * 1.5:
+                if body_size > avg_body * 1.1:
                     obs.append({
                         'type': 'bearish',
                         'price': candle['high'],

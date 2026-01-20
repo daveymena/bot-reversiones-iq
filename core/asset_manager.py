@@ -222,8 +222,8 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró una oportunidad REAL (score >= 30, bajado para testing agresivo)
-        if best_opportunity and best_opportunity['score'] >= 30:
+        # Solo retornar si encontró una oportunidad REAL (score >= 25, bajado para captar más setups)
+        if best_opportunity and best_opportunity['score'] >= 25:
             return best_opportunity
         
         return None

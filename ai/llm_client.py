@@ -251,11 +251,11 @@ class LLMClient:
 
         === TU MISIÓN COMO TRADER PROFESIONAL ===
         
-        Analiza TODA esta información como un trader institucional y decide:
+        Analiza TODA esta información como un trader institucional especializado en ALTA FRECUENCIA y decide:
         
-        1. ¿HAY UNA OPORTUNIDAD REAL DE TRADING?
+        1. ¿HAY UNA OPORTUNIDAD REAL DE TRADING? (Considera que una ventaja del 60% ya es rentable)
         2. ¿QUÉ DIRECCIÓN (CALL/PUT)?
-        3. ¿CUÁL ES TU NIVEL DE CONFIANZA?
+        3. ¿CUÁL ES TU NIVEL DE CONFIANZA? (No seas extremadamente conservador: 75-85% es muy bueno)
         4. ¿CUÁNTO ARRIESGAR?
 
         CONCEPTOS CLAVE A EVALUAR:
@@ -268,12 +268,11 @@ class LLMClient:
         - Confluencias múltiples
 
         REGLAS DE ORO:
-        1. SOLO opera si hay al menos 3 confluencias
+        1. SOLO opera si hay al menos 2 confluencias claras
         2. EVITA niveles saturados (muchos toques)
         3. BUSCA niveles frescos institucionales
-        4. NO persigas el precio - espera retrocesos
-        5. CONFIRMA la dirección con estructura de mercado
-        6. RESPETA el risk management (máximo 2% por trade)
+        4. CONFIRMA la dirección con estructura de mercado
+        5. RESPETA el risk management
 
         RESPONDE ÚNICAMENTE CON ESTE JSON:
         {{

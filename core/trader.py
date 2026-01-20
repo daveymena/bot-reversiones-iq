@@ -219,10 +219,10 @@ class LiveTrader(QThread):
         for asset in self.asset_manager.monitored_assets:
             profile = self.market_profiler.profile_asset(asset)
             # 🛡️ FILTRO DE CONFIRMACIÓN ESTADÍSTICA
-            if profile and profile.get('winrate_stat', 0) >= 53.0: 
+            if profile and profile.get('winrate_stat', 0) >= 51.0: 
                 strong_assets.append(asset)
             else:
-                self.signals.log_message.emit(f"   📉 {asset} DESCARTADO por bajo rendimiento estadístico (< 53%)")
+                self.signals.log_message.emit(f"   📉 {asset} DESCARTADO por bajo rendimiento estadístico (< 51%)")
         
         if strong_assets:
             self.asset_manager.monitored_assets = strong_assets
