@@ -222,3 +222,139 @@ class LLMClient:
                 return f"Error Ollama ({response.status_code})"
         except Exception as e:
             return f"Error conexión Ollama local: {e}"
+
+    def analyze_complete_trading_opportunity(self, market_data_summary, smart_money_analysis, 
+                                           learning_insights, asset, current_balance):
+        """
+        OLLAMA COMO ORQUESTADOR PRINCIPAL - Analiza toda la información y toma la decisión final
+        """
+        
+        recent_lessons = self._get_recent_lessons()
+        
+        prompt = f"""
+        ERES EL TRADER PROFESIONAL PRINCIPAL - TOMAS TODAS LAS DECISIONES DE TRADING
+
+        ACTIVO: {asset}
+        BALANCE ACTUAL: ${current_balance:.2f}
+
+        === MEMORIA DE TUS OPERACIONES ANTERIORES ===
+        {recent_lessons}
+
+        === ANÁLISIS TÉCNICO COMPLETO ===
+        {market_data_summary}
+
+        === ANÁLISIS SMART MONEY CONCEPTS ===
+        {smart_money_analysis}
+
+        === INSIGHTS DE APRENDIZAJE PROFESIONAL ===
+        {learning_insights}
+
+        === TU MISIÓN COMO TRADER PROFESIONAL ===
+        
+        Analiza TODA esta información como un trader institucional y decide:
+        
+        1. ¿HAY UNA OPORTUNIDAD REAL DE TRADING?
+        2. ¿QUÉ DIRECCIÓN (CALL/PUT)?
+        3. ¿CUÁL ES TU NIVEL DE CONFIANZA?
+        4. ¿CUÁNTO ARRIESGAR?
+
+        CONCEPTOS CLAVE A EVALUAR:
+        - Order Blocks frescos vs mitigados
+        - Fair Value Gaps sin llenar
+        - Zonas de liquidez institucional
+        - Break of Structure (BOS) vs Change of Character (CHoCH)
+        - Inducement patterns (trampas de liquidez)
+        - Timing de entrada óptimo
+        - Confluencias múltiples
+
+        REGLAS DE ORO:
+        1. SOLO opera si hay al menos 3 confluencias
+        2. EVITA niveles saturados (muchos toques)
+        3. BUSCA niveles frescos institucionales
+        4. NO persigas el precio - espera retrocesos
+        5. CONFIRMA la dirección con estructura de mercado
+        6. RESPETA el risk management (máximo 2% por trade)
+
+        RESPONDE ÚNICAMENTE CON ESTE JSON:
+        {{
+            "should_trade": true/false,
+            "direction": "CALL"/"PUT"/null,
+            "confidence": 0-100,
+            "position_size": 0.0,
+            "primary_reason": "Razón principal en 1 frase",
+            "confluences": ["lista", "de", "confluencias", "detectadas"],
+            "risk_factors": ["lista", "de", "riesgos", "identificados"],
+            "market_phase": "accumulation/markup/distribution/markdown/ranging",
+            "expected_outcome": "win"/"loss"/"uncertain",
+            "timing_quality": "excellent"/"good"/"poor",
+            "smart_money_signal": "bullish"/"bearish"/"neutral"
+        }}
+        """
+        
+        try:
+            response = self._safe_query(prompt)
+            return self._parse_trading_decision(response)
+        except Exception as e:
+            print(f"[ERROR] Error en análisis completo de Ollama: {e}")
+            return self._get_safe_default_decision()
+
+    def _parse_trading_decision(self, response):
+        """Parsea la respuesta de decisión de trading de Ollama"""
+        try:
+            # Buscar JSON en la respuesta
+            start = response.find('{')
+            end = response.rfind('}') + 1
+            
+            if start >= 0 and end > start:
+                json_str = response[start:end]
+                
+                try:
+                    data = json.loads(json_str)
+                except json.JSONDecodeError:
+                    # Intento con ast.literal_eval para comillas simples
+                    import ast
+                    try:
+                        data = ast.literal_eval(json_str)
+                    except:
+                        print(f"[WARNING] No se pudo parsear decisión de Ollama: {json_str[:100]}...")
+                        return self._get_safe_default_decision()
+                
+                # Normalizar valores booleanos
+                should_trade = data.get('should_trade', False)
+                if isinstance(should_trade, str):
+                    should_trade = should_trade.lower() in ['true', 'yes', 'si', '1']
+                
+                return {
+                    'should_trade': should_trade,
+                    'direction': data.get('direction'),
+                    'confidence': float(data.get('confidence', 0)),
+                    'position_size': float(data.get('position_size', 0)),
+                    'primary_reason': data.get('primary_reason', 'Análisis Ollama'),
+                    'confluences': data.get('confluences', []),
+                    'risk_factors': data.get('risk_factors', []),
+                    'market_phase': data.get('market_phase', 'ranging'),
+                    'expected_outcome': data.get('expected_outcome', 'uncertain'),
+                    'timing_quality': data.get('timing_quality', 'poor'),
+                    'smart_money_signal': data.get('smart_money_signal', 'neutral')
+                }
+            
+        except Exception as e:
+            print(f"[ERROR] Error parseando decisión de Ollama: {e}")
+        
+        return self._get_safe_default_decision()
+
+    def _get_safe_default_decision(self):
+        """Decisión segura por defecto cuando Ollama falla"""
+        return {
+            'should_trade': False,
+            'direction': None,
+            'confidence': 0,
+            'position_size': 0,
+            'primary_reason': 'Error en análisis de IA - modo seguro',
+            'confluences': [],
+            'risk_factors': ['Error de comunicación con Ollama'],
+            'market_phase': 'ranging',
+            'expected_outcome': 'uncertain',
+            'timing_quality': 'poor',
+            'smart_money_signal': 'neutral'
+        }

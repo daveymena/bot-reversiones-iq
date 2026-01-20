@@ -55,6 +55,8 @@ from core.intelligent_filters import IntelligentFilters
 from core.parallel_trainer import ParallelTrainer
 from core.market_structure_analyzer import MarketStructureAnalyzer
 from core.consistency_manager import ConsistencyManager
+from core.smart_money_analyzer import SmartMoneyAnalyzer
+from core.professional_learning_system import ProfessionalLearningSystem
 from database.db_manager import db
 from datetime import datetime
 import json
@@ -103,6 +105,10 @@ class LiveTrader(QThread):
         
         self.market_structure_analyzer = MarketStructureAnalyzer()
         self.consistency_manager = ConsistencyManager()
+        
+        # 🧠 SISTEMAS DE INTELIGENCIA PROFESIONAL (NUEVO)
+        self.smart_money_analyzer = SmartMoneyAnalyzer()
+        self.professional_learning = ProfessionalLearningSystem()
         
         self.signals = TraderSignals()
         self.running = False
@@ -484,116 +490,121 @@ class LiveTrader(QThread):
                     continue
 
                 if len(df) >= window_size:
-                        # Si hay una oportunidad detectada por el scanner, usarla
+                        # 🧠 OLLAMA COMO ORQUESTADOR PRINCIPAL - NUEVA ARQUITECTURA
                         if best_opportunity and best_opportunity['asset'] == self.current_asset:
-                            self.signals.log_message.emit(f"\n🎯 Analizando oportunidad detectada...")
+                            self.signals.log_message.emit(f"\n🧠 OLLAMA ANALIZANDO OPORTUNIDAD COMPLETA...")
                             
-                            # Usar la acción sugerida por el scanner
-                            action = 1 if best_opportunity['action'] == 'CALL' else 2
-                            
-                            # 2. ANÁLISIS DE INDICADORES
+                            # 1. PREPARAR ANÁLISIS TÉCNICO COMPLETO
                             indicators_analysis = self.analyze_indicators(df)
                             
-                            # 2.5 ANÁLISIS DE ESTRUCTURA PREVIO (Para contexto IA)
-                            htf_context_str = "Sin contexto HTF"
-                            try:
-                                # Analizar estructura completa (simulado o real si hay datos)
-                                market_analysis_pre = self.market_structure_analyzer.analyze_full_context(df)
-                                htf_context_str = f"Trend: {market_analysis_pre.get('main_trend', 'N/A')}, Volatility: {market_analysis_pre.get('volatility_state', 'NORMAL')}"
-                                if 'levels' in market_analysis_pre:
-                                     htf_context_str += f", Near Level: {market_analysis_pre['levels'].get('nearest', 'None')}"
-                            except Exception as e:
-                                print(f"Warning HTF context: {e}")
-
-                            # 🧪 PERFILADOR DE MERCADO (Análisis estadístico de la API)
-                            # Usar perfil existente si es reciente para no perder tiempo
-                            asset_profile = self.market_profiler.profiles.get(self.current_asset)
-                            if not asset_profile or (time.time() - asset_profile['last_update'] > 3600):
-                                asset_profile = self.market_profiler.profile_asset(self.current_asset)
+                            # 2. ANÁLISIS SMART MONEY COMPLETO
+                            smart_money_analysis = self.smart_money_analyzer.analyze_smart_money_structure(df)
                             
-                            stats_context = ""
-                            if asset_profile:
-                                stats_context = f"DATO API (RENTABILIDAD): Expiración de {asset_profile['best_expiration']} min es la mejor hoy ({asset_profile['winrate_stat']:.1f}% winrate)."
-                                # self.signals.log_message.emit(f"📊 Estadística API: {asset_profile['best_expiration']} min tiene mayor probabilidad en {self.current_asset}")
-
-                            # 🔥 OPTIMIZACIÓN: SALTO DE FILTROS PARA SEÑALES INSTITUCIONALES (ROOT)
-                            # Si el AssetManager ya hizo el análisis de panorama completo (M15)
-                            # y nos da una señal de alta confianza, saltamos validaciones redundantes
-                            is_institutional_root = "ROOT" in best_opportunity.get('setup', '') or "SMC" in best_opportunity.get('setup', '')
+                            # 3. ANÁLISIS DE ESTRUCTURA DE MERCADO
+                            market_structure = self.market_structure_analyzer.analyze_full_context(df)
                             
-                            if is_institutional_root and (best_opportunity['confidence'] >= 90 or best_opportunity['confidence'] >= 0.90):
-                                self.signals.log_message.emit(f"🚀 SEÑAL INSTITUCIONAL DETECTADA ({best_opportunity['setup']})")
-                                self.signals.log_message.emit("⚡ Saltando validaciones redundantes para entrada inmediata en la RAÍZ")
-                                
-                                # Asegurar escala 0-100 para la confianza
-                                conf_val = best_opportunity['confidence']
-                                if conf_val <= 1.0: conf_val *= 100
-
-                                validation = {
-                                    'valid': True, 
-                                    'recommendation': best_opportunity['action'],
-                                    'confidence': conf_val / 100, # Escala 0-1 para consistencia con DecisionValidator
-                                    'reasons': [
-                                        f"Señal Institucional ({best_opportunity['setup']})",
-                                        "Detección de Pantalla Completa M15/M30",
-                                        f"Estadística API: Expiración {asset_profile['best_expiration'] if asset_profile else '3'} min"
-                                    ],
-                                    'warnings': []
-                                }
-                                # Forzar dirección y validez para el resto de la lógica
-                                action = 1 if best_opportunity['action'] == 'CALL' else 2
-                                indicators_analysis = {'direction': best_opportunity['action'], 'score': 100}
-                                timing_analysis = {
-                                    'is_optimal': True, 
-                                    'confidence': conf_val / 100, 
-                                    'wait_time': 0,
-                                    'recommended_expiration': asset_profile['best_expiration'] if asset_profile else Config.MANUAL_EXPIRATION
-                                }
+                            # 4. INSIGHTS DE APRENDIZAJE PROFESIONAL
+                            learning_insights = self.professional_learning.get_learning_insights()
                             
-                            else:
-                                # 3. 🎯 IA VISUAL ANALIZA EL TIMING PERFECTO (OLLAMA)
-                                timing_analysis = None
-                                if self.llm_client and Config.USE_LLM:
-                                    try:
-                                        self.signals.log_message.emit("⏱️ IA Visual (Ollama) analizando gráfico...")
-                                        timing_analysis = self.llm_client.analyze_entry_timing(
-                                            df=df,
-                                            proposed_action=best_opportunity['action'],
-                                            proposed_asset=self.current_asset,
-                                            extra_context=f"{htf_context_str} | {stats_context}"
-                                        )
+                            # 5. PREPARAR RESUMEN PARA OLLAMA
+                            market_data_summary = self._prepare_market_summary(df, indicators_analysis, market_structure, best_opportunity)
+                            smart_money_summary = self._prepare_smart_money_summary(smart_money_analysis)
+                            learning_summary = self._prepare_learning_summary(learning_insights)
+                            
+                            # 6. � OLLAMA TOMA LA DECISIÓN FINAL
+                            if self.llm_client and Config.USE_LLM:
+                                try:
+                                    self.signals.log_message.emit("🧠 Ollama analizando como trader profesional...")
+                                    
+                                    ollama_decision = self.llm_client.analyze_complete_trading_opportunity(
+                                        market_data_summary=market_data_summary,
+                                        smart_money_analysis=smart_money_summary,
+                                        learning_insights=learning_summary,
+                                        asset=self.current_asset,
+                                        current_balance=self.market_data.get_balance()
+                                    )
+                                    
+                                    # 7. PROCESAR DECISIÓN DE OLLAMA
+                                    if ollama_decision['should_trade']:
+                                        self.signals.log_message.emit(f"\n✅ OLLAMA CONFIRMA OPERACIÓN:")
+                                        self.signals.log_message.emit(f"   Dirección: {ollama_decision['direction']}")
+                                        self.signals.log_message.emit(f"   Confianza: {ollama_decision['confidence']:.0f}%")
+                                        self.signals.log_message.emit(f"   Razón: {ollama_decision['primary_reason']}")
                                         
-                                        if timing_analysis:
-                                            if not timing_analysis['is_optimal'] and timing_analysis['wait_time'] > 0:
-                                                if timing_analysis['confidence'] >= 0.55:
-                                                    self.signals.log_message.emit(f"⚡ Confianza aceptable ({timing_analysis['confidence']*100:.0f}%), operando sin esperar")
-                                                else:
-                                                    self.signals.log_message.emit(f"👁️ Registrando oportunidad para aprendizaje observacional...")
-                                                    self.best_opportunity = None # Limpiar para no repetir análisis inútilmente
-                                                    continue
-                                    except Exception as e:
-                                        self.signals.log_message.emit(f"⚠️ Error en análisis de timing: {e}")
+                                        # Mostrar confluencias
+                                        if ollama_decision['confluences']:
+                                            self.signals.log_message.emit("   Confluencias detectadas:")
+                                            for conf in ollama_decision['confluences'][:3]:
+                                                self.signals.log_message.emit(f"     ✓ {conf}")
+                                        
+                                        # Mostrar factores de riesgo
+                                        if ollama_decision['risk_factors']:
+                                            self.signals.log_message.emit("   Factores de riesgo:")
+                                            for risk in ollama_decision['risk_factors'][:2]:
+                                                self.signals.log_message.emit(f"     ⚠️ {risk}")
+                                        
+                                        # Crear validación compatible con el sistema existente
+                                        validation = {
+                                            'valid': True,
+                                            'recommendation': ollama_decision['direction'],
+                                            'confidence': ollama_decision['confidence'] / 100,
+                                            'reasons': [ollama_decision['primary_reason']] + ollama_decision['confluences'][:2],
+                                            'warnings': ollama_decision['risk_factors'][:2]
+                                        }
+                                        
+                                        # Emitir análisis al gráfico
+                                        try:
+                                            self.signals.decision_analysis.emit(validation, ollama_decision['confidence'])
+                                        except: pass
+                                        
+                                    else:
+                                        self.signals.log_message.emit(f"\n⏸️ OLLAMA RECHAZA OPERACIÓN:")
+                                        self.signals.log_message.emit(f"   Razón: {ollama_decision['primary_reason']}")
+                                        
+                                        if ollama_decision['risk_factors']:
+                                            self.signals.log_message.emit("   Factores de riesgo identificados:")
+                                            for risk in ollama_decision['risk_factors']:
+                                                self.signals.log_message.emit(f"     ⚠️ {risk}")
+                                        
+                                        # Registrar como oportunidad observada
+                                        opportunity_data = {
+                                            'asset': self.current_asset,
+                                            'action': best_opportunity['action'],
+                                            'confidence': ollama_decision['confidence'],
+                                            'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                            'state_before': df.tail(10) if not df.empty else None
+                                        }
+                                        try:
+                                            self.observational_learner.observe_opportunity(
+                                                opportunity_data,
+                                                f"Ollama rechazó: {ollama_decision['primary_reason']}"
+                                            )
+                                        except Exception as obs_err:
+                                            print(f"Error en observational learner: {obs_err}")
+                                        
+                                        self.best_opportunity = None
+                                        continue
                                 
-                                # 4. VALIDAR DECISIÓN (Normal)
+                                except Exception as e:
+                                    self.signals.log_message.emit(f"⚠️ Error en análisis de Ollama: {e}")
+                                    # Fallback al sistema anterior
+                                    validation = self.decision_validator.validate_decision(
+                                        df=df,
+                                        action=1 if best_opportunity['action'] == 'CALL' else 2,
+                                        indicators_analysis=indicators_analysis,
+                                        rl_prediction=1 if best_opportunity['action'] == 'CALL' else 2,
+                                        llm_advice=best_opportunity['action']
+                                    )
+                            else:
+                                # Sin LLM, usar sistema de validación tradicional
+                                self.signals.log_message.emit("⚠️ Ollama no disponible, usando validación tradicional")
                                 validation = self.decision_validator.validate_decision(
                                     df=df,
-                                    action=action,
+                                    action=1 if best_opportunity['action'] == 'CALL' else 2,
                                     indicators_analysis=indicators_analysis,
-                                    rl_prediction=action,
+                                    rl_prediction=1 if best_opportunity['action'] == 'CALL' else 2,
                                     llm_advice=best_opportunity['action']
                                 )
-                            
-                            # 🎯 EMITIR ANÁLISIS AL GRÁFICO PROFESIONAL
-                            try:
-                                # Asegurar que el score sea 0-100 para la señal
-                                raw_conf = validation.get('confidence', 0.5)
-                                profitability_score = raw_conf * 100 if raw_conf <= 1.0 else raw_conf
-                                self.signals.decision_analysis.emit(validation, profitability_score)
-                            except: pass
-                            
-                            # 5. MOSTRAR ANÁLISIS
-                            summary = self.decision_validator.get_summary(validation)
-                            for line in summary.split('\n'):
                                 self.signals.log_message.emit(line)
                             
                             # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
@@ -1369,7 +1380,7 @@ class LiveTrader(QThread):
                         # Convertir dirección a acción
                         action = 1 if trade['direction'] == 'call' else 2
                         
-                        # Agregar experiencia
+                        # Agregar experiencia al sistema continuo
                         self.continuous_learner.add_real_trade_experience(
                             state_before=trade['state_before'],
                             action=action,
@@ -1383,6 +1394,42 @@ class LiveTrader(QThread):
                                 'timestamp': time.time()
                             }
                         )
+                        
+                        # 🧠 NUEVO: Agregar al sistema de aprendizaje profesional
+                        try:
+                            # Preparar datos para el aprendizaje profesional
+                            trade_data = {
+                                'asset': trade['asset'],
+                                'direction': trade['direction'],
+                                'entry_price': trade['entry_price'],
+                                'amount': trade.get('amount', 0),
+                                'timestamp': time.time()
+                            }
+                            
+                            # Análisis de mercado (simulado - en producción vendría del análisis real)
+                            market_analysis = {
+                                'market_phase': 'ranging',  # Se determinaría del análisis real
+                                'confidence': 70,  # Se obtendría del análisis real
+                                'order_blocks': [],
+                                'fair_value_gaps': [],
+                                'liquidity_zones': []
+                            }
+                            
+                            result_data = {
+                                'won': won,
+                                'profit': profit
+                            }
+                            
+                            # Analizar para aprendizaje profesional
+                            lesson = self.professional_learning.analyze_trade_for_learning(
+                                trade_data, market_analysis, result_data
+                            )
+                            
+                            if lesson:
+                                self.signals.log_message.emit(f"📚 Nueva lección profesional: {lesson.concept.value}")
+                        
+                        except Exception as learning_error:
+                            print(f"[WARNING] Error en aprendizaje profesional: {learning_error}")
                         
                         self.signals.log_message.emit(f"📝 Experiencia guardada para aprendizaje continuo")
             
@@ -1548,3 +1595,109 @@ Indicadores actuales:
         except Exception as e:
             print(f"[ERROR] Error en _process_basic_result: {e}")
             self.signals.error_message.emit(f"❌ Error en procesamiento básico: {e}")
+    def _prepare_market_summary(self, df, indicators_analysis, market_structure, best_opportunity):
+        """Prepara resumen de datos de mercado para Ollama"""
+        if df.empty:
+            return "Sin datos de mercado disponibles"
+        
+        last_candle = df.iloc[-1]
+        
+        summary_parts = [
+            f"PRECIO ACTUAL: {last_candle['close']:.5f}",
+            f"OPORTUNIDAD DETECTADA: {best_opportunity['action']} (Confianza: {best_opportunity.get('confidence', 0):.1f}%)"
+        ]
+        
+        # Indicadores técnicos
+        if 'rsi' in df.columns:
+            rsi = last_candle['rsi']
+            rsi_status = "Sobreventa" if rsi < 30 else ("Sobrecompra" if rsi > 70 else "Neutral")
+            summary_parts.append(f"RSI: {rsi:.1f} ({rsi_status})")
+        
+        if 'macd' in df.columns:
+            macd = last_candle['macd']
+            macd_status = "Alcista" if macd > 0 else "Bajista"
+            summary_parts.append(f"MACD: {macd:.5f} ({macd_status})")
+        
+        # Estructura de mercado
+        if market_structure:
+            phase = market_structure.get('market_phase', 'unknown')
+            summary_parts.append(f"FASE DE MERCADO: {phase.upper()}")
+            
+            entry_signal = market_structure.get('entry_signal', {})
+            if entry_signal.get('should_enter'):
+                summary_parts.append(f"ESTRUCTURA CONFIRMA: {entry_signal.get('direction', 'N/A')}")
+            elif entry_signal.get('should_wait'):
+                summary_parts.append("ESTRUCTURA DICE: ESPERAR")
+        
+        return " | ".join(summary_parts)
+    
+    def _prepare_smart_money_summary(self, smart_money_analysis):
+        """Prepara resumen de análisis Smart Money para Ollama"""
+        if not smart_money_analysis or 'error' in smart_money_analysis:
+            return "Análisis Smart Money no disponible"
+        
+        summary_parts = []
+        
+        # Bias direccional
+        bias = smart_money_analysis.get('directional_bias', {})
+        if bias:
+            summary_parts.append(f"BIAS DIRECCIONAL: {bias.get('bias', 'neutral').upper()} ({bias.get('confidence', 0):.0f}%)")
+        
+        # Order Blocks
+        order_blocks = smart_money_analysis.get('order_blocks', [])
+        fresh_obs = [ob for ob in order_blocks if not ob.get('mitigated', False)]
+        if fresh_obs:
+            summary_parts.append(f"ORDER BLOCKS FRESCOS: {len(fresh_obs)}")
+        
+        # Fair Value Gaps
+        fvgs = smart_money_analysis.get('fair_value_gaps', [])
+        unfilled_fvgs = [fvg for fvg in fvgs if not fvg.get('filled', False)]
+        if unfilled_fvgs:
+            summary_parts.append(f"FVG SIN LLENAR: {len(unfilled_fvgs)}")
+        
+        # Estructura de mercado
+        structure = smart_money_analysis.get('market_structure', {})
+        if structure.get('bos'):
+            summary_parts.append(f"BOS DETECTADO: {structure['bos']['type']}")
+        if structure.get('choch'):
+            summary_parts.append(f"CHoCH DETECTADO: {structure['choch']['type']}")
+        
+        # Señal de entrada
+        entry_signal = smart_money_analysis.get('entry_signal', {})
+        if entry_signal.get('should_enter'):
+            summary_parts.append(f"SMART MONEY CONFIRMA: {entry_signal.get('direction', 'N/A')}")
+        
+        return " | ".join(summary_parts) if summary_parts else "Sin señales Smart Money claras"
+    
+    def _prepare_learning_summary(self, learning_insights):
+        """Prepara resumen de insights de aprendizaje para Ollama"""
+        if not learning_insights or 'error' in learning_insights:
+            return "Sistema de aprendizaje inicializándose"
+        
+        summary_parts = []
+        
+        # Performance reciente
+        recent_perf = learning_insights.get('recent_performance', {})
+        if recent_perf:
+            success_rate = recent_perf.get('success_rate', 0)
+            trend = recent_perf.get('trend', 'unknown')
+            summary_parts.append(f"PERFORMANCE RECIENTE: {success_rate:.1%} ({trend})")
+        
+        # Mejores conceptos
+        best_concepts = learning_insights.get('best_concepts', [])
+        if best_concepts:
+            top_concept = best_concepts[0]
+            summary_parts.append(f"MEJOR CONCEPTO: {top_concept['concept']} ({top_concept['success_rate']:.1%})")
+        
+        # Mejores fases de mercado
+        best_phases = learning_insights.get('best_market_phases', [])
+        if best_phases:
+            top_phase = best_phases[0]
+            summary_parts.append(f"MEJOR FASE: {top_phase['phase']} ({top_phase['success_rate']:.1%})")
+        
+        # Recomendaciones
+        recommendations = learning_insights.get('recommendations', [])
+        if recommendations:
+            summary_parts.append(f"RECOMENDACIÓN: {recommendations[0]}")
+        
+        return " | ".join(summary_parts) if summary_parts else "Aprendizaje en progreso"
