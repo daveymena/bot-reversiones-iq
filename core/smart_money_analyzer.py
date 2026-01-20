@@ -157,20 +157,22 @@ class SmartMoneyAnalyzer:
         previous_high = df.iloc[:-21]['high'].tail(50).max() if len(df) > 70 else highs
         previous_low = df.iloc[:-21]['low'].tail(50).min() if len(df) > 70 else lows
         
-        bos = False
-        choch = False
+        bos = None
+        choch = None
         trend = "ranging"
         
         if last_close > previous_high:
-            bos = True
+            bos = {'type': 'bullish', 'level': previous_high}
             trend = "bullish"
         elif last_close < previous_low:
-            bos = True
+            bos = {'type': 'bearish', 'level': previous_low}
             trend = "bearish"
             
         # CHoCH es más sensible, indica cambio de tendencia local
         if trend == "bullish" and last_close < df['low'].tail(5).min():
-            choch = True
+            choch = {'type': 'bearish_change', 'level': df['low'].tail(5).min()}
+        elif trend == "bearish" and last_close > df['high'].tail(5).max():
+            choch = {'type': 'bullish_change', 'level': df['high'].tail(5).max()}
             
         return {
             'trend': trend,
