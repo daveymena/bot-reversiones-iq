@@ -1,0 +1,18 @@
+[Unit]
+Description=Trading Bot Telegram - Auto Signals
+After=network.target
+
+[Service]
+# Configuración del proceso
+Type=simple
+User=root
+WorkingDirectory=/root/trading
+ExecStart=/usr/bin/python3 main_telegram_bot.py
+Restart=always
+RestartSec=10
+
+# Variables de entorno (opcional si ya están en .env)
+# Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
