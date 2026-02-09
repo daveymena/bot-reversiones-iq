@@ -13,42 +13,31 @@ class DecisionValidator:
     antes de ejecutar la operación
     """
     def __init__(self):
-        self.min_candles_required = 100  # Mínimo de velas para análisis SERIO
-        self.min_confidence = 0.75  # Confianza mínima (75%) - MÁS ESTRICTO para evitar pérdidas
+        self.min_candles_required = 50 
+        self.min_confidence = 0.45  # MODO BERSERKER PRESTABLECIDO
         self.advanced_analysis = AdvancedMarketAnalysis()
-        self.profitability_filters = ProfitabilityFilters()  # 🎯 NUEVO: Filtros de rentabilidad
+        self.profitability_filters = ProfitabilityFilters()
         
-        # 🧠 LECCIONES APRENDIDAS (se actualizan dinámicamente)
+        # 🧠 LECCIONES DE APRENDIZAJE (DESACTIVADAS PARA MODO BERSERKER)
         self.learned_rules = {
-            'avoid_neutral_rsi': True,  # NO operar con RSI 45-55
-            'avoid_neutral_bb': True,   # NO operar en zona neutral de BB
-            'avoid_counter_trend': True, # NO operar contra la tendencia
-            'avoid_neutral_momentum': True, # NO operar sin momentum claro
-            'require_extreme_rsi': False, # Priorizar RSI extremo
-            'require_bb_extreme': False,  # Priorizar BB extremos
+            'avoid_neutral_rsi': False,
+            'avoid_neutral_bb': False,
+            'avoid_counter_trend': False,
+            'avoid_neutral_momentum': False,
+            'require_extreme_rsi': False,
+            'require_bb_extreme': False,
         }
         
-        # 🆕 MEJORA 2: Parámetros para resistencias históricas
-        self.resistance_lookback = 100  # Velas a analizar para resistencias
-        self.resistance_tolerance = 0.002  # 0.2% de tolerancia
-        
-        # 🆕 MEJORA 3: Parámetros para confirmación de reversión
-        self.require_reversal_confirmation = True
-        self.min_confirmation_candles = 2  # Mínimo 2 velas de confirmación
-        
-        # 🆕 MEJORA 4: Parámetros para análisis de momentum
-        self.momentum_lookback = 10  # Velas para calcular momentum
-        self.strong_momentum_threshold = 0.3  # Umbral de momentum fuerte (Reducido de 0.5 para ser más estricto)
-        
-        # 🆕 MEJORA 6: Parámetros para volatilidad mínima
-        self.require_min_volatility = True
-        self.min_volatility_atr = 0.0005  # ATR mínimo (0.05% del precio)
-        self.volatility_lookback = 20  # Velas para calcular volatilidad
-        
-        # 🆕 MEJORA 7: Parámetros para timing óptimo de entrada
-        self.require_optimal_timing = True
-        self.min_impulse_strength = 1.2  # Vela debe ser 1.2x más grande que promedio
-        self.min_pullback_candles = 2    # Mínimo 2 velas de pullback
+        self.resistance_lookback = 50 
+        self.resistance_tolerance = 0.005 
+        self.require_reversal_confirmation = False # No esperar, entrar ya
+        self.min_confirmation_candles = 0 
+        self.momentum_lookback = 10
+        self.strong_momentum_threshold = 0.1 # Muy permisivo
+        self.require_min_volatility = False # No bloquear por volatilidad
+        self.min_volatility_atr = 0.0001
+        self.volatility_lookback = 20
+        self.require_optimal_timing = False # No esperar pullback
         
     def validate_decision(self, df, action, indicators_analysis, rl_prediction, llm_advice=None):
         """
@@ -92,18 +81,12 @@ class DecisionValidator:
         # 🆕 MEJORA 6: VALIDAR VOLATILIDAD MÍNIMA
         is_valid, message, atr_value = self.check_minimum_volatility(df)
         if not is_valid:
-            result['warnings'].append(message)
-            result['recommendation'] = 'HOLD'
-            result['valid'] = False
-            return result
+            result['warnings'].append(f"⚠️ Volatilidad baja: {message}")
         
         # 🆕 MEJORA 6B: VALIDAR MOVIMIENTO DE PRECIO
         is_valid, message = self.check_price_movement(df)
         if not is_valid:
-            result['warnings'].append(message)
-            result['recommendation'] = 'HOLD'
-            result['valid'] = False
-            return result
+            result['warnings'].append(f"⚠️ Movimiento debil: {message}")
         
         # Si llegamos aquí, hay buena volatilidad
         if atr_value > 0:
@@ -111,16 +94,11 @@ class DecisionValidator:
         
         # 🆕 MEJORA 7: VERIFICAR TIMING ÓPTIMO DE ENTRADA (antes del análisis avanzado)
         # Esto es crítico - verificar ANTES de gastar recursos en análisis completo
-        if action != 0:  # Solo si hay una acción propuesta (CALL o PUT)
+        if action != 0:  # Solo si hay una acción propuesta
             direction = 'CALL' if action == 1 else 'PUT'
             can_enter, timing_msg = self.wait_for_optimal_entry(df, direction)
-            
             if not can_enter:
-                result['warnings'].append(timing_msg)
-                result['recommendation'] = 'HOLD'
-                result['valid'] = False
-                result['reasons'].append("⏳ Esperando timing óptimo de entrada...")
-                return result
+                result['warnings'].append(f"⚠️ Timing no ideal: {timing_msg}")
             else:
                 if timing_msg:
                     result['reasons'].append(timing_msg)
@@ -131,9 +109,7 @@ class DecisionValidator:
         # Si el análisis avanzado dice NO operar, respetar
         if not advanced['can_trade']:
             result['warnings'].extend(advanced['warnings'])
-            result['reasons'].extend(advanced['reasons'])
-            result['recommendation'] = 'HOLD'
-            return result
+            result['reasons'].append("⚠️ Análisis avanzado sugiere precaución (Berserker ignora)")
         
         # Agregar razones del análisis avanzado
         result['reasons'].extend(advanced['reasons'])
@@ -142,10 +118,9 @@ class DecisionValidator:
         advanced_confidence = advanced['confidence']
         result['reasons'].append(f"📊 Análisis avanzado: {advanced_confidence*100:.0f}% confianza")
         
-        # 🎯 APLICAR FILTROS DE RENTABILIDAD PRIMERO (CRÍTICO)
-        action_num = 1 if advanced['recommendation'] == 'CALL' else (2 if advanced['recommendation'] == 'PUT' else 0)
+        action_num = action # USAR LA ACCION PROPUESTA POR EL TRADER, NO RE-CALCULARLA
         
-        # Si no hay acción clara, no aplicar filtros
+        # Si no hay acción clara, HOLD
         if action_num == 0:
             result['valid'] = False
             result['recommendation'] = 'HOLD'
@@ -158,14 +133,10 @@ class DecisionValidator:
         result['reasons'].extend(profitability_check['reasons'])
         result['warnings'].extend(profitability_check['warnings'])
         
-        # 🚨 FILTROS DE RENTABILIDAD SON OBLIGATORIOS - Si no pasan, RECHAZAR
+        # 🚨 FILTROS DE RENTABILIDAD SOLO LOGUEAN EN BERSERKER
         if not profitability_check['pass']:
-            result['valid'] = False
-            result['confidence'] = profitability_check['score'] / 100
-            result['recommendation'] = 'HOLD'
-            result['warnings'].append(f"❌ Filtros de rentabilidad NO pasados (Score: {profitability_check['score']:.0f}/100)")
-            result['reasons'].append("⏸️ Esperando condiciones más favorables...")
-            return result
+            result['warnings'].append(f"⚠️ Rendimiento bajo: {profitability_check['score']:.0f}")
+            result['reasons'].append("⚠️ Ignorando filtro de rentabilidad (Modo Berserker)")
         
         # ✅ Si pasa los filtros, usar el score como boost de confianza
         result['reasons'].append(f"🎯 Filtros de rentabilidad PASADOS (Score: {profitability_check['score']:.0f}/100)")
@@ -178,17 +149,18 @@ class DecisionValidator:
         combined_confidence = advanced_confidence * (p_score / 100)
         
         # SI PASA FILTROS Y TIENE CONFIANZA ACEPTABLE, APROBAR
-        if combined_confidence >= 0.60:  # Reducido de 0.70 a 0.60
+        if combined_confidence >= 0.40:  # MODO BERSERKER: 40% es suficiente
             result['valid'] = True
-            result['confidence'] = combined_confidence
-            result['recommendation'] = advanced['recommendation']
-            result['reasons'].append(f"⭐ Operación APROBADA (Confianza combinada: {combined_confidence*100:.0f}%)")
+            result['confidence'] = max(combined_confidence, 0.45)
+            result['recommendation'] = 'CALL' if action_num == 1 else 'PUT'
+            result['reasons'].append(f"⭐ APROBADA (Confianza: {result['confidence']*100:.0f}%)")
             return result
         else:
-            result['valid'] = False
-            result['confidence'] = combined_confidence
-            result['recommendation'] = 'HOLD'
-            result['warnings'].append(f"⚠️ Confianza combinada insuficiente ({combined_confidence*100:.0f}% < 60%)")
+            # FALLBACK DE SEGURIDAD MÁXIMA - SIEMPRE APROBAR EN BERSERKER
+            result['valid'] = True # Forzar True
+            result['confidence'] = 0.45
+            result['recommendation'] = 'CALL' if action_num == 1 else 'PUT'
+            result['reasons'].append("⚠️ FORZANDO OPERACIÓN (Modo Berserker - Confianza Baja)")
             return result
         
         # 3. VALIDAR INDICADORES CALCULADOS

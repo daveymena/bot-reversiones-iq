@@ -20,6 +20,13 @@ class Config:
     # Credenciales IQ Option
     IQ_OPTION_EMAIL = os.getenv("IQ_OPTION_EMAIL", "")
     IQ_OPTION_PASSWORD = os.getenv("IQ_OPTION_PASSWORD", "")
+
+    # ============= TELEGRAM =============
+    TELEGRAM_API_ID = int(os.getenv('TELEGRAM_API_ID', '0'))
+    TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH', '')
+    TELEGRAM_PHONE = os.getenv('TELEGRAM_PHONE', '')
+    TELEGRAM_SESSION_NAME = os.getenv('TELEGRAM_SESSION_NAME', 'trading_session')
+    TELEGRAM_CHATS = os.getenv('TELEGRAM_CHATS', '').split(',') if os.getenv('TELEGRAM_CHATS') else []
     
     # ============= TRADING =============
     DEFAULT_ASSET = os.getenv("DEFAULT_ASSET", "EURUSD-OTC")
@@ -48,15 +55,22 @@ class Config:
     
     # ============= AI/LLM =============
     USE_LLM = os.getenv("USE_LLM", "True").lower() == "true"
-    USE_GROQ = False # DISABLED AS REQUESTED
+    USE_GROQ = os.getenv("USE_GROQ", "True").lower() == "true"
     
-    # Soporte para múltiples llaves de Groq (Desactivado)
-    GROQ_API_KEYS = []
-    GROQ_API_KEY = ""
+    # Soporte para múltiples llaves de Groq (fallback automático)
+    GROQ_API_KEYS = [
+        os.getenv("VITE_GROQ_API_KEY", ""),
+        os.getenv("VITE_GROQ_API_KEY_2", ""),
+        os.getenv("VITE_GROQ_API_KEY_3", ""),
+        os.getenv("VITE_GROQ_API_KEY_4", "")
+    ]
+    # Filtrar llaves vacías
+    GROQ_API_KEYS = [key for key in GROQ_API_KEYS if key.strip()]
+    GROQ_API_KEY = GROQ_API_KEYS[0] if GROQ_API_KEYS else ""
     
-    # Modelo optimizado: llama3.2:1b (Confirmado disponible en Easypanel)
+    # Modelo más liviano y rápido para trading
     OLLAMA_MODEL = os.getenv("VITE_OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "llama3.2:1b"))
-    OLLAMA_MODEL_FAST = os.getenv("OLLAMA_MODEL_FAST", "llama3.2:1b")
+    OLLAMA_MODEL_FAST = "phi3:mini"  # Modelo ultra-liviano como alternativa
     OLLAMA_BASE_URL = os.getenv("VITE_OLLAMA_BASE_URL", os.getenv("OLLAMA_BASE_URL", "https://ollama-ollama.ginee6.easypanel.host"))
     OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
     
@@ -99,3 +113,10 @@ DATA_DIR = Config.DATA_DIR
 MODELS_DIR = Config.MODELS_DIR
 EXPERIENCES_FILE = Config.EXPERIENCES_FILE
 MODEL_PATH = Config.MODEL_PATH
+
+# Telegram Compatibilidad
+TELEGRAM_API_ID = Config.TELEGRAM_API_ID
+TELEGRAM_API_HASH = Config.TELEGRAM_API_HASH
+TELEGRAM_PHONE = Config.TELEGRAM_PHONE
+TELEGRAM_SESSION_NAME = Config.TELEGRAM_SESSION_NAME
+TELEGRAM_CHATS = Config.TELEGRAM_CHATS

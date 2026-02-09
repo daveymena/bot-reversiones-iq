@@ -11,13 +11,16 @@ from config import Config
 
 class LLMClient:
     def __init__(self):
-        self.api_keys = Config.GROQ_API_KEYS
+        self.api_keys = Config.GROQ_API_KEYS if hasattr(Config, 'GROQ_API_KEYS') and Config.GROQ_API_KEYS else ([Config.GROQ_API_KEY] if Config.GROQ_API_KEY else [])
         self.current_key_index = 0
-        self.use_groq = len(self.api_keys) > 0
+        self.use_groq = Config.USE_GROQ and len(self.api_keys) > 0
         self.groq_client = None
         self.last_error = None
         
-        self._initialize_groq()
+        if self.use_groq:
+            self._initialize_groq()
+        else:
+            print("ℹ️ Groq desactivado o sin llaves. Usando Ollama como motor principal.")
 
     def _initialize_groq(self):
         if self.use_groq and Groq and self.current_key_index < len(self.api_keys):
@@ -47,14 +50,37 @@ class LLMClient:
         Envía un resumen del mercado al LLM y obtiene un consejo.
         """
         prompt = f"""
-        Actúa como un experto trader de opciones binarias. Analiza los siguientes datos técnicos y dame una recomendación MUY BREVE (máximo 2 frases).
+        SISTEMA DE TRADING PROFESIONAL AGRESIVO - MODO SMART MONEY
+        Activo: {asset}. Balance: ${current_balance:.2f}
         
-        Datos del Mercado:
-        {market_summary}
+        DATOS DE MERCADO: {market_data_summary}
+        ANÁLISIS SMART MONEY: {smart_money_analysis}
+        APRENDIZAJE: {learning_insights}
         
-        Tu respuesta debe seguir este formato:
-        SENTIMIENTO: [ALCISTA/BAJISTA/NEUTRAL]
-        CONSEJO: [Tu recomendación estratégica]
+        INSTRUCCIONES CRÍTICAS:
+        1. Eres un trader institucional profesional con 15 años de experiencia
+        2. Tu objetivo es MAXIMA FRECUENCIA de trading con rentabilidad
+        3. Opera cuando veas al menos 2 señales técnicas alineadas
+        4. Busca setups de probabilidad media-alta (>50%) con riesgo controlado
+        5. Si hay Order Blocks + Fair Value Gap + BOS confirmado = OPERA
+        6. Si solo hay 1-2 señales débiles = NO OPERES
+        
+        CRITERIOS DE ENTRADA:
+        - Order Blocks institucionales confirmados
+        - Fair Value Gaps sin llenar
+        - Break of Structure (BOS) o Change of Character (CHoCH)
+        - Momentum alineado con estructura
+        - Liquidez disponible para el movimiento
+        
+        Responde ÚNICAMENTE con JSON válido:
+        {{
+            "should_trade": true/false,
+            "direction": "CALL" o "PUT",
+            "confidence": 45-95,
+            "primary_reason": "razón específica basada en Smart Money",
+            "risk_factors": ["factor1", "factor2"],
+            "smart_money_signal": "strong/medium/weak"
+        }}
         """
 
         return self._safe_query(prompt)
@@ -192,11 +218,13 @@ class LLMClient:
             try:
                 chat_completion = self.groq_client.chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Eres un asistente de trading experto."},
+                        {"role": "system", "content": "Eres un analista de trading de élite. Responde de forma técnica, precisa y ultra-rápida."},
                         {"role": "user", "content": prompt}
                     ],
-                    model="llama-3.1-8b-instant",
-                    timeout=8
+                    model="llama-3.3-70b-versatile", # Modelo más potente y rápido en Groq
+                    temperature=0.1,
+                    max_tokens=500,
+                    timeout=10
                 )
                 return chat_completion.choices[0].message.content
             except Exception as e:
@@ -209,90 +237,78 @@ class LLMClient:
         return self._query_ollama(prompt)
 
     def _query_ollama(self, prompt):
+        """Consulta mejorada a Ollama con mejor manejo de errores"""
         try:
             payload = {
                 "model": Config.OLLAMA_MODEL,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                    "temperature": 0.1, 
+                    "num_ctx": 1024,
+                    "top_p": 0.9,
+                    "repeat_penalty": 1.1
+                }
             }
-            response = requests.post(Config.OLLAMA_URL, json=payload, timeout=45)
+            
+            print(f"   🔗 Conectando a Ollama ({Config.OLLAMA_BASE_URL})...")
+            
+            # Timeout reducido y mejor manejo
+            response = requests.post(
+                Config.OLLAMA_URL, 
+                json=payload, 
+                timeout=20,  # Aumentado a 20s
+                verify=False,
+                headers={'Content-Type': 'application/json'}
+            )
+            
             if response.status_code == 200:
-                return response.json().get("response", "Sin respuesta")
+                result = response.json()
+                ollama_response = result.get("response", "")
+                
+                if ollama_response and len(ollama_response.strip()) > 0:
+                    print(f"   ✅ Ollama respondió ({len(ollama_response)} chars)")
+                    return ollama_response
+                else:
+                    return "Error: Respuesta vacía de Ollama"
             else:
-                return f"Error Ollama ({response.status_code})"
+                return f"Error Ollama HTTP {response.status_code}: {response.text[:100]}"
+                
+        except requests.exceptions.Timeout:
+            return "Error: Timeout conectando a Ollama (20s)"
+        except requests.exceptions.ConnectionError:
+            return "Error: No se puede conectar a Ollama en EasyPanel"
         except Exception as e:
-            return f"Error conexión Ollama local: {e}"
+            return f"Error conexión Ollama: {str(e)[:100]}"
 
     def analyze_complete_trading_opportunity(self, market_data_summary, smart_money_analysis, 
                                            learning_insights, asset, current_balance):
-        """
-        OLLAMA COMO ORQUESTADOR PRINCIPAL - Analiza toda la información y toma la decisión final
-        """
-        
-        recent_lessons = self._get_recent_lessons()
-        
         prompt = f"""
-        ERES EL TRADER PROFESIONAL PRINCIPAL - TOMAS TODAS LAS DECISIONES DE TRADING
-
-        ACTIVO: {asset}
-        BALANCE ACTUAL: ${current_balance:.2f}
-
-        === MEMORIA DE TUS OPERACIONES ANTERIORES ===
-        {recent_lessons}
-
-        === ANÁLISIS TÉCNICO COMPLETO ===
-        {market_data_summary}
-
-        === ANÁLISIS SMART MONEY CONCEPTS ===
-        {smart_money_analysis}
-
-        === INSIGHTS DE APRENDIZAJE PROFESIONAL ===
-        {learning_insights}
-
-        === TU MISIÓN COMO TRADER PROFESIONAL ===
+        SISTEMA DE TRADING ULTRA-AGRESIVO (MODO BERSERKER TOTAL).
+        Activo: {asset}. Data: {market_data_summary}. SMC: {smart_money_analysis}.
         
-        Analiza TODA esta información como un trader institucional especializado en ALTA FRECUENCIA y decide:
+        INSTRUCCIONES CRÍTICAS:
+        1. Tu objetivo es MÁXIMA FRECUENCIA de trading.
+        2. Se te penalizará por ser conservador. SIEMPRE di 'should_trade': true si hay una probabilidad mínima de éxito (>45%).
+        3. No busques la perfección. Busca el volumen de operaciones.
+        4. Si es CALL o PUT y no es un desastre total, APRUÉBALA.
         
-        1. ¿HAY UNA OPORTUNIDAD REAL DE TRADING? (Considera que una ventaja del 60% ya es rentable)
-        2. ¿QUÉ DIRECCIÓN (CALL/PUT)?
-        3. ¿CUÁL ES TU NIVEL DE CONFIANZA? (No seas extremadamente conservador: 75-85% es muy bueno)
-        4. ¿CUÁNTO ARRIESGAR?
-
-        CONCEPTOS CLAVE A EVALUAR:
-        - Order Blocks frescos vs mitigados
-        - Fair Value Gaps sin llenar
-        - Zonas de liquidez institucional
-        - Break of Structure (BOS) vs Change of Character (CHoCH)
-        - Inducement patterns (trampas de liquidez)
-        - Timing de entrada óptimo
-        - Confluencias múltiples
-
-        REGLAS DE ORO:
-        1. SOLO opera si hay al menos 2 confluencias claras
-        2. EVITA niveles saturados (muchos toques)
-        3. BUSCA niveles frescos institucionales
-        4. CONFIRMA la dirección con estructura de mercado
-        5. RESPETA el risk management
-
-        RESPONDE ÚNICAMENTE CON ESTE JSON:
+        Responde ÚNICAMENTE con JSON:
         {{
-            "should_trade": true/false,
-            "direction": "CALL"/"PUT"/null,
-            "confidence": 0-100,
-            "position_size": 0.0,
-            "primary_reason": "Razón principal en 1 frase",
-            "confluences": ["lista", "de", "confluencias", "detectadas"],
-            "risk_factors": ["lista", "de", "riesgos", "identificados"],
-            "market_phase": "accumulation/markup/distribution/markdown/ranging",
-            "expected_outcome": "win"/"loss"/"uncertain",
-            "timing_quality": "excellent"/"good"/"poor",
-            "smart_money_signal": "bullish"/"bearish"/"neutral"
+            "should_trade": true,
+            "direction": "CALL/PUT",
+            "confidence": 45-100,
+            "primary_reason": "frase corta",
+            "risk_factors": ["dato1", "dato2"]
         }}
         """
-        
         try:
             response = self._safe_query(prompt)
-            return self._parse_trading_decision(response)
+            data = self._parse_trading_decision(response)
+            # Garantizar campos mínimos
+            if 'risk_factors' not in data: data['risk_factors'] = []
+            if 'confluences' not in data: data['confluences'] = []
+            return data
         except Exception as e:
             print(f"[ERROR] Error en análisis completo de Ollama: {e}")
             return self._get_safe_default_decision()
@@ -341,6 +357,23 @@ class LLMClient:
             print(f"[ERROR] Error parseando decisión de Ollama: {e}")
         
         return self._get_safe_default_decision()
+
+    
+    def _get_aggressive_fallback_decision(self):
+        """Decisión agresiva cuando Ollama falla - prioriza volumen"""
+        return {
+            'should_trade': True,  # Siempre operar en fallback
+            'direction': 'CALL',   # Dirección por defecto
+            'confidence': 60,      # Confianza media
+            'position_size': 0,
+            'primary_reason': 'Fallback agresivo - Ollama no disponible',
+            'confluences': ['Fallback técnico'],
+            'risk_factors': ['Sin análisis de IA'],
+            'market_phase': 'ranging',
+            'expected_outcome': 'uncertain',
+            'timing_quality': 'medium',
+            'smart_money_signal': 'neutral'
+        }
 
     def _get_safe_default_decision(self):
         """Decisión segura por defecto cuando Ollama falla"""

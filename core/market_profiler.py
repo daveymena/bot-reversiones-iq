@@ -42,11 +42,11 @@ class MarketProfiler:
             winrate = stats.get('winrate', 0)
             trades = stats.get('trades', 0)
             
-            # Umbral de rentabilidad: 55% winrate y al menos 5 trades históricos
-            if winrate >= 55 and trades >= 5:
-                return True, f"Hora RENTABLE: {winrate}% Winrate histórico en esta hora."
+            # Umbral de rentabilidad RELAJADO: 51% winrate y al menos 1 trade histórico
+            if winrate >= 51 and trades >= 1:
+                return True, f"Hora RENTABLE: {winrate}% Winrate histórico."
             else:
-                return False, f"Hora NO RENTABLE: {winrate}% Winrate histórico insuficiente."
+                return False, f"Hora DEBIL: {winrate}% Winrate insuficiente."
         
         return True, "Hora sin datos específicos, permitiendo operación."
 

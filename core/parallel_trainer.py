@@ -386,14 +386,6 @@ class ParallelTrainer:
             else:
                 self.training_stats['losses'] += 1
             
-            # 🧠 ACTUALIZAR MEMORIA DE CORTO PLAZO
-            strat_type = trade['strategy'] # 'reversion' o 'continuation'
-            if strat_type in self.strategy_performance:
-                self.strategy_performance[strat_type].append(won)
-                # Mantener solo últimas 20
-                if len(self.strategy_performance[strat_type]) > 20:
-                    self.strategy_performance[strat_type].pop(0)
-
             # Calcular lección aprendida
             lesson = self._extract_lesson(trade, won, exit_price)
             self.training_stats['lessons_learned'].append(lesson)

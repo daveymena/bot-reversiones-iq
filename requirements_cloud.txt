@@ -21,3 +21,5 @@ psycopg2-binary>=2.9.0
 # Server (Opcional por si despliegan la API)
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+# Telegram Integration
+telethon>=1.30.0

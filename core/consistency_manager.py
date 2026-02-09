@@ -8,10 +8,10 @@ import pandas as pd
 
 class ConsistencyManager:
     def __init__(self):
-        self.min_hourly_winrate = 55.0 # Mínimo 55% para operar en esa hora
-        self.min_asset_winrate = 52.0  # Mínimo 52% para ese activo
-        self.limit_losses_24h = 10      # Máximo pérdidas en 24h antes de modo "Ultra Seguro"
-        self.limit_losses_1h = 2        # Máximo pérdidas en 1h antes de pausa de 30 min
+        self.min_hourly_winrate = 49.0 # Relajado para permitir más operaciones
+        self.min_asset_winrate = 49.0  # Relajado para permitir más operaciones
+        self.limit_losses_24h = 10      
+        self.limit_losses_1h = 3        # Aumentado a 3 pérdidas antes de pausar
         
     def should_allow_trade(self, asset: str) -> tuple[bool, str]:
         """
@@ -55,21 +55,6 @@ class ConsistencyManager:
 
     def get_dynamic_confidence_threshold(self) -> float:
         """
-        Ajusta la confianza mínima requerida basado en el PnL del día.
-        Si vamos ganando, podemos arriesgar más (65%).
-        Si vamos perdiendo, nos volvemos súper conservadores (85%).
+        MODO BERSERKER: Confianza mínima del 45% para forzar operaciones.
         """
-        try:
-            stats = db.get_performance_stats(days=1)
-            pnl = stats.get('total_profit', 0)
-            
-            if pnl < 0:
-                # Estamos en pérdida, subir la vara para filtrar solo lo mejor de lo mejor
-                return 0.85 
-            elif pnl > 50:
-                # Vamos muy bien, podemos operar señales de confianza media-alta
-                return 0.65
-            else:
-                return 0.75 # Estándar
-        except:
-            return 0.75
+        return 0.45

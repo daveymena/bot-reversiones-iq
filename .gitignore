@@ -1,6 +1,16 @@
 # Python
+# Py# Telegram Sessions (CRITICO: No subir nunca)
+*.session
+*.session-journal
+trading_session.session
+
+# Environment Variables
+.env
+.venv
+WaitMsBeforeAsync
 __pycache__/
-*.py[cod]
+*.pyc
+[cod]
 *.pyc
 *.pyo
 *.log

@@ -100,5 +100,3 @@ if __name__ == "__main__":
         print("❌ REPARACIÓN FALLIDA")
     print("="*60)
     print()
-    
-    input("Presiona Enter para salir...")

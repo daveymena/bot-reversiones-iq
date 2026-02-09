@@ -1,4 +1,4 @@
-"""Sistema de Análisis de Estructura de Mercado REAL"""
+"""Sistema de Análisis de Estructura de Mercado REAL - Pro Version"""
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional
@@ -11,168 +11,143 @@ class MarketStructureAnalyzer:
     def __init__(self):
         self.min_candles_for_analysis = 50
     
-    def analyze_full_context(self, candles: pd.DataFrame) -> Dict:
+    def find_sr_levels(self, df: pd.DataFrame) -> Dict[str, List[float]]:
+        """Detecta Soporte y Resistencia usando picos y valles locales"""
+        highs = df['high'].values
+        lows = df['low'].values
+        
+        resistances = []
+        supports = []
+        
+        # Parámetro de sensibilidad para niveles
+        window = 5
+        
+        for i in range(window, len(highs) - window):
+            # Pico local (Resistencia)
+            if all(highs[i] > highs[i-j] for j in range(1, window+1)) and \
+               all(highs[i] > highs[i+j] for j in range(1, window+1)):
+                resistances.append(highs[i])
+            
+            # Valle local (Soporte)
+            if all(lows[i] < lows[i-j] for j in range(1, window+1)) and \
+               all(lows[i] < lows[i+j] for j in range(1, window+1)):
+                supports.append(lows[i])
+                
+        # Quedarse con los 3 más importantes/recientes
+        return {
+            "resistances": sorted(list(set(resistances)))[-3:],
+            "supports": sorted(list(set(supports)))[:3]
+        }
+
+    def analyze_full_context(self, m1_candles: pd.DataFrame, m5_candles: Optional[pd.DataFrame] = None) -> Dict:
         """
-        Realiza un análisis técnico REAL de la estructura del mercado.
-        Calcula tendencias, momentum y advierte sobre operaciones contra-tendencia.
+        Análisis TOP-DOWN profesional:
+        - M5 (o dataframe más largo): Define niveles de Soporte/Resistencia.
+        - M1: Define momentum y gatillo de entrada.
         """
-        if len(candles) < self.min_candles_for_analysis:
+        if len(m1_candles) < self.min_candles_for_analysis:
             return self._no_signal("Insuficientes velas")
         
         try:
-            df = candles.copy()
+            # Usar M5 para niveles si está disponible, si no usar M1 largo
+            ref_df = m5_candles if m5_candles is not None else m1_candles
+            levels = self.find_sr_levels(ref_df)
             
-            # 1. CALCULO DE INDICADORES DE ESTRUCTURA
-            # SMAs para tendencia
+            df = m1_candles.copy()
+            # 1. INDICADORES
             df['sma_20'] = df['close'].rolling(window=20).mean()
-            df['sma_50'] = df['close'].rolling(window=50).mean()
+            df['ema_10'] = df['close'].ewm(span=10, adjust=False).mean()
             
             last = df.iloc[-1]
-            prev = df.iloc[-2]
+            last_close = last['close']
+            rsi = last.get('rsi', 50)
             
-            # 2. DEFINIR TENDENCIA
-            trend = "neutral"
-            trend_strength = 0
+            # 2. PROXIMIDAD A NIVELES
+            near_resistance = any(abs(last_close - res) / res < 0.0003 for res in levels['resistances'])
+            near_support = any(abs(last_close - sup) / sup < 0.0003 for sup in levels['supports'])
             
-            if last['sma_20'] > last['sma_50']:
-                trend = "bullish"
-                # Fuerza: Distancia entre medias
-                dist = (last['sma_20'] - last['sma_50']) / last['sma_50']
-                trend_strength = min(100, dist * 10000) # Normalizar
-            elif last['sma_20'] < last['sma_50']:
-                trend = "bearish"
-                dist = (last['sma_50'] - last['sma_20']) / last['sma_50']
-                trend_strength = min(100, dist * 10000)
+            # 3. TENDENCIA Y MOMENTUM
+            trend = "bullish" if last['ema_10'] > last['sma_20'] else "bearish"
             
-            # 3. ANALISIS DE MOMENTUM (Velas recientes)
-            # Mirar últimas 3 velas
-            last_3 = df.iloc[-3:]
-            closes = last_3['close'].values
-            opens = last_3['open'].values
+            recent = df.tail(3)
+            bullish_v = sum(1 for _, c in recent.iterrows() if c['close'] > c['open'])
+            bearish_v = sum(1 for _, c in recent.iterrows() if c['close'] < c['open'])
             
-            momentum_state = "neutral"
-            bearish_candles = np.sum(closes < opens)
-            bullish_candles = np.sum(closes > opens)
-            
-            if bearish_candles == 3:
-                momentum_state = "strong_bearish"
-            elif bullish_candles == 3:
-                momentum_state = "strong_bullish"
-            elif bearish_candles == 2:
-                momentum_state = "bearish"
-            elif bullish_candles == 2:
-                momentum_state = "bullish"
-                
-            # 4. DECISIÓN DE ESTRUCTURA
+            # 4. DECISIONES REALISTAS DE TRADER
             should_enter = False
             direction = None
             reasons = []
-            warnings = []
-            confidence = 50
-            
-            # Lógica de Validación de Estructura
-            
-            # A) Si TENDENCIA y MOMENTUM coinciden -> SEÑAL FUERTE A FAVOR
-            if trend == "bullish" and momentum_state in ["bullish", "strong_bullish"]:
-                should_enter = True
-                direction = "CALL"
-                confidence = 85 + (5 if momentum_state == "strong_bullish" else 0)
-                reasons.append(f"Tendencia Alcista (Fuerza {trend_strength:.0f})")
-                reasons.append("Momentum a favor (Velas verdes)")
-                
-            elif trend == "bearish" and momentum_state in ["bearish", "strong_bearish"]:
+            confidence = 0
+
+            # --- LÓGICA DE VENTA (PUT) ---
+            # Caso 1: Rechazo en Resistencia (MÁS REALISTA)
+            if near_resistance and bearish_v >= 1:
                 should_enter = True
                 direction = "PUT"
-                confidence = 85 + (5 if momentum_state == "strong_bearish" else 0)
-                reasons.append(f"Tendencia Bajista (Fuerza {trend_strength:.0f})")
-                reasons.append("Momentum a favor (Velas rojas)")
-                
-            # B) Si queremos CONTRA-TENDENCIA (Reversión), necesitamos confirmación
-            #    El "placebo" anterior aprobaba todo. Ahora filtramos.
-            else:
-                # Estamos en escenario de posible reversión o ruido
-                should_enter = False # Por defecto esperar
-                confidence = 0
-                
-                # Caso Reversión Alcista (Esperamos CALL en tendencia bajista)
-                if trend == "bearish":
-                    if momentum_state == "strong_bearish":
-                        warnings.append("⚠️ CAÍDA LIBRE: Momentum bajista fuerte. Peligroso operar CALL.")
-                        should_enter = False
-                    elif momentum_state == "bullish": # Empieza a girar (2 velas verdes)
-                        should_enter = True
-                        direction = "CALL"
-                        confidence = 65 # Menor confianza por ser contra-tendencia
-                        reasons.append("Posible reversión alcista (2 velas verdes en tendencia bajista)")
-                    else:
-                        warnings.append("Tendencia bajista dominante. Esperando giro claro.")
+                confidence = 85
+                reasons.append("Rechazo en zona de RESISTENCIA")
+                reasons.append("Buscando rebote bajista")
+            
+            # Caso 2: Agotamiento en compra (RSI alto)
+            elif rsi > 70 and bearish_v >= 1:
+                should_enter = True
+                direction = "PUT"
+                confidence = 80
+                reasons.append("Sobrecompra extrema (RSI > 70)")
+                reasons.append("Agotamiento del impulso alcista")
 
-                # Caso Reversión Bajista (Esperamos PUT en tendencia alcista)
-                elif trend == "bullish":
-                    if momentum_state == "strong_bullish":
-                        warnings.append("⚠️ COHETE: Momentum alcista fuerte. Peligroso operar PUT.")
-                        should_enter = False
-                    elif momentum_state == "bearish": # Empieza a girar (2 velas rojas)
-                        should_enter = True
-                        direction = "PUT"
-                        confidence = 65
-                        reasons.append("Posible reversión bajista (2 velas rojas en tendencia alcista)")
-                    else:
-                        warnings.append("Tendencia alcista dominante. Esperando giro claro.")
+            # --- LÓGICA DE COMPRA (CALL) ---
+            # Caso 1: Rebote en Soporte (MÁS REALISTA)
+            elif near_support and bullish_v >= 1:
+                should_enter = True
+                direction = "CALL"
+                confidence = 85
+                reasons.append("Rebote en zona de SOPORTE")
+                reasons.append("Buscando impulso alcista")
+            
+            # Caso 2: Agotamiento en venta (RSI bajo)
+            elif rsi < 30 and bullish_v >= 1:
+                should_enter = True
+                direction = "CALL"
+                confidence = 80
+                reasons.append("Sobreventa extrema (RSI < 30)")
+                reasons.append("Agotamiento del impulso bajista")
+
+            # --- FILTRO DE SEGURIDAD: NO COMPRAR EN RESISTENCIA / NO VENDER EN SOPORTE ---
+            if direction == "CALL" and near_resistance:
+                should_enter = False
+                reasons.append("BLOQUEO: No se compra contra una resistencia")
+            
+            if direction == "PUT" and near_support:
+                should_enter = False
+                reasons.append("BLOQUEO: No se vende contra un soporte")
 
             entry_signal = {
                 "should_enter": should_enter,
-                "should_wait": not should_enter,
                 "direction": direction if direction else "NONE",
                 "confidence": confidence,
                 "reasons": reasons,
-                "warnings": warnings,
-                "market_context": {"phase": trend, "momentum": momentum_state}
+                "market_context": {
+                    "trend": trend,
+                    "near_res": near_resistance,
+                    "near_sup": near_support,
+                    "levels": levels
+                }
             }
             
             return {
-                "market_phase": trend,
-                "structure": {"trend": trend, "strength": trend_strength},
-                "momentum": {"state": momentum_state, "strength": 0},
                 "entry_signal": entry_signal,
                 "timestamp": datetime.now().isoformat()
             }
         except Exception as e:
-            return self._no_signal(f"Error en analisis: {str(e)}")
-    
+            return self._no_signal(f"Error: {e}")
+
     def _no_signal(self, reason: str) -> Dict:
         return {
-            "market_phase": "unknown",
-            "structure": {"trend": "neutral", "strength": 0},
-            "momentum": {"state": "neutral", "strength": 0},
             "entry_signal": {
                 "should_enter": False,
-                "should_wait": True,
                 "direction": "NONE",
                 "confidence": 0,
-                "reasons": [],
-                "warnings": [reason]
+                "reasons": [reason]
             }
         }
-    
-    def get_human_readable_analysis(self, analysis: Dict) -> str:
-        lines = ["=" * 60, "📊 ANÁLISIS DE ESTRUCTURA REAL", "=" * 60]
-        st = analysis['structure']
-        mo = analysis['momentum']
-        lines.append(f"Tendencia: {st['trend'].upper()} (Fuerza: {st['strength']:.1f})")
-        lines.append(f"Momentum : {mo['state'].upper()}")
-        
-        entry = analysis['entry_signal']
-        lines.extend(["\n" + "=" * 60, "🎯 SEÑAL DE ESTRUCTURA", "=" * 60])
-        
-        if entry['should_enter']:
-            lines.append(f"✅ CONFIRMADO: {entry['direction']} - Confianza: {entry['confidence']}%")
-            for r in entry['reasons']:
-                lines.append(f"   - {r}")
-        else:
-            lines.append("⏳ ESPERAR / NO OPERAR")
-            for w in entry['warnings']:
-                lines.append(f"   ⚠️ {w}")
-        
-        lines.append("=" * 60)
-        return "\n".join(lines)

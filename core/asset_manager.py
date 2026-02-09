@@ -222,8 +222,8 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró una oportunidad REAL (score >= 25, bajado para captar más setups)
-        if best_opportunity and best_opportunity['score'] >= 25:
+        # Solo retornar si encontró un setup técnico con score >= 3 (Mínimo histórico)
+        if best_opportunity and best_opportunity['score'] >= 5:
             return best_opportunity
         
         return None
@@ -437,16 +437,16 @@ class AssetManager:
             # ESTRATEGIA: REVERSIÓN ESTÁNDAR M1 (Si no hay MTF cerca)
             # ---------------------------------------------------------
             if not setup_found:
-                # REVERSIÓN ALCISTA (CALL)
-                if rsi < 30 and price <= local_low * 1.0003:
+                # REVERSIÓN ALCISTA (CALL) - RSI Relajado
+                if rsi < 35 and price <= local_low * 1.0005:
                     setup_found = "M1_REVERSAL_CALL"
                     action = "CALL"
-                    confidence = 0.85
-                # REVERSIÓN BAJISTA (PUT)
-                elif rsi > 70 and price >= local_high * 0.9997:
+                    confidence = 0.75
+                # REVERSIÓN BAJISTA (PUT) - RSI Relajado
+                elif rsi > 65 and price >= local_high * 0.9995:
                     setup_found = "M1_REVERSAL_PUT"
                     action = "PUT"
-                    confidence = 0.85
+                    confidence = 0.75
 
             # ---------------------------------------------------------
             # 🛡️ PROTECCIÓN DE "NIVEL MEJOR" (Avoid Liquidity Traps)
@@ -456,18 +456,18 @@ class AssetManager:
                 # Caso PUT: Verificar si hay resistencia mayor cerca
                 if action == "PUT":
                     dist_major_res = (power_levels['major_res'] - price) / price
-                    # Si la resistencia mayor está entre 0.05% y 0.3% arriba, ES UNA TRAMPA.
+                    # Si la resistencia mayor está entre 0.05% y 0.3% arriba.
                     if 0.0005 < dist_major_res < 0.0030:
-                        print(f"      🛡️ TRAMPA EVITADA: Resistencia Mayor a {dist_major_res*100:.3f}% arriba. Esperando barrido.")
-                        setup_found = None # Anular señal
+                        print(f"      ⚠️ POSIBLE TRAMPA: Resistencia Mayor a {dist_major_res*100:.3f}% arriba. Operando con precaución.")
+                        confidence *= 0.8 # Reducir confianza en lugar de anular
                 
                 # Caso CALL: Verificar si hay soporte mayor cerca
                 elif action == "CALL":
                     dist_major_supp = (price - power_levels['major_supp']) / price
-                    # Si el soporte mayor está entre 0.05% y 0.3% abajo, ES UNA TRAMPA.
+                    # Si el soporte mayor está entre 0.05% y 0.3% abajo.
                     if 0.0005 < dist_major_supp < 0.0030:
-                        print(f"      🛡️ TRAMPA EVITADA: Soporte Mayor a {dist_major_supp*100:.3f}% abajo. Esperando barrido.")
-                        setup_found = None # Anular señal
+                        print(f"      ⚠️ POSIBLE TRAMPA: Soporte Mayor a {dist_major_supp*100:.3f}% abajo. Operando con precaución.")
+                        confidence *= 0.8 # Reducir confianza en lugar de anular
 
             # ---------------------------------------------------------
             # RESULTADO DEL ANÁLISIS

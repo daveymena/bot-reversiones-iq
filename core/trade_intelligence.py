@@ -73,13 +73,20 @@ class TradeIntelligence:
         Returns:
             dict: Análisis completo con recomendaciones
         """
+        # Asegurar que result sea un dict y tenga las llaves necesarias
+        if not isinstance(result, dict):
+            result = {'won': bool(result), 'profit': 0}
+            
+        won = result.get('won', False)
+        profit = result.get('profit', 0)
+        
         analysis = {
             'timestamp': datetime.now().isoformat(),
             'asset': trade_data.get('asset'),
             'action': trade_data.get('direction', 'N/A').upper(), # Normalizar para el Refiner
-            'result': 'win' if result['won'] else 'loose',        # Normalizar para el Refiner
-            'won': result['won'],
-            'profit': result['profit'],
+            'result': 'win' if won else 'loose',                 # Normalizar para el Refiner
+            'won': won,
+            'profit': profit,
             'strategy': {'confidence': 0}, # Placeholder para compatibilidad
             'reasons': [],
             'lessons': [],
@@ -487,8 +494,8 @@ Eres un analista experto de trading de opciones binarias. Analiza esta operació
 OPERACIÓN:
 - Dirección: {pattern.get('direction', 'N/A').upper()}
 - Activo: {pattern.get('asset', 'N/A')}
-- Resultado: {'GANÓ' if result['won'] else 'PERDIÓ'}
-- Profit: ${result['profit']:.2f}
+- Resultado: {'GANÓ' if result.get('won', False) else 'PERDIÓ'}
+- Profit: ${result.get('profit', 0):.2f}
 
 INDICADORES EN EL MOMENTO DE ENTRADA:
 - RSI: {pattern.get('rsi', 'N/A')}
@@ -499,11 +506,11 @@ INDICADORES EN EL MOMENTO DE ENTRADA:
 - Momentum: {pattern.get('momentum', 'N/A')}
 
 ANÁLISIS REQUERIDO:
-1. ¿Por qué {'ganó' if result['won'] else 'perdió'}? (análisis profundo)
+1. ¿Por qué {'ganó' if result.get('won', False) else 'perdió'}? (análisis profundo)
 2. ¿Qué debió hacer diferente? (si perdió)
 3. ¿Qué hizo bien? (si ganó)
 4. ¿Qué ajustes recomiendas para futuras operaciones?
-5. ¿Qué patrón específico debe {'replicar' if result['won'] else 'evitar'}?
+5. ¿Qué patrón específico debe {'replicar' if result.get('won', False) else 'evitar'}?
 
 Responde en formato JSON:
 {{
@@ -519,20 +526,9 @@ Responde en formato JSON:
 """
         
         try:
-            # Intentar con Groq primero
-            if self.llm_client.use_groq and self.llm_client.groq_client:
-                try:
-                    response = self.llm_client._query_groq(context)
-                    source = "Groq"
-                except Exception as groq_error:
-                    # Si Groq falla, usar Ollama como respaldo
-                    print(f"⚠️ Groq falló ({groq_error}), usando Ollama como respaldo...")
-                    response = self.llm_client._query_ollama(context)
-                    source = "Ollama"
-            else:
-                # Usar Ollama directamente
-                response = self.llm_client._query_ollama(context)
-                source = "Ollama"
+            # Usar el método seguro que maneja rotación y fallback automáticamente
+            response = self.llm_client._safe_query(context)
+            source = "Groq" if self.llm_client.use_groq and self.llm_client.groq_client else "Ollama"
             
             # Intentar parsear JSON con manejo robusto
             import json
