@@ -86,62 +86,97 @@ async def main():
     last_trade_time = datetime.min
     TRADE_COOLDOWN_SECONDS = 300  # 5 minutos entre operaciones mínimo (por señal)
 
+    import pandas as pd # Importación diferida o asegurar arriba
+
     async def monitor_trade_outcome(order_id, asset, direction, duration_min, indicators):
-        """Espera a que termine la operación y guarda el resultado"""
-        wait_seconds = (duration_min * 60) + 10 # Esperar duración + margen
-        print(f"👀 Monitoreando operación {order_id} ({asset})... Esperando {wait_seconds}s para resultado.")
+        """
+        Monitorea el resultado y realiza un ANÁLISIS PROFUNDO (Deep Learning) post-mortem.
+        """
+        entry_time = time.time()
+        wait_seconds = (duration_min * 60) + 5 # Esperar duración
+        print(f"👀 Monitoreando operación {order_id} ({asset})... Esperando {wait_seconds}s...")
         
         await asyncio.sleep(wait_seconds)
         
-        # Verificar resultado (Win/Loss)
-        # Nota: La API de IQ/Exnova a veces retorna el resultado por websocket.
-        # Aquí consultamos el historial de operaciones cerradas o intentamos inferir.
-        
-        # Método simple: Consultar beneficio de la opción cerrada
         try:
-            # Opción 1: win/loss histórico (si la API lo soporta fácil)
-            # Opción 2: Chequear balance (poco preciso si hay varias op)
-            # Opción 3: check_win_v3 / get_option_open_by_other_pc (complejo)
+            # 1. Obtener Resultado Real
+            profit = market_data.api.check_win_v3(order_id) # Puede fallar en demo
+            if profit is None: profit = 0
             
-            # Para DEMO/Aprendizaje, asumiremos que si precio cierre > precio apertura (CALL) ganamos.
-            # Necesitamos precio entrada y precio cierre.
-            
-            initial_price = market_data.get_current_price(asset) # Precio AHORA (final)
-            # Esto es impreciso porque entry_price fue hace X min.
-            
-            # Mejor: Usar la API para ver el resultado oficial si es posible.
-            # get_betinfo(order_id)
-            if hasattr(market_data.api, 'get_async_order'):
-                 # Intento genérico
-                 pass
-            
-            # Si no podemos obtener resultado exacto por API, lo simulamos/guardamos como PENDING
-            # Pero para aprendizaje real, necesitamos el resultado.
-            
-            # PLAN B: Checkear profit de la orden
-            profit = 0
-            result = "UNKNOWN"
-            
-            try:
-                # Intento obtener info de la operación cerrada
-                # Esto depende mucho de la librería específica (iqoptionapi)
-                profit = market_data.api.check_win_v3(order_id)
-            except:
-                pass
-                
-            if profit > 0:
-                result = "WIN" 
-            elif profit < 0:
-                result = "LOSS"
-            else:
-                # A veces devuelve 0 si empató o falló check
-                result = "DRAW" 
-                
+            result = "WIN" if profit > 0 else "LOSS" if profit < 0 else "DRAW"
             print(f"🏁 Operación {order_id} finalizada. Resultado: {result} (${profit:.2f})")
             
-            if local_ai and result in ["WIN", "LOSS"]:
-                local_ai.record_experience(asset, direction, result, indicators)
+            # 2. 🧪 DEEP LEARNING (Análisis Post-Mortem)
+            try:
+                # Descargar velas del periodo (Duración + 2 min antes + 2 min margen)
+                total_candles_needed = duration_min + 5
+                # Obtenemos velas de 1 minuto
+                df_analysis = market_data.get_candles(asset, 60, total_candles_needed, time.time())
                 
+                deep_analysis = {}
+                
+                if not df_analysis.empty:
+                    # Asumimos que la vela de entrada es la antepenúltima (aprox)
+                    # Esto es una aproximación, idealmente saber timestamp exacto
+                    
+                    # Precio de entrada estimado (cierre de la vela anterior a la señal o open de la actual)
+                    # Usaremos el precio del indicador capturado como referencia de entrada
+                    entry_price_ref = indicators.get('close', df_analysis.iloc[0]['close'])
+                    
+                    # Análisis de Excursión (Riesgo vs Recompensa)
+                    min_price_during = df_analysis['low'].min()
+                    max_price_during = df_analysis['high'].max()
+                    
+                    if direction == 'CALL':
+                        max_drawdown = entry_price_ref - min_price_during
+                        max_profit_potential = max_price_during - entry_price_ref
+                    else: # PUT
+                        max_drawdown = max_price_during - entry_price_ref
+                        max_profit_potential = entry_price_ref - min_price_during
+                        
+                    deep_analysis['max_drawdown'] = max_drawdown
+                    deep_analysis['max_profit_potential'] = max_profit_potential
+                    
+                    # 3. ⏱️ Simulación de Mejores Tiempos (Expiración)
+                    # Comparamos el precio de entrada con el cierre de las siguientes N velas
+                    simulations = {}
+                    for i in range(1, 6): # Minutos 1 a 5
+                        if i < len(df_analysis):
+                            close_at_min = df_analysis.iloc[i]['close']
+                            sim_win = False
+                            if direction == 'CALL': sim_win = close_at_min > entry_price_ref
+                            else: sim_win = close_at_min < entry_price_ref
+                            
+                            simulations[f'exp_{i}min'] = 'WIN' if sim_win else 'LOSS'
+                    
+                    deep_analysis['time_simulation'] = simulations
+                    
+                    # 4. 📉 Análisis de Mejor Entrada (Pullback)
+                    # ¿Hubo un mejor precio en el primer minuto?
+                    first_candle = df_analysis.iloc[0]
+                    better_entry_found = False
+                    if direction == 'CALL':
+                        if first_candle['low'] < entry_price_ref:
+                            better_entry_found = True
+                            deep_analysis['missed_pullback'] = entry_price_ref - first_candle['low']
+                    else:
+                        if first_candle['high'] > entry_price_ref:
+                            better_entry_found = True
+                            deep_analysis['missed_pullback'] = first_candle['high'] - entry_price_ref
+                            
+                    deep_analysis['better_entry_available'] = better_entry_found
+
+                # Guardar Conocimiento
+                if local_ai:
+                    local_ai.record_experience(asset, direction, result, indicators, deep_analysis)
+                    print(f"🧠 Aprendizaje Profundo Guardado para {asset}")
+                    
+            except Exception as dl_e:
+                print(f"⚠️ Error en Deep Learning (aprendiendo solo básico): {dl_e}")
+                # Guardar básico si falla el profundo
+                if local_ai:
+                    local_ai.record_experience(asset, direction, result, indicators)
+
         except Exception as e:
             print(f"❌ Error monitoreando resultado: {e}")
 
@@ -248,7 +283,7 @@ async def main():
         except Exception as e:
             print(f"❌ Error procesando señal: {e}")
 
-    # 4. Inicializar Telegram Listener (Userbot)
+    # 4. Inicializar Telegram Listener (PRIORIDAD ALTA)
     telegram_task = None
     if Config.TELEGRAM_API_ID and Config.TELEGRAM_API_HASH:
         print("📱 Iniciando cliente de Telegram...")
@@ -259,15 +294,17 @@ async def main():
             session_name=Config.TELEGRAM_SESSION_NAME,
             signal_callback=process_telegram_signal
         )
-        # Crear tarea de Telegram
-        async def start_telegram():
-            try:
-                await listener.start()
-                await listener.listen(Config.TELEGRAM_CHATS)
-            except Exception as e:
-                print(f"❌ Error en terea de Telegram: {e}")
-
-        telegram_task = asyncio.create_task(start_telegram())
+        # Conexión Sincronizada (Bloqueante hasta login)
+        try:
+            print("⏳ Conectando a Telegram (Esperando login)...")
+            await listener.start() # Esto pedirá el código si es necesario
+            print("✅ Telegram conectado exitosamente.")
+            
+            # Una vez logueado, lanzamos la escucha en background
+            telegram_task = asyncio.create_task(listener.listen(Config.TELEGRAM_CHATS))
+        except Exception as e:
+            print(f"❌ Error conectando a Telegram: {e}")
+            return # Si falla Telegram crítico, mejor salir o revisar
     else:
         print("⚠️ Telegram NO configurado (API_ID/HASH faltantes)")
 
@@ -306,12 +343,7 @@ async def main():
                     if signal_data_web and signal_data_web.get('raw_text'):
                         current_text = signal_data_web['raw_text']
                         
-                        # Si el texto cambió significativamente (nueva señal)
-                        # O si ha pasado X tiempo y sigue activa (a decidir)
-                        # Por ahora, detectamos cambio de texto
-                        
                         # Limpieza básica para comparar contenido real
-                        # Quitamos hora actual que siempre cambia
                         clean_text = re.sub(r'Hora Actual:.*', '', current_text)
                         clean_text = re.sub(r'Tiempo restante.*', '', clean_text)
                         
@@ -320,11 +352,10 @@ async def main():
                             print(f"\n🌐 NUEVA INFORMACIÓN WEB DETECTADA")
                             last_signal_text = clean_text
                             
-                            # Enviamos al mismo procesador que Telegram (la IA decide si es señal)
-                            # Simulamos un objeto de señal compatible
+                            # Enviamos al mismo procesador que Telegram
                             await process_telegram_signal({
                                 'raw_message': f"WEB_SIGNAL_CONTEXT: {current_text}",
-                                'asset': None, 'direction': None, 'expiration': None # Dejamos que la IA extraiga
+                                'asset': None, 'direction': None, 'expiration': None
                             })
                             
                     await asyncio.sleep(5) # Revisar cada 5 segundos

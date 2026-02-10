@@ -180,7 +180,7 @@ class LocalAIAnalyzer:
 
         return True, "✅ Aprobado por IA Local"
 
-    def record_experience(self, asset, direction, result, indicators=None):
+    def record_experience(self, asset, direction, result, indicators=None, deep_analysis=None):
         """Guarda resultado para aprendizaje"""
         experience = {
             'date': datetime.now().strftime('%Y-%m-%d'),
@@ -188,7 +188,8 @@ class LocalAIAnalyzer:
             'asset': asset,
             'direction': direction,
             'result': result,
-            'indicators': indicators or {}
+            'indicators': indicators or {},
+            'deep_analysis': deep_analysis or {} # Guardar análisis profundo
         }
         
         filepath = 'data/experiences.json'
@@ -200,12 +201,15 @@ class LocalAIAnalyzer:
                 data = []
             
             data.append(experience)
-            if len(data) > 1000: data = data[-1000:]
+            # Mantener buffer de 2000 experiencias
+            if len(data) > 2000: data = data[-2000:]
                 
             with open(filepath, 'w') as f:
                 json.dump(data, f, indent=4)
                 
             print(f"📝 Experiencia registrada: {asset} {direction} -> {result}")
+            if deep_analysis:
+                print(f"   🧪 Análisis Profundo Guardado (Drawdown/Mejor Entrada)")
         except Exception as e:
             print(f"❌ Error guardando experiencia: {e}")
 
