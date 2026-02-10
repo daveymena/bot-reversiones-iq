@@ -102,6 +102,14 @@ async def main():
             print(f"⌛ Tiempo cumplido para {order_id}. Verificando resultado en broker...")
             loop = asyncio.get_event_loop()
             
+            # --- RECONEXIÓN DE SEGURIDAD ---
+            # Antes de preguntar, aseguramos que el cable esté enchufado
+            is_connected = await loop.run_in_executor(None, market_data.api.check_connect)
+            if not is_connected:
+                print("⚠️ Conexión caída durante espera. Reconectando...")
+                await loop.run_in_executor(None, lambda: market_data.connect(Config.EXNOVA_EMAIL, Config.EXNOVA_PASSWORD))
+            # -------------------------------
+
             # 1. Obtener Resultado Real (Ejecutar en hilo aparte para no bloquear)
             # check_win_v3 puede tardar si la opción no ha liquidado
             profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
