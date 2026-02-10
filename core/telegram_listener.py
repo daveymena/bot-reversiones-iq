@@ -151,14 +151,18 @@ class TelegramListener:
     
     async def listen(self, chat_identifiers: list = None):
         """
-        Inicia la escucha de mensajes
-        
-        Args:
-            chat_identifiers: Lista de chats/canales a monitorear
-                              Si es None, escucha TODOS los chats
+        Inicia la escucha de mensajes. Se asegura de estar conectado primero.
         """
+        if not self.client.is_connected():
+            print("⚠️ Cliente desconectado. Iniciando conexión...")
+            await self.start()
+
         # Agregar chats a monitorear
         if chat_identifiers:
+            if isinstance(chat_identifiers, str):
+                # Si llega como string único (ej: "@EDINSON358"), convertir a lista
+                chat_identifiers = [c.strip() for c in chat_identifiers.split(',')]
+                
             for chat_id in chat_identifiers:
                 await self.add_chat_to_monitor(chat_id)
         else:

@@ -7,6 +7,8 @@ import sys
 import asyncio
 import time
 import signal
+import os
+import re
 from datetime import datetime, timedelta
 from config import Config
 from data.market_data import MarketDataHandler
@@ -60,95 +62,296 @@ async def main():
     balance = market_data.get_balance()
     print(f"✅ Conectado | Balance actual: ${balance:.2f}\n")
 
-    # 3. Definir Callback para señales INTELIGENTE
+    # --- INICIO IA INTELIGENTE (GROQ) ---
     from core.smart_signal_parser import SmartSignalParser
-    
-    # Intentar cargar parser inteligente
     try:
         smart_parser = SmartSignalParser()
         print("🧠 Cerebro IA (Groq) ACTIVADO para análisis de señales")
     except Exception as e:
-        print(f"⚠️ No se pudo cargar IA: {e}")
+        print(f"⚠️ No se pudo cargar IA Groq: {e}")
         smart_parser = None
 
-    async def process_telegram_signal(signal_data):
-        """Procesa la señal usando, si es posible, el cerebro inteligente"""
+    # --- INICIO IA LOCAL (MEMORIA) ---
+    from ai.local_ai_analyzer import LocalAIAnalyzer
+    try:
+        local_ai = LocalAIAnalyzer()
+        print("🧠 IA Local (Memoria) ACTIVADA para evitar pérdidas recurrentes")
+    except Exception as e:
+        print(f"⚠️ No se pudo cargar IA Local: {e}")
+        local_ai = None
+    # -------------------------------
+
+    # Variables de estado para evitar duplicados y vaciado
+    last_signal_signature = None
+    last_trade_time = datetime.min
+    TRADE_COOLDOWN_SECONDS = 300  # 5 minutos entre operaciones mínimo (por señal)
+
+    async def monitor_trade_outcome(order_id, asset, direction, duration_min, indicators):
+        """Espera a que termine la operación y guarda el resultado"""
+        wait_seconds = (duration_min * 60) + 10 # Esperar duración + margen
+        print(f"👀 Monitoreando operación {order_id} ({asset})... Esperando {wait_seconds}s para resultado.")
+        
+        await asyncio.sleep(wait_seconds)
+        
+        # Verificar resultado (Win/Loss)
+        # Nota: La API de IQ/Exnova a veces retorna el resultado por websocket.
+        # Aquí consultamos el historial de operaciones cerradas o intentamos inferir.
+        
+        # Método simple: Consultar beneficio de la opción cerrada
         try:
-            # Si tenemos parser inteligente, re-analizamos el mensaje completo
-            # para capturar matices como "Hora exacta: 21:11"
-            if smart_parser and 'raw_message' in signal_data:
-                print("🧠 Analizando mensaje con IA...")
-                ai_signal = smart_parser.parse_with_ai(signal_data['raw_message'])
+            # Opción 1: win/loss histórico (si la API lo soporta fácil)
+            # Opción 2: Chequear balance (poco preciso si hay varias op)
+            # Opción 3: check_win_v3 / get_option_open_by_other_pc (complejo)
+            
+            # Para DEMO/Aprendizaje, asumiremos que si precio cierre > precio apertura (CALL) ganamos.
+            # Necesitamos precio entrada y precio cierre.
+            
+            initial_price = market_data.get_current_price(asset) # Precio AHORA (final)
+            # Esto es impreciso porque entry_price fue hace X min.
+            
+            # Mejor: Usar la API para ver el resultado oficial si es posible.
+            # get_betinfo(order_id)
+            if hasattr(market_data.api, 'get_async_order'):
+                 # Intento genérico
+                 pass
+            
+            # Si no podemos obtener resultado exacto por API, lo simulamos/guardamos como PENDING
+            # Pero para aprendizaje real, necesitamos el resultado.
+            
+            # PLAN B: Checkear profit de la orden
+            profit = 0
+            result = "UNKNOWN"
+            
+            try:
+                # Intento obtener info de la operación cerrada
+                # Esto depende mucho de la librería específica (iqoptionapi)
+                profit = market_data.api.check_win_v3(order_id)
+            except:
+                pass
                 
+            if profit > 0:
+                result = "WIN" 
+            elif profit < 0:
+                result = "LOSS"
+            else:
+                # A veces devuelve 0 si empató o falló check
+                result = "DRAW" 
+                
+            print(f"🏁 Operación {order_id} finalizada. Resultado: {result} (${profit:.2f})")
+            
+            if local_ai and result in ["WIN", "LOSS"]:
+                local_ai.record_experience(asset, direction, result, indicators)
+                
+        except Exception as e:
+            print(f"❌ Error monitoreando resultado: {e}")
+
+    async def process_telegram_signal(signal_data):
+        nonlocal last_signal_signature, last_trade_time
+        
+        try:
+            # 1. PARSER INTELIGENTE (IA)
+            if smart_parser and 'raw_message' in signal_data:
+                print("🧠 IA analizando...")
+                ai_signal = smart_parser.parse_with_ai(signal_data['raw_message'])
                 if ai_signal:
-                    print(f"🔍 IA detectó: {ai_signal}")
-                    
-                    # Usar datos de la IA si son válidos
                     if ai_signal.get('asset'): signal_data['asset'] = ai_signal['asset']
                     if ai_signal.get('direction'): signal_data['direction'] = ai_signal['direction']
                     if ai_signal.get('expiration'): signal_data['expiration'] = ai_signal['expiration']
                     
-                    # Lógica de espera inteligente
-                    wait_seconds = ai_signal.get('seconds_to_wait', 0)
-                    if wait_seconds > 0:
-                        target_time = datetime.now() + timedelta(seconds=wait_seconds)
-                        print(f"⏳ SEÑAL PROGRAMADA: Esperando {wait_seconds}s hasta las {target_time.strftime('%H:%M:%S')}...")
-                        await asyncio.sleep(wait_seconds)
-                        print("⏰ TIEMPO CUMPLIDO: Ejecutando ahora!")
+                    # Espera programada
+                    wait_s = ai_signal.get('seconds_to_wait', 0)
+                    if wait_s > 0:
+                        print(f"⏳ Esperando {wait_s}s para hora exacta...")
+                        await asyncio.sleep(wait_s)
+
+            # 2. DEFINIR DATOS CLAVE
+            asset = signal_data.get('asset')
+            direction = signal_data.get('direction')
+            expiration = signal_data.get('expiration', 5)
             
-            # Ejecución normal (ahora o después de la espera)
-            asset = signal_data['asset']
-            direction = signal_data['direction']
-            expiration = signal_data['expiration']
+            if not asset or not direction:
+                print("⚠️ Señal incompleta, ignorando.")
+                return
+
+            # 3. 🛡️ FILTROS DE SEGURIDAD 🛡️
             
+            # A) Firma Anti-Duplicados
+            current_sig = f"{asset}-{direction}-{datetime.now().strftime('%Y%m%d%H%M')}"
+            if current_sig == last_signal_signature:
+                print(f"🛑 DUPLICADO: Ya operamos {asset} hace un momento.")
+                return
+            
+            # B) Cooldown Global
+            seconds_since_last = (datetime.now() - last_trade_time).total_seconds()
+            if seconds_since_last < 60: 
+                 print(f"🛑 COOLDOWN: Espera {60 - seconds_since_last:.0f}s.")
+                 return
+
+            # C) Stop Loss Diario
+            # Obtenemos balance actual con reintento simple si es 0
+            current_balance = market_data.get_balance()
+            if current_balance == 0:
+                 await asyncio.sleep(1)
+                 current_balance = market_data.get_balance()
+
+            if not risk_manager.can_trade(current_balance):
+                print(f"🛑 STOP LOSS DIARIO ALCANZADO (Balance: {current_balance}). Pausando operaciones...")
+                return
+
+            # D) Memoria IA
+            if local_ai:
+                is_safe, reason = local_ai.evaluate_trade_safety(asset, direction, expiration)
+                if not is_safe:
+                    print(f"🛑 IA LOCAL BLOQUEÓ OPERACIÓN: {reason}")
+                    return
+
+            # CAPTURAR INSTANTÁNEA DE MERCADO (RSI, MACD)
+            indicators = {}
+            try:
+                # Intentamos obtener velas y calcular indicadores rápidos para guardar el contexto
+                # Esto es crucial para que el bot "aprenda" el patrón
+                # Solicitamos 50 velas para cálculo básico
+                df = market_data.get_candles(asset, 60, 50, time.time())
+                if not df.empty:
+                     # Cálculo rápido manual de RSI (LocalAI lo hace internamente pero aquí necesitamos extraerlo)
+                     # Por simplicidad, guardamos OHLC de la última vela o usamos LocalAI si expusiera método
+                     delta = df['close'].diff()
+                     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                     rs = gain / loss
+                     df['rsi'] = 100 - (100 / (1 + rs))
+                     
+                     indicators['rsi'] = df['rsi'].iloc[-1]
+                     indicators['close'] = df['close'].iloc[-1]
+                     # Podríamos calcular MACD aquí también
+            except Exception as ind_e:
+                print(f"⚠️ No se pudo capturar snapshot de mercado: {ind_e}")
+
+            # 4. EJECUTAR OPERACIÓN
             print(f"\n⚡ EJECUTANDO: {asset} | {direction.upper()} | {expiration} min")
-            
             amount = risk_manager.get_trade_amount()
             
-            # Ejecutar en broker
-            success, order_id = market_data.api.buy(
-                amount,
-                asset,
-                direction,
-                expiration
-            )
+            # USAR WRAPPER INTELIGENTE
+            success, order_id = market_data.buy(asset, amount, direction, expiration)
             
             if success:
-                print(f"✅ OPERACIÓN ABIERTA - ID: {order_id}")
-            else:
-                print(f"❌ Error al abrir operación: {order_id}")
+                print(f"✅ OPERACIÓN ÉXITOSA - ID: {order_id}")
+                last_signal_signature = current_sig
+                last_trade_time = datetime.now()
                 
+                # INICIAR APRENDIZAJE ASÍNCRONO
+                asyncio.create_task(monitor_trade_outcome(order_id, asset, direction, expiration, indicators))
+                
+            else:
+                print(f"❌ Falló ejecución en broker: {order_id}")
+
         except Exception as e:
             print(f"❌ Error procesando señal: {e}")
 
-    # 4. Inicializar Telegram Listener
-    if Config.TELEGRAM_API_ID == 0 or not Config.TELEGRAM_API_HASH:
-        print("❌ ERROR: No has configurado las credenciales de Telegram en el archivo .env")
-        print("Necesitas TELEGRAM_API_ID y TELEGRAM_API_HASH de https://my.telegram.org")
-        return
+    # 4. Inicializar Telegram Listener (Userbot)
+    telegram_task = None
+    if Config.TELEGRAM_API_ID and Config.TELEGRAM_API_HASH:
+        print("📱 Iniciando cliente de Telegram...")
+        listener = TelegramListener(
+            api_id=Config.TELEGRAM_API_ID,
+            api_hash=Config.TELEGRAM_API_HASH,
+            phone=Config.TELEGRAM_PHONE,
+            session_name=Config.TELEGRAM_SESSION_NAME,
+            signal_callback=process_telegram_signal
+        )
+        # Crear tarea de Telegram
+        async def start_telegram():
+            try:
+                await listener.start()
+                await listener.listen(Config.TELEGRAM_CHATS)
+            except Exception as e:
+                print(f"❌ Error en terea de Telegram: {e}")
 
-    print("📱 Iniciando cliente de Telegram...")
-    listener = TelegramListener(
-        api_id=Config.TELEGRAM_API_ID,
-        api_hash=Config.TELEGRAM_API_HASH,
-        phone=Config.TELEGRAM_PHONE,
-        session_name=Config.TELEGRAM_SESSION_NAME,
-        signal_callback=process_telegram_signal
-    )
+        telegram_task = asyncio.create_task(start_telegram())
+    else:
+        print("⚠️ Telegram NO configurado (API_ID/HASH faltantes)")
+
+    # 5. Inicializar Web Scraper (AlgoritmoDeTrading)
+    # Ejecutamos el scraper en un hilo separado o loop asíncrono
+    web_scraper = None
+    
+    web_enable_str = os.getenv("WEB_ENABLE", "False").strip().lower()
+    print(f"DEBUG: WEB_ENABLE='{web_enable_str}'") # Para ver qué lee realmente
+
+    if web_enable_str in ["true", "1", "yes", "on"]:
+        from core.web_signal_scraper import WebSignalScraper
+        print("🌐 Iniciando Web Scraper (AlgoritmoDeTrading)...")
+        
+        web_user = os.getenv("WEB_USER", "Duvier mena")
+        web_id = os.getenv("WEB_ID", "167326711")
+        
+        web_scraper = WebSignalScraper(web_user, web_id)
+        
+        # Función para monitorear la web en bucle
+        async def monitor_web_signals():
+            try:
+                # Iniciar navegador (bloqueante)
+                # Ejecutamos en executor para no bloquear el loop principal
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, web_scraper.start)
+                
+                last_signal_text = ""
+                
+                print("🌐 Web Scraper activo y monitoreando...")
+                
+                while running:
+                    # Obtener señal actual
+                    signal_data_web = await loop.run_in_executor(None, web_scraper.get_latest_signal)
+                    
+                    if signal_data_web and signal_data_web.get('raw_text'):
+                        current_text = signal_data_web['raw_text']
+                        
+                        # Si el texto cambió significativamente (nueva señal)
+                        # O si ha pasado X tiempo y sigue activa (a decidir)
+                        # Por ahora, detectamos cambio de texto
+                        
+                        # Limpieza básica para comparar contenido real
+                        # Quitamos hora actual que siempre cambia
+                        clean_text = re.sub(r'Hora Actual:.*', '', current_text)
+                        clean_text = re.sub(r'Tiempo restante.*', '', clean_text)
+                        
+                        # Solo procesamos si hay cambio real en la señal
+                        if clean_text != last_signal_text:
+                            print(f"\n🌐 NUEVA INFORMACIÓN WEB DETECTADA")
+                            last_signal_text = clean_text
+                            
+                            # Enviamos al mismo procesador que Telegram (la IA decide si es señal)
+                            # Simulamos un objeto de señal compatible
+                            await process_telegram_signal({
+                                'raw_message': f"WEB_SIGNAL_CONTEXT: {current_text}",
+                                'asset': None, 'direction': None, 'expiration': None # Dejamos que la IA extraiga
+                            })
+                            
+                    await asyncio.sleep(5) # Revisar cada 5 segundos
+                    
+            except Exception as e:
+                print(f"❌ Error en monitor web: {e}")
+
+        # Lanzar monitor web como tarea
+        asyncio.create_task(monitor_web_signals())
 
     try:
-        # Iniciar conexión a Telegram
-        await listener.start()
-        
-        # Iniciar escucha de mensajes
-        # Usamos Config.TELEGRAM_CHATS que definimos antes
-        await listener.listen(Config.TELEGRAM_CHATS)
+        # Mantener el loop corriendo
+        if telegram_task:
+            await telegram_task
+        else:
+             # Si no hay telegram, mantener vivo por el web scraper
+             while running:
+                 await asyncio.sleep(1)
         
     except Exception as e:
-        print(f"❌ Error en el listener de Telegram: {e}")
+        print(f"❌ Error en el loop principal: {e}")
     finally:
-        await listener.stop()
-        print("👋 Bot de señales finalizado.")
+        if telegram_task:
+            await listener.stop()
+        if web_scraper:
+            web_scraper.stop()
+        print("👋 Bot finalizado.")
 
 if __name__ == "__main__":
     # Configurar cierre limpio

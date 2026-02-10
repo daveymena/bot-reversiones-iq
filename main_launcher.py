@@ -21,7 +21,7 @@ def run_system():
     def start_bot():
         print("🧠 Iniciando Bot de Trading...")
         return subprocess.Popen(
-            [sys.executable, "main_headless.py"],
+            [sys.executable, "main_telegram_bot.py"],
             stdout=open("logs/bot_stdout.log", "a"),
             stderr=open("logs/bot_stderr.log", "a")
         )

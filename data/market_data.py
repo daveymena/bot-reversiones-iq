@@ -290,53 +290,68 @@ class MarketDataHandler:
     def buy(self, asset, amount, action, duration):
         """
         Ejecuta una operación buscando la mejor vía disponible (Digital -> Binaria).
-        Evita errores de 'underlying key not found' verificando disponibilidad.
+        Si falla, intenta automáticamente la variante OTC/Normal contraria.
         """
         if not self.connected or not self.api:
             return False, "No conectado"
 
-        # 1. Intentar Digital (Suele tener mejor payout)
-        # Solo intentamos si es una de las duraciones estándar (1, 5, 15)
-        if duration in [1, 5, 15]:
-            try:
-                # Verificar si el activo está abierto para Digital antes de intentar
-                # Esto evita el error "underlying key not found" en la librería
-                print(f"📦 Verificando disponibilidad DIGITAL para {asset}...")
-                
-                # Intentar obtener el ID del instrumento digital
+        # 1. Intento Principal con el nombre original
+        success, result = self._execute_buy_logic(asset, amount, action, duration)
+        if success:
+            return True, result
+            
+        # Si falló, analizar si vale la pena reintentar con OTC/Normal
+        print(f"⚠️ Falló intento principal en {asset}: {result}")
+        
+        # Generar nombre alternativo
+        if asset.endswith("-OTC"):
+            alt_asset = asset.replace("-OTC", "") # Pruebo Normal
+        else:
+            alt_asset = asset + "-OTC" # Pruebo OTC
+            
+        print(f"🔄 Intentando FALLBACK automático con: {alt_asset} ...")
+        
+        # 2. Intento Secundario (Fallback)
+        success_alt, result_alt = self._execute_buy_logic(alt_asset, amount, action, duration)
+        
+        if success_alt:
+            print(f"✅ ÉXITO en Fallback: {alt_asset}")
+            return True, result_alt
+        else:
+            return False, f"Falló en {asset} ({result}) y en {alt_asset} ({result_alt})"
+
+    def _execute_buy_logic(self, asset, amount, action, duration):
+        """Lógica interna de compra (Digital -> Binaria)"""
+        try:
+            # A) Intentar Digital (Mejor Payout)
+            if duration in [1, 5, 15]:
                 try:
-                    # Esta es una forma indirecta de ver si está abierto sin disparar el error de compra
-                    # Usamos get_digital_payout como proxy de disponibilidad
-                    payout_digital = self.api.get_digital_payout(asset)
+                    # Verificar payout digital (proxy de disponibilidad)
+                    self.api.subscribe_strike_list(asset, duration)
+                    payout = self.api.get_digital_to_payout(asset, duration)
                     
-                    if payout_digital <= 0:
-                        print(f"⚠️ {asset} no disponible para Digital en este momento (Payout: {payout_digital}).")
-                    else:
-                        print(f"📦 Intentando operación DIGITAL en {asset} (Payout: {payout_digital}%)...")
+                    if payout and payout > 0:
+                        print(f"📦 Digital disponible en {asset} (Payout: {payout}%)")
                         check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
                         if check:
                             return True, order_id
-                        else:
-                            print(f"⚠️ Compra Digital rechazada: {order_id}")
-                except Exception as dig_e:
-                    print(f"⚠️ Error al consultar Digital Payout: {dig_e}")
+                    else:
+                        print(f"⚠️ Digital no disponible/payout 0 en {asset}")
+                except Exception as e:
+                    print(f"⚠️ Error check Digital: {e}")
 
-            except Exception as e:
-                print(f"⚠️ Fallo crítico en Digital: {e}")
-
-        # 2. Intentar Binaria (Fallback)
-        try:
-            print(f"📦 Intentando operación BINARIA en {asset}...")
-            # En iqoption/exnova API, buy devuelve: True/False, order_id o error
+            # B) Intentar Binaria/Turbo (Fallback estándar)
+            # Turbo es 1-5 min, Binaria es >15. La API usually maneja esto con 'buy'
+            print(f"📦 Intentando Binaria/Turbo en {asset}...")
             check, order_id = self.api.buy(amount, asset, action, duration)
+            
             if check:
                 return True, order_id
             else:
-                return False, f"Binaria rechazada: {order_id}"
+                return False, f"Rechazado: {order_id}"
+                
         except Exception as e:
-            print(f"⚠️ Fallo en Binaria: {e}")
-
-        return False, "No se pudo ejecutar en ninguna modalidad"
+            return False, str(e)
 
     def disconnect(self):
         """Desconecta del broker"""
