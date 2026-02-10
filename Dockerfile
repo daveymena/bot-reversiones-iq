@@ -28,4 +28,4 @@ ENV HEADLESS_MODE=True
 RUN mkdir -p data models
 
 # Ejecutar el Bot Orquestador (IA Central) por defecto
-CMD ["python", "main_headless.py"]
+CMD ["python", "main_telegram_bot.py"]
