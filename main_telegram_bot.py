@@ -99,9 +99,18 @@ async def main():
         await asyncio.sleep(wait_seconds)
         
         try:
-            # 1. Obtener Resultado Real
-            profit = market_data.api.check_win_v3(order_id) # Puede fallar en demo
-            if profit is None: profit = 0
+            print(f"⌛ Tiempo cumplido para {order_id}. Verificando resultado en broker...")
+            loop = asyncio.get_event_loop()
+            
+            # 1. Obtener Resultado Real (Ejecutar en hilo aparte para no bloquear)
+            # check_win_v3 puede tardar si la opción no ha liquidado
+            profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
+            
+            if profit is None: 
+                # A veces tarda unos segundos más en liquidar
+                await asyncio.sleep(2)
+                profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
+                if profit is None: profit = 0
             
             result = "WIN" if profit > 0 else "LOSS" if profit < 0 else "DRAW"
             print(f"🏁 Operación {order_id} finalizada. Resultado: {result} (${profit:.2f})")
@@ -110,8 +119,8 @@ async def main():
             try:
                 # Descargar velas del periodo (Duración + 2 min antes + 2 min margen)
                 total_candles_needed = duration_min + 5
-                # Obtenemos velas de 1 minuto
-                df_analysis = market_data.get_candles(asset, 60, total_candles_needed, time.time())
+                # Obtenemos velas de 1 minuto (en hilo aparte)
+                df_analysis = await loop.run_in_executor(None, lambda: market_data.get_candles(asset, 60, total_candles_needed, time.time()))
                 
                 deep_analysis = {}
                 
