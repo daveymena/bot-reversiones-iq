@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     g++ \
     libglib2.0-0 \
     libpq-dev \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements de la nube (sin GUI para evitar errores libglib)
