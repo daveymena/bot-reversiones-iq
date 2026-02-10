@@ -1,9 +1,8 @@
 # Python
-# Py# Telegram Sessions (Se ignoran por defecto, pero permitiremos la principal para Cloud)
-# *.session
+# Telegram Sessions (BLOQUEADOS por defecto, permitimos SOLO cloud_session para EasyPanel)
+*.session
 *.session-journal
-!trading_session.session
-# trading_session.session (HABILITADO PARA CLOUD)
+!cloud_session.session
 
 # Environment Variables
 .env

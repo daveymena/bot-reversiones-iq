@@ -25,6 +25,7 @@ ENV PYTHONUNBUFFERED=1
 ENV BROKER_NAME=exnova
 ENV ACCOUNT_TYPE=PRACTICE
 ENV HEADLESS_MODE=True
+ENV TELEGRAM_SESSION_NAME=cloud_session
 
 # Crear directorios para persistencia
 RUN mkdir -p data models
