@@ -93,109 +93,77 @@ async def main():
         Monitorea el resultado y realiza un ANÁLISIS PROFUNDO (Deep Learning) post-mortem.
         """
         entry_time = time.time()
-        wait_seconds = (duration_min * 60) + 5 # Esperar duración
-        print(f"👀 Monitoreando operación {order_id} ({asset})... Esperando {wait_seconds}s...")
         
-        await asyncio.sleep(wait_seconds)
+        # 0. Estrategia de Espera Inteligente 🧠⚡
+        total_wait_time = duration_min * 60
+        initial_sleep = max(0, total_wait_time - 15)
         
-        try:
-            print(f"⌛ Tiempo cumplido para {order_id}. Verificando resultado en broker...")
-            loop = asyncio.get_event_loop()
-            
-            # --- RECONEXIÓN DE SEGURIDAD ---
-            # Antes de preguntar, aseguramos que el cable esté enchufado
-            is_connected = await loop.run_in_executor(None, market_data.api.check_connect)
-            if not is_connected:
-                print("⚠️ Conexión caída durante espera. Reconectando...")
-                await loop.run_in_executor(None, lambda: market_data.connect(Config.EXNOVA_EMAIL, Config.EXNOVA_PASSWORD))
-            # -------------------------------
-
-            # 1. Obtener Resultado Real (Ejecutar en hilo aparte para no bloquear)
-            # check_win_v3 puede tardar si la opción no ha liquidado
-            profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
-            
-            if profit is None: 
-                # A veces tarda unos segundos más en liquidar
-                await asyncio.sleep(2)
-                profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
-                if profit is None: profit = 0
-            
-            result = "WIN" if profit > 0 else "LOSS" if profit < 0 else "DRAW"
-            print(f"🏁 Operación {order_id} finalizada. Resultado: {result} (${profit:.2f})")
-            
-            # 2. 🧪 DEEP LEARNING (Análisis Post-Mortem)
+        if initial_sleep > 0:
+            print(f"👀 Monitoreando {order_id} ({asset})... Durmiendo {initial_sleep:.1f}s...")
+            await asyncio.sleep(initial_sleep)
+        
+        print(f"🕵️ Escaneando cierre de operación {order_id}...")
+        
+        loop = asyncio.get_event_loop()
+        profit = None
+        
+        # Polling durante los últimos segundos + margen
+        for i in range(60): # 60 intentos = 1 min de polling intenso
             try:
-                # Descargar velas del periodo (Duración + 2 min antes + 2 min margen)
-                total_candles_needed = duration_min + 5
-                # Obtenemos velas de 1 minuto (en hilo aparte)
-                df_analysis = await loop.run_in_executor(None, lambda: market_data.get_candles(asset, 60, total_candles_needed, time.time()))
+                is_connected = await loop.run_in_executor(None, market_data.api.check_connect)
+                if not is_connected:
+                    await loop.run_in_executor(None, lambda: market_data.connect(Config.EXNOVA_EMAIL, Config.EXNOVA_PASSWORD))
                 
-                deep_analysis = {}
+                profit = await loop.run_in_executor(None, lambda: market_data.api.check_win_v3(order_id))
+                if profit is not None:
+                    break
+            except Exception:
+                pass
+            await asyncio.sleep(1)
+            
+        if profit is None: profit = 0
+        
+        result = "WIN" if profit > 0 else "LOSS" if profit < 0 else "DRAW"
+        print(f"🏁 Operación {order_id} finalizada. Resultado: {result} (${profit:.2f})")
+
+        # 2. 🧪 DEEP LEARNING (Análisis Post-Mortem)
+        try:
+            # Obtener velas para análisis
+            df_analysis = await loop.run_in_executor(None, lambda: market_data.get_candles(asset, 60, duration_min + 5, time.time()))
+            
+            deep_analysis = {}
+            if not df_analysis.empty:
+                entry_price_ref = indicators.get('close', df_analysis.iloc[0]['close'])
+                min_price = df_analysis['low'].min()
+                max_price = df_analysis['high'].max()
                 
-                if not df_analysis.empty:
-                    # Asumimos que la vela de entrada es la antepenúltima (aprox)
-                    # Esto es una aproximación, idealmente saber timestamp exacto
-                    
-                    # Precio de entrada estimado (cierre de la vela anterior a la señal o open de la actual)
-                    # Usaremos el precio del indicador capturado como referencia de entrada
-                    entry_price_ref = indicators.get('close', df_analysis.iloc[0]['close'])
-                    
-                    # Análisis de Excursión (Riesgo vs Recompensa)
-                    min_price_during = df_analysis['low'].min()
-                    max_price_during = df_analysis['high'].max()
-                    
-                    if direction == 'CALL':
-                        max_drawdown = entry_price_ref - min_price_during
-                        max_profit_potential = max_price_during - entry_price_ref
-                    else: # PUT
-                        max_drawdown = max_price_during - entry_price_ref
-                        max_profit_potential = entry_price_ref - min_price_during
-                        
-                    deep_analysis['max_drawdown'] = max_drawdown
-                    deep_analysis['max_profit_potential'] = max_profit_potential
-                    
-                    # 3. ⏱️ Simulación de Mejores Tiempos (Expiración)
-                    # Comparamos el precio de entrada con el cierre de las siguientes N velas
-                    simulations = {}
-                    for i in range(1, 6): # Minutos 1 a 5
-                        if i < len(df_analysis):
-                            close_at_min = df_analysis.iloc[i]['close']
-                            sim_win = False
-                            if direction == 'CALL': sim_win = close_at_min > entry_price_ref
-                            else: sim_win = close_at_min < entry_price_ref
-                            
-                            simulations[f'exp_{i}min'] = 'WIN' if sim_win else 'LOSS'
-                    
-                    deep_analysis['time_simulation'] = simulations
-                    
-                    # 4. 📉 Análisis de Mejor Entrada (Pullback)
-                    # ¿Hubo un mejor precio en el primer minuto?
-                    first_candle = df_analysis.iloc[0]
-                    better_entry_found = False
-                    if direction == 'CALL':
-                        if first_candle['low'] < entry_price_ref:
-                            better_entry_found = True
-                            deep_analysis['missed_pullback'] = entry_price_ref - first_candle['low']
-                    else:
-                        if first_candle['high'] > entry_price_ref:
-                            better_entry_found = True
-                            deep_analysis['missed_pullback'] = first_candle['high'] - entry_price_ref
-                            
-                    deep_analysis['better_entry_available'] = better_entry_found
+                if direction == 'CALL':
+                    max_drawdown = entry_price_ref - min_price
+                    max_profit = max_price - entry_price_ref
+                else:
+                    max_drawdown = max_price - entry_price_ref
+                    max_profit = entry_price_ref - min_price
+                
+                deep_analysis['max_drawdown'] = max_drawdown
+                deep_analysis['max_profit_potential'] = max_profit
+                
+                # Simulación de otros tiempos
+                sims = {}
+                for t in range(1, 6):
+                    if t < len(df_analysis):
+                        close_t = df_analysis.iloc[t]['close']
+                        sim_win = close_t > entry_price_ref if direction == 'CALL' else close_t < entry_price_ref
+                        sims[f'exp_{t}min'] = 'WIN' if sim_win else 'LOSS'
+                deep_analysis['time_simulation'] = sims
 
-                # Guardar Conocimiento
-                if local_ai:
-                    local_ai.record_experience(asset, direction, result, indicators, deep_analysis)
-                    print(f"🧠 Aprendizaje Profundo Guardado para {asset}")
-                    
-            except Exception as dl_e:
-                print(f"⚠️ Error en Deep Learning (aprendiendo solo básico): {dl_e}")
-                # Guardar básico si falla el profundo
-                if local_ai:
-                    local_ai.record_experience(asset, direction, result, indicators)
-
+            # Registrar experiencia
+            if local_ai:
+                local_ai.record_experience(asset, direction, result, indicators, deep_analysis)
+                print(f"🧠 Aprendizaje Profundo Guardado para {asset}")
         except Exception as e:
-            print(f"❌ Error monitoreando resultado: {e}")
+            print(f"⚠️ Error en Deep Learning: {e}")
+            if local_ai:
+                local_ai.record_experience(asset, direction, result, indicators)
 
     async def process_telegram_signal(signal_data):
         nonlocal last_signal_signature, last_trade_time
