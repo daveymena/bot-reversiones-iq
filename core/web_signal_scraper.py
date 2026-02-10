@@ -19,13 +19,16 @@ class WebSignalScraper:
         self.driver = None
         self.is_running = False
         
-        # Configuración de Chrome
+        # Configuración de Chrome (Optimizada para Docker/Linux)
         self.options = Options()
-        # self.options.add_argument("--headless=new")  # Comentar para ver el navegador (debug)
+        self.options.add_argument("--headless=new") # Critico para servidores sin pantalla
         self.options.add_argument("--no-sandbox")
         self.options.add_argument("--disable-dev-shm-usage")
+        self.options.add_argument("--disable-gpu")
+        self.options.add_argument("--window-size=1920,1080")
+        self.options.add_argument("--disable-extensions")
         self.options.add_argument("--disable-infobars")
-        self.options.add_argument("--start-maximized")
+        
         # Anti-detección básica
         self.options.add_argument("--disable-blink-features=AutomationControlled")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])

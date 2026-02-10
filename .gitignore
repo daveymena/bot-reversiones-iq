@@ -2,7 +2,7 @@
 # Py# Telegram Sessions (CRITICO: No subir nunca)
 *.session
 *.session-journal
-trading_session.session
+# trading_session.session (HABILITADO PARA CLOUD)
 
 # Environment Variables
 .env
