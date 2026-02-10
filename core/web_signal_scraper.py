@@ -36,9 +36,18 @@ class WebSignalScraper:
 
     def start(self):
         """Inicia el navegador y hace login"""
-        print("🌍 Iniciando navegador para AlgoritmoDeTrading...")
         try:
-            service = Service(ChromeDriverManager().install())
+            # Estrategia de Selección de Driver (Docker vs Local)
+            system_driver = "/usr/bin/chromedriver"
+            if os.path.exists(system_driver):
+                print(f"✅ Usando driver del sistema: {system_driver}")
+                service = Service(executable_path=system_driver)
+            else:
+                print("⚒️ Driver del sistema no encontrado, usando webdriver-manager...")
+                from webdriver_manager.chrome import ChromeDriverManager
+                driver_path = ChromeDriverManager().install()
+                service = Service(driver_path)
+
             self.driver = webdriver.Chrome(service=service, options=self.options)
             
             # Navegar a home
