@@ -68,17 +68,27 @@ class TradeIntelligence:
         
         Args:
             trade_data: dict con datos de la operación
-            result: dict con resultado (won, profit, etc.)
+            result: dict con resultado (won, profit, etc.) o bool
             
         Returns:
             dict: Análisis completo con recomendaciones
         """
-        # Asegurar que result sea un dict y tenga las llaves necesarias
-        if not isinstance(result, dict):
-            result = {'won': bool(result), 'profit': 0}
-            
-        won = result.get('won', False)
-        profit = result.get('profit', 0)
+        # Manejo robusto de result - puede venir como dict o bool
+        try:
+            if isinstance(result, dict):
+                won = result.get('won', False)
+                profit = result.get('profit', 0)
+            elif isinstance(result, bool):
+                won = result
+                profit = 0
+            else:
+                # Fallback seguro
+                won = bool(result)
+                profit = 0
+        except Exception as e:
+            print(f"[ERROR] Error parseando result en analyze_trade_result: {e}, result={result}")
+            won = False
+            profit = 0
         
         analysis = {
             'timestamp': datetime.now().isoformat(),
