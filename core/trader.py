@@ -119,6 +119,11 @@ class LiveTrader(QThread):
         self.smart_money_analyzer = SmartMoneyAnalyzer()
         self.professional_learning = ProfessionalLearningSystem()
         
+        # 🎯 SISTEMA DE REFINAMIENTO DE PRECISIÓN (NUEVO)
+        from core.precision_refiner import PrecisionRefiner
+        self.precision_refiner = PrecisionRefiner()
+        print(f"🎯 Sistema de Precisión: {self.precision_refiner.precision_metrics['current_win_rate']:.1f}% winrate actual")
+        
         # 🎯 SISTEMA DE VALIDACIÓN REFINADA (NUEVO)
         if REFINED_VALIDATION_AVAILABLE:
             try:
