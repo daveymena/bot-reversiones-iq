@@ -157,10 +157,10 @@ class LiveTrader(QThread):
         
         # Control de tiempo entre operaciones (MÁS ESTRICTO para evitar sobre-operación)
         self.last_trade_time = 0
-        # Control de tiempo entre operaciones (MÁS CONSERVADOR para análisis profundo)
+        # Control de tiempo entre operaciones (BALANCEADO)
         self.last_trade_time = 0
-        self.min_time_between_trades = 300  # Mínimo 5 MINUTOS entre operaciones
-        self.cooldown_after_loss = 600      # 10 MINUTOS de espera después de perder
+        self.min_time_between_trades = 120  # 2 MINUTOS entre operaciones
+        self.cooldown_after_loss = 300      # 5 MINUTOS de espera después de perder
         self.consecutive_losses = 0
         self.last_trade_result = None
         self.max_consecutive_losses = 5    
@@ -680,39 +680,82 @@ class LiveTrader(QThread):
                             
                             # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
                             if validation['valid']:
-                                # 📊 ANÁLISIS MULTI-TEMPORALIDAD (OBLIGATORIO)
-                                self.signals.log_message.emit("\n📊 ANALIZANDO MÚLTIPLES TEMPORALIDADES...")
+                                # 📊 ANÁLISIS MULTI-TEMPORALIDAD (OBLIGATORIO - ESPECÍFICO PARA BINARIAS)
+                                self.signals.log_message.emit("\n📊 ANALIZANDO TEMPORALIDADES M1, M15, M30...")
                                 try:
                                     mtf_context = self.multi_timeframe_analyzer.analyze_all_timeframes(self.current_asset)
                                     
+                                    # Mostrar análisis de cada temporalidad
+                                    for tf_name, tf_data in mtf_context['timeframes'].items():
+                                        if tf_data:
+                                            trend = tf_data['trend']
+                                            rsi = tf_data['rsi']
+                                            at_support = "📍Soporte" if tf_data.get('at_support') else ""
+                                            at_resistance = "📍Resistencia" if tf_data.get('at_resistance') else ""
+                                            level_info = f" {at_support}{at_resistance}" if (at_support or at_resistance) else ""
+                                            self.signals.log_message.emit(f"   {tf_name}: {trend.upper()} | RSI: {rsi:.1f}{level_info}")
+                                    
+                                    # Mostrar niveles de confluencia
+                                    conf_levels = mtf_context['confluence'].get('confluence_levels', {})
+                                    if conf_levels:
+                                        supports = conf_levels.get('supports', [])
+                                        resistances = conf_levels.get('resistances', [])
+                                        
+                                        if supports:
+                                            self.signals.log_message.emit(f"\n   🟢 SOPORTES CON CONFLUENCIA:")
+                                            for sup in supports:
+                                                tfs = ', '.join(sup['timeframes'])
+                                                self.signals.log_message.emit(f"      {sup['price']:.5f} ({tfs})")
+                                        
+                                        if resistances:
+                                            self.signals.log_message.emit(f"\n   🔴 RESISTENCIAS CON CONFLUENCIA:")
+                                            for res in resistances:
+                                                tfs = ', '.join(res['timeframes'])
+                                                self.signals.log_message.emit(f"      {res['price']:.5f} ({tfs})")
+                                    
+                                    # Verificar confluencia
                                     if mtf_context['confluence']['aligned']:
                                         mtf_dir = mtf_context['confluence']['direction']
                                         mtf_score = mtf_context['confluence']['score']
-                                        self.signals.log_message.emit(f"✅ CONFLUENCIA DETECTADA: {mtf_dir} ({mtf_score:.0f}% alineación)")
+                                        mtf_reason = mtf_context['confluence']['reason']
                                         
-                                        # Mostrar análisis por temporalidad
-                                        for tf_name, tf_data in mtf_context['timeframes'].items():
-                                            trend = tf_data['trend']
-                                            rsi = tf_data['rsi']
-                                            self.signals.log_message.emit(f"   {tf_name}: {trend.upper()} | RSI: {rsi:.1f}")
+                                        self.signals.log_message.emit(f"\n✅ CONFLUENCIA DETECTADA: {mtf_dir} ({mtf_score:.0f}%)")
+                                        self.signals.log_message.emit(f"   Razón: {mtf_reason}")
                                         
                                         # Verificar que la dirección coincida con la validación
                                         if mtf_dir != validation['recommendation']:
                                             self.signals.log_message.emit(f"⚠️ CONFLICTO: Multi-timeframe dice {mtf_dir}, validación dice {validation['recommendation']}")
                                             
-                                            # Si la confluencia es muy fuerte (>80%), usar multi-timeframe
-                                            if mtf_score >= 80:
+                                            # Si la confluencia es fuerte (>60%), usar multi-timeframe
+                                            if mtf_score >= 60:
                                                 self.signals.log_message.emit(f"   ✅ Usando señal de MULTI-TIMEFRAME (confluencia {mtf_score:.0f}%)")
                                                 validation['recommendation'] = mtf_dir
                                                 validation['confidence'] = max(validation['confidence'], mtf_score / 100)
                                             else:
                                                 self.signals.log_message.emit(f"   ❌ RECHAZANDO: Confluencia débil ({mtf_score:.0f}%) y conflicto de dirección")
+                                                
+                                                # Registrar como oportunidad observada
+                                                opportunity_data = {
+                                                    'asset': self.current_asset,
+                                                    'action': validation['recommendation'],
+                                                    'confidence': validation.get('confidence', 0),
+                                                    'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                                    'state_before': df.tail(10) if not df.empty else None
+                                                }
+                                                try:
+                                                    self.observational_learner.observe_opportunity(
+                                                        opportunity_data,
+                                                        f"Conflicto multi-timeframe: {mtf_reason}"
+                                                    )
+                                                except Exception as obs_err:
+                                                    print(f"Error en observational learner: {obs_err}")
+                                                
                                                 self.best_opportunity = None
                                                 continue
                                     else:
                                         reason = mtf_context['confluence'].get('reason', 'Temporalidades no alineadas')
-                                        self.signals.log_message.emit(f"❌ SIN CONFLUENCIA: {reason}")
-                                        self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Se requiere confluencia multi-timeframe")
+                                        self.signals.log_message.emit(f"\n❌ SIN CONFLUENCIA: {reason}")
+                                        self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Se requiere confluencia de temporalidades Y niveles S/R")
                                         
                                         # Registrar como oportunidad observada
                                         opportunity_data = {
@@ -736,10 +779,12 @@ class LiveTrader(QThread):
                                 except Exception as mtf_error:
                                     self.signals.log_message.emit(f"❌ Error en análisis multi-timeframe: {mtf_error}")
                                     self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Análisis multi-timeframe es obligatorio")
+                                    import traceback
+                                    traceback.print_exc()
                                     self.best_opportunity = None
                                     continue
                                 
-                                # 📐 ANÁLISIS DE FIBONACCI (OBLIGATORIO)
+                                # 📐 ANÁLISIS DE FIBONACCI (OPCIONAL - BOOST SI DISPONIBLE)
                                 self.signals.log_message.emit("\n📐 ANALIZANDO NIVELES DE FIBONACCI...")
                                 try:
                                     fib_analysis = self.fibonacci_analyzer.analyze_current_position(df)
@@ -750,53 +795,26 @@ class LiveTrader(QThread):
                                         for line in fib_readable.split('\n'):
                                             self.signals.log_message.emit(line)
                                         
-                                        # Verificar si debe entrar según Fibonacci
-                                        if not fib_analysis['should_enter']:
-                                            self.signals.log_message.emit(f"\n⏸️ FIBONACCI RECHAZA: {fib_analysis['entry_quality']['recommendation']}")
-                                            self.signals.log_message.emit("   Esperando nivel óptimo (0.618 Golden Ratio preferido)")
-                                            
-                                            # Registrar como oportunidad observada
-                                            opportunity_data = {
-                                                'asset': self.current_asset,
-                                                'action': validation['recommendation'],
-                                                'confidence': validation.get('confidence', 0),
-                                                'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
-                                                'state_before': df.tail(10) if not df.empty else None
-                                            }
-                                            try:
-                                                self.observational_learner.observe_opportunity(
-                                                    opportunity_data,
-                                                    f"Fibonacci: {fib_analysis['entry_quality']['recommendation']}"
-                                                )
-                                            except Exception as obs_err:
-                                                print(f"Error en observational learner: {obs_err}")
-                                            
-                                            self.best_opportunity = None
-                                            continue
-                                        
-                                        # Verificar confluencia con validación
-                                        fib_bias = fib_analysis['trend_bias']
-                                        if fib_bias != validation['recommendation']:
-                                            self.signals.log_message.emit(f"⚠️ CONFLICTO: Fibonacci dice {fib_bias}, validación dice {validation['recommendation']}")
-                                            
-                                            # Si Fibonacci tiene score alto (≥70), usar Fibonacci
+                                        # Si Fibonacci aprueba, dar boost de confianza
+                                        if fib_analysis['should_enter']:
+                                            fib_bias = fib_analysis['trend_bias']
                                             fib_score = fib_analysis['entry_quality']['score']
-                                            if fib_score >= 70:
-                                                self.signals.log_message.emit(f"   ✅ Usando señal de FIBONACCI (score {fib_score}/100)")
-                                                validation['recommendation'] = fib_bias
-                                                validation['confidence'] = max(validation['confidence'], fib_score / 100)
+                                            
+                                            if fib_bias == validation['recommendation']:
+                                                self.signals.log_message.emit(f"✅ FIBONACCI CONFIRMA: {fib_bias} (Score: {fib_score}/100)")
+                                                # Boost de confianza si está en Golden Ratio
+                                                if fib_analysis['entry_quality']['level_name'] == 'golden':
+                                                    validation['confidence'] = min(0.95, validation['confidence'] * 1.15)
+                                                    self.signals.log_message.emit(f"   🌟 GOLDEN RATIO BOOST: Confianza aumentada a {validation['confidence']*100:.0f}%")
+                                                else:
+                                                    validation['confidence'] = min(0.90, validation['confidence'] * 1.05)
+                                                    self.signals.log_message.emit(f"   ✅ FIBONACCI BOOST: Confianza aumentada a {validation['confidence']*100:.0f}%")
                                             else:
-                                                self.signals.log_message.emit(f"   ❌ RECHAZANDO: Fibonacci score bajo ({fib_score}/100) y conflicto")
-                                                self.best_opportunity = None
-                                                continue
+                                                self.signals.log_message.emit(f"⚠️ Fibonacci dice {fib_bias}, validación dice {validation['recommendation']}")
+                                                self.signals.log_message.emit("   Continuando con validación original...")
                                         else:
-                                            fib_score = fib_analysis['entry_quality']['score']
-                                            self.signals.log_message.emit(f"✅ FIBONACCI CONFIRMA: {fib_bias} (Score: {fib_score}/100)")
-                                            # Boost de confianza si está en Golden Ratio
-                                            if fib_analysis['entry_quality']['level_name'] == 'golden':
-                                                validation['confidence'] = min(0.95, validation['confidence'] * 1.1)
-                                                self.signals.log_message.emit(f"   🌟 GOLDEN RATIO BOOST: Confianza aumentada a {validation['confidence']*100:.0f}%")
-                                    
+                                            self.signals.log_message.emit(f"⚠️ Fibonacci no recomienda entrada (score: {fib_analysis['entry_quality']['score']}/100)")
+                                            self.signals.log_message.emit("   Continuando sin boost de Fibonacci...")
                                     else:
                                         self.signals.log_message.emit(f"⚠️ Fibonacci: {fib_analysis['reason']}")
                                         self.signals.log_message.emit("   Continuando sin análisis de Fibonacci...")
@@ -804,8 +822,6 @@ class LiveTrader(QThread):
                                 except Exception as fib_error:
                                     self.signals.log_message.emit(f"⚠️ Error en análisis de Fibonacci: {fib_error}")
                                     self.signals.log_message.emit("   Continuando sin análisis de Fibonacci...")
-                                    import traceback
-                                    traceback.print_exc()
                                 
                                 if is_institutional_root:
                                     self.signals.log_message.emit("\n✅ ESTRUCTURA CONFIRMADA POR ASSET MANAGER (M15)")
