@@ -17,6 +17,10 @@ class Config:
     EXNOVA_EMAIL = os.getenv("EXNOVA_EMAIL", "")
     EXNOVA_PASSWORD = os.getenv("EXNOVA_PASSWORD", "")
     
+    # Alias de compatibilidad
+    EX_EMAIL = EXNOVA_EMAIL
+    EX_PASSWORD = EXNOVA_PASSWORD
+    
     # Credenciales IQ Option
     IQ_OPTION_EMAIL = os.getenv("IQ_OPTION_EMAIL", "")
     IQ_OPTION_PASSWORD = os.getenv("IQ_OPTION_PASSWORD", "")
@@ -55,7 +59,8 @@ class Config:
     
     # ============= AI/LLM =============
     USE_LLM = os.getenv("USE_LLM", "True").lower() == "true"
-    USE_GROQ = os.getenv("USE_GROQ", "True").lower() == "true"
+    USE_GROQ = os.getenv("USE_GROQ", "False").lower() == "true"
+    USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
     
     # Soporte para múltiples llaves de Groq (fallback automático)
     GROQ_API_KEYS = [
@@ -68,11 +73,12 @@ class Config:
     GROQ_API_KEYS = [key for key in GROQ_API_KEYS if key.strip()]
     GROQ_API_KEY = GROQ_API_KEYS[0] if GROQ_API_KEYS else ""
     
-    # Modelo más liviano y rápido para trading
-    OLLAMA_MODEL = os.getenv("VITE_OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "llama3.2:1b"))
+    # Configuración Ollama actualizada
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "kimi-k2.5:cloud")
     OLLAMA_MODEL_FAST = "phi3:mini"  # Modelo ultra-liviano como alternativa
-    OLLAMA_BASE_URL = os.getenv("VITE_OLLAMA_BASE_URL", os.getenv("OLLAMA_BASE_URL", "https://ollama-ollama.ginee6.easypanel.host"))
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "https://n8n-ollama.ginee6.easypanel.host")
     OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
+    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120000")) / 1000  # Convertir a segundos
     
     # ============= BACKEND (para GUI remota) =============
     BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
@@ -120,3 +126,7 @@ TELEGRAM_API_HASH = Config.TELEGRAM_API_HASH
 TELEGRAM_PHONE = Config.TELEGRAM_PHONE
 TELEGRAM_SESSION_NAME = Config.TELEGRAM_SESSION_NAME
 TELEGRAM_CHATS = Config.TELEGRAM_CHATS
+
+# Alias de compatibilidad (definidos por archivos que usan nombres diferentes)
+EX_EMAIL = Config.EXNOVA_EMAIL
+EX_PASSWORD = Config.EXNOVA_PASSWORD

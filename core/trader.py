@@ -539,7 +539,17 @@ class LiveTrader(QThread):
                                     'reasons': [f"Filtro Elite (Score: {best_opportunity['score']})"],
                                     'warnings': []
                                 }
-                            # 6. OLLAMA TOMA LA DECISIÓN FINAL
+                            # === FAST TRACK para señales técnicas fuertes (>=75% confianza) ===
+                            elif best_opportunity.get('confidence', 0) >= 75:
+                                self.signals.log_message.emit(f"🚀 FAST-TRACK: Señal técnica fuerte ({best_opportunity.get('confidence')}%). Operando sin Ollama.")
+                                validation = {
+                                    'valid': True,
+                                    'recommendation': best_opportunity['action'],
+                                    'confidence': best_opportunity.get('confidence', 75) / 100,
+                                    'reasons': [f"Señal técnica fuerte: {best_opportunity.get('setup_type', 'N/A')}"],
+                                    'warnings': []
+                                }
+                            # 6. OLLAMA TOMA LA DECISIÓN FINAL (solo para señales medias)
                             elif self.llm_client and Config.USE_LLM:
                                 try:
                                     self.signals.log_message.emit("🧠 Consultando a Ollama (Max 15s)...")
@@ -1619,114 +1629,184 @@ Indicadores actuales:
             print(f"[ERROR] Error en _process_basic_result: {e}")
             self.signals.error_message.emit(f"❌ Error en procesamiento básico: {e}")
     def _prepare_market_summary(self, df, indicators_analysis, market_structure, best_opportunity):
-        """Prepara resumen de datos de mercado para Ollama"""
+        """Prepara resumen ENRIQUECIDO de datos de mercado para Ollama"""
         if df.empty:
             return "Sin datos de mercado disponibles"
         
         last_candle = df.iloc[-1]
+        prev_candles = df.tail(5)
         
-        summary_parts = [
-            f"PRECIO ACTUAL: {last_candle['close']:.5f}",
-            f"OPORTUNIDAD DETECTADA: {best_opportunity['action']} (Confianza: {best_opportunity.get('confidence', 0):.1f}%)"
-        ]
+        summary_parts = []
         
-        # Indicadores técnicos
+        # 1. CONTEXTO DE PRECIO Y MOMENTUM
+        price_change_5 = ((last_candle['close'] - df.iloc[-6]['close']) / df.iloc[-6]['close']) * 100
+        momentum_dir = "ALCISTA" if price_change_5 > 0 else "BAJISTA"
+        summary_parts.append(f"PRECIO: {last_candle['close']:.5f} | Momentum 5min: {momentum_dir} ({price_change_5:+.2f}%)")
+        
+        # 2. OPORTUNIDAD DETECTADA CON DETALLES
+        setup_type = best_opportunity.get('setup_type', 'UNKNOWN')
+        confidence = best_opportunity.get('confidence', 0)
+        summary_parts.append(f"SETUP: {setup_type} → {best_opportunity['action']} (Confianza: {confidence:.0f}%)")
+        
+        # 3. INDICADORES TÉCNICOS CON CONTEXTO
+        indicators_str = []
         if 'rsi' in df.columns:
             rsi = last_candle['rsi']
-            rsi_status = "Sobreventa" if rsi < 30 else ("Sobrecompra" if rsi > 70 else "Neutral")
-            summary_parts.append(f"RSI: {rsi:.1f} ({rsi_status})")
+            if rsi < 30:
+                rsi_status = "SOBREVENTA EXTREMA ⚠️"
+            elif rsi < 40:
+                rsi_status = "Sobreventa"
+            elif rsi > 70:
+                rsi_status = "SOBRECOMPRA EXTREMA ⚠️"
+            elif rsi > 60:
+                rsi_status = "Sobrecompra"
+            else:
+                rsi_status = "Neutral"
+            indicators_str.append(f"RSI: {rsi:.1f} ({rsi_status})")
         
-        if 'macd' in df.columns:
+        if 'macd' in df.columns and 'macd_signal' in df.columns:
             macd = last_candle['macd']
-            macd_status = "Alcista" if macd > 0 else "Bajista"
-            summary_parts.append(f"MACD: {macd:.5f} ({macd_status})")
+            macd_signal = last_candle['macd_signal']
+            macd_cross = "Cruce Alcista" if macd > macd_signal and df.iloc[-2]['macd'] <= df.iloc[-2]['macd_signal'] else \
+                        ("Cruce Bajista" if macd < macd_signal and df.iloc[-2]['macd'] >= df.iloc[-2]['macd_signal'] else "Sin cruce")
+            indicators_str.append(f"MACD: {macd:.5f} ({macd_cross})")
         
-        # Estructura de mercado
+        if 'bb_upper' in df.columns and 'bb_lower' in df.columns:
+            bb_position = "Banda Superior" if last_candle['close'] >= last_candle['bb_upper'] else \
+                         ("Banda Inferior" if last_candle['close'] <= last_candle['bb_lower'] else "Zona Media")
+            indicators_str.append(f"Bollinger: {bb_position}")
+        
+        if indicators_str:
+            summary_parts.append(" | ".join(indicators_str))
+        
+        # 4. ESTRUCTURA DE MERCADO
         if market_structure:
             phase = market_structure.get('market_phase', 'unknown')
-            summary_parts.append(f"FASE DE MERCADO: {phase.upper()}")
+            trend = market_structure.get('trend', {})
+            trend_dir = trend.get('direction', 'neutral') if isinstance(trend, dict) else 'neutral'
+            trend_strength = trend.get('strength', 0) if isinstance(trend, dict) else 0
+            
+            summary_parts.append(f"FASE: {phase.upper()} | Tendencia: {trend_dir.upper()} (Fuerza: {trend_strength:.0f}%)")
             
             entry_signal = market_structure.get('entry_signal', {})
             if entry_signal.get('should_enter'):
-                summary_parts.append(f"ESTRUCTURA CONFIRMA: {entry_signal.get('direction', 'N/A')}")
+                summary_parts.append(f"✅ ESTRUCTURA CONFIRMA: {entry_signal.get('direction', 'N/A')}")
             elif entry_signal.get('should_wait'):
-                summary_parts.append("ESTRUCTURA DICE: ESPERAR")
+                summary_parts.append("⏳ ESTRUCTURA DICE: ESPERAR")
         
-        return " | ".join(summary_parts)
+        # 5. VOLATILIDAD Y ATR
+        if 'atr' in df.columns:
+            atr = last_candle['atr']
+            atr_pct = (atr / last_candle['close']) * 100
+            volatility_level = "Alta" if atr_pct > 0.1 else ("Media" if atr_pct > 0.05 else "Baja")
+            summary_parts.append(f"Volatilidad: {volatility_level} (ATR: {atr_pct:.3f}%)")
+        
+        return "\n".join(summary_parts)
     
     def _prepare_smart_money_summary(self, smart_money_analysis):
-        """Prepara resumen de análisis Smart Money para Ollama"""
+        """Prepara resumen ENRIQUECIDO de análisis Smart Money para Ollama"""
         if not smart_money_analysis or 'error' in smart_money_analysis:
             return "Análisis Smart Money no disponible"
         
         summary_parts = []
         
-        # Bias direccional
+        # 1. BIAS DIRECCIONAL CON FACTORES
         bias = smart_money_analysis.get('directional_bias', {})
         if bias:
-            summary_parts.append(f"BIAS DIRECCIONAL: {bias.get('bias', 'neutral').upper()} ({bias.get('confidence', 0):.0f}%)")
+            bias_dir = bias.get('bias', 'neutral').upper()
+            bias_conf = bias.get('confidence', 0)
+            factors = bias.get('confidence_factors', [])
+            factors_str = ", ".join(factors[:2]) if factors else "Sin factores"
+            summary_parts.append(f"🎯 BIAS: {bias_dir} ({bias_conf:.0f}%) - {factors_str}")
         
-        # Order Blocks
-        order_blocks = smart_money_analysis.get('order_blocks', [])
-        fresh_obs = [ob for ob in order_blocks if not ob.get('mitigated', False)]
-        if fresh_obs:
-            summary_parts.append(f"ORDER BLOCKS FRESCOS: {len(fresh_obs)}")
-        
-        # Fair Value Gaps
+        # 2. FAIR VALUE GAPS (FVG) - CRÍTICO
         fvgs = smart_money_analysis.get('fair_value_gaps', [])
-        # Manejar tanto formato dict {'bullish': [], 'bearish': []} como lista []
         if isinstance(fvgs, dict):
-            all_fvgs = fvgs.get('bullish', []) + fvgs.get('bearish', [])
-        else:
-            all_fvgs = fvgs if isinstance(fvgs, list) else []
+            bullish_fvgs = [f for f in fvgs.get('bullish', []) if isinstance(f, dict) and not f.get('is_mitigated', False)]
+            bearish_fvgs = [f for f in fvgs.get('bearish', []) if isinstance(f, dict) and not f.get('is_mitigated', False)]
+            
+            if bullish_fvgs:
+                latest_bull = bullish_fvgs[-1]
+                summary_parts.append(f"📈 FVG BULLISH: {latest_bull.get('top', 0):.5f} - {latest_bull.get('bottom', 0):.5f} (Fresco)")
+            if bearish_fvgs:
+                latest_bear = bearish_fvgs[-1]
+                summary_parts.append(f"📉 FVG BEARISH: {latest_bear.get('top', 0):.5f} - {latest_bear.get('bottom', 0):.5f} (Fresco)")
         
-        unfilled_fvgs = [fvg for fvg in all_fvgs if isinstance(fvg, dict) and not fvg.get('filled', False) and not fvg.get('is_mitigated', False)]
-        if unfilled_fvgs:
-            summary_parts.append(f"FVG SIN LLENAR: {len(unfilled_fvgs)}")
+        # 3. ORDER BLOCKS
+        order_blocks = smart_money_analysis.get('order_blocks', [])
+        fresh_obs = [ob for ob in order_blocks if isinstance(ob, dict) and not ob.get('mitigated', False)]
+        if fresh_obs:
+            ob_types = [ob.get('type', 'unknown') for ob in fresh_obs[:2]]
+            summary_parts.append(f"🏦 ORDER BLOCKS: {len(fresh_obs)} frescos ({', '.join(ob_types)})")
         
-        # Estructura de mercado
+        # 4. ESTRUCTURA DE MERCADO (BOS/CHoCH)
         structure = smart_money_analysis.get('market_structure', {})
         if structure.get('bos'):
-            summary_parts.append(f"BOS DETECTADO: {structure['bos']['type']}")
+            bos_type = structure['bos'].get('type', 'unknown')
+            summary_parts.append(f"⚡ BOS DETECTADO: {bos_type.upper()}")
         if structure.get('choch'):
-            summary_parts.append(f"CHoCH DETECTADO: {structure['choch']['type']}")
+            choch_type = structure['choch'].get('type', 'unknown')
+            summary_parts.append(f"🔄 CHoCH DETECTADO: {choch_type.upper()}")
         
-        # Señal de entrada
+        # 5. SEÑAL DE ENTRADA SMART MONEY
         entry_signal = smart_money_analysis.get('entry_signal', {})
         if entry_signal.get('should_enter'):
-            summary_parts.append(f"SMART MONEY CONFIRMA: {entry_signal.get('direction', 'N/A')}")
+            direction = entry_signal.get('direction', 'N/A')
+            reasons = entry_signal.get('entry_reasons', [])
+            reasons_str = reasons[0] if reasons else "Confluencia detectada"
+            summary_parts.append(f"✅ SEÑAL SMC: {direction} - {reasons_str}")
         
-        return " | ".join(summary_parts) if summary_parts else "Sin señales Smart Money claras"
+        # 6. LIQUIDEZ Y ZONAS
+        liquidity_zones = smart_money_analysis.get('liquidity_zones', [])
+        if liquidity_zones:
+            summary_parts.append(f"💧 ZONAS DE LIQUIDEZ: {len(liquidity_zones)} identificadas")
+        
+        return "\n".join(summary_parts) if summary_parts else "Sin señales Smart Money claras"
     
     def _prepare_learning_summary(self, learning_insights):
-        """Prepara resumen de insights de aprendizaje para Ollama"""
+        """Prepara resumen ENRIQUECIDO de insights de aprendizaje para Ollama"""
         if not learning_insights or 'error' in learning_insights:
             return "Sistema de aprendizaje inicializándose"
         
         summary_parts = []
         
-        # Performance reciente
+        # 1. PERFORMANCE RECIENTE CON TENDENCIA
         recent_perf = learning_insights.get('recent_performance', {})
         if recent_perf:
             success_rate = recent_perf.get('success_rate', 0)
+            total_trades = recent_perf.get('total_trades', 0)
             trend = recent_perf.get('trend', 'unknown')
-            summary_parts.append(f"PERFORMANCE RECIENTE: {success_rate:.1%} ({trend})")
+            trend_emoji = "📈" if trend == "improving" else ("📉" if trend == "declining" else "➡️")
+            summary_parts.append(f"{trend_emoji} PERFORMANCE: {success_rate:.1%} en {total_trades} trades ({trend})")
         
-        # Mejores conceptos
+        # 2. MEJORES CONCEPTOS (Top 2)
         best_concepts = learning_insights.get('best_concepts', [])
         if best_concepts:
-            top_concept = best_concepts[0]
-            summary_parts.append(f"MEJOR CONCEPTO: {top_concept['concept']} ({top_concept['success_rate']:.1%})")
+            top_concepts = best_concepts[:2]
+            concepts_str = ", ".join([f"{c['concept']} ({c['success_rate']:.0%})" for c in top_concepts])
+            summary_parts.append(f"🎯 MEJORES SETUPS: {concepts_str}")
         
-        # Mejores fases de mercado
+        # 3. PEORES CONCEPTOS (Para evitar)
+        worst_concepts = learning_insights.get('worst_concepts', [])
+        if worst_concepts:
+            worst = worst_concepts[0]
+            summary_parts.append(f"⚠️ EVITAR: {worst['concept']} ({worst['success_rate']:.0%} winrate)")
+        
+        # 4. MEJORES FASES DE MERCADO
         best_phases = learning_insights.get('best_market_phases', [])
         if best_phases:
             top_phase = best_phases[0]
-            summary_parts.append(f"MEJOR FASE: {top_phase['phase']} ({top_phase['success_rate']:.1%})")
+            summary_parts.append(f"🌟 MEJOR FASE: {top_phase['phase']} ({top_phase['success_rate']:.0%})")
         
-        # Recomendaciones
+        # 5. RECOMENDACIONES CLAVE
         recommendations = learning_insights.get('recommendations', [])
         if recommendations:
-            summary_parts.append(f"RECOMENDACIÓN: {recommendations[0]}")
+            summary_parts.append(f"💡 RECOMENDACIÓN: {recommendations[0]}")
         
-        return " | ".join(summary_parts) if summary_parts else "Aprendizaje en progreso"
+        # 6. ÚLTIMAS LECCIONES
+        recent_lessons = learning_insights.get('recent_lessons', [])
+        if recent_lessons:
+            latest_lesson = recent_lessons[0]
+            summary_parts.append(f"📚 ÚLTIMA LECCIÓN: {latest_lesson}")
+        
+        return "\n".join(summary_parts) if summary_parts else "Aprendizaje en progreso"

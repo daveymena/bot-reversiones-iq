@@ -20,7 +20,7 @@ class LLMClient:
         if self.use_groq:
             self._initialize_groq()
         else:
-            print("ℹ️ Groq desactivado o sin llaves. Usando Ollama como motor principal.")
+            print("[INFO] Groq desactivado o sin llaves. Usando Ollama como motor principal.")
 
     def _initialize_groq(self):
         if self.use_groq and Groq and self.current_key_index < len(self.api_keys):
@@ -45,45 +45,156 @@ class LLMClient:
         """Envía una consulta general al LLM."""
         return self._safe_query(prompt)
 
-    def analyze_market(self, market_summary):
+    def analyze_complete_trading_opportunity(self, market_data_summary, smart_money_analysis, learning_insights, asset, current_balance):
         """
-        Envía un resumen del mercado al LLM y obtiene un consejo.
+        🧠 ANÁLISIS INTELIGENTE COMPLETO - Ollama como Cerebro Estratégico
+        
+        Ollama analiza:
+        1. Contexto completo del mercado
+        2. Patrones históricos de éxito/fracaso
+        3. Confluencia de señales técnicas + Smart Money
+        4. Timing óptimo de entrada
+        5. Gestión de riesgo adaptativa
         """
+        
+        # Construir prompt inteligente con contexto completo
         prompt = f"""
-        SISTEMA DE TRADING PROFESIONAL AGRESIVO - MODO SMART MONEY
-        Activo: {asset}. Balance: ${current_balance:.2f}
-        
-        DATOS DE MERCADO: {market_data_summary}
-        ANÁLISIS SMART MONEY: {smart_money_analysis}
-        APRENDIZAJE: {learning_insights}
-        
-        INSTRUCCIONES CRÍTICAS:
-        1. Eres un trader institucional profesional con 15 años de experiencia
-        2. Tu objetivo es MAXIMA FRECUENCIA de trading con rentabilidad
-        3. Opera cuando veas al menos 2 señales técnicas alineadas
-        4. Busca setups de probabilidad media-alta (>50%) con riesgo controlado
-        5. Si hay Order Blocks + Fair Value Gap + BOS confirmado = OPERA
-        6. Si solo hay 1-2 señales débiles = NO OPERES
-        
-        CRITERIOS DE ENTRADA:
-        - Order Blocks institucionales confirmados
-        - Fair Value Gaps sin llenar
-        - Break of Structure (BOS) o Change of Character (CHoCH)
-        - Momentum alineado con estructura
-        - Liquidez disponible para el movimiento
-        
-        Responde ÚNICAMENTE con JSON válido:
-        {{
-            "should_trade": true/false,
-            "direction": "CALL" o "PUT",
-            "confidence": 45-95,
-            "primary_reason": "razón específica basada en Smart Money",
-            "risk_factors": ["factor1", "factor2"],
-            "smart_money_signal": "strong/medium/weak"
-        }}
-        """
+Eres un TRADER INSTITUCIONAL EXPERTO con 15 años de experiencia en Smart Money Concepts y Price Action.
 
-        return self._safe_query(prompt)
+🎯 MISIÓN: Analizar esta oportunidad de trading y decidir si ejecutar o esperar.
+
+📊 ACTIVO: {asset}
+💰 BALANCE: ${current_balance:.2f}
+
+═══════════════════════════════════════════════════════════════
+📈 DATOS DE MERCADO:
+{market_data_summary}
+
+💎 ANÁLISIS SMART MONEY:
+{smart_money_analysis}
+
+🧠 APRENDIZAJE HISTÓRICO:
+{learning_insights}
+═══════════════════════════════════════════════════════════════
+
+🎓 TU EXPERTISE - CRITERIOS DE DECISIÓN:
+
+1. CONFLUENCIA DE SEÑALES (Peso: 40%)
+   ✅ OPERAR si hay 3+ señales alineadas:
+      - FVG (Fair Value Gap) sin llenar
+      - Order Block institucional fresco
+      - BOS (Break of Structure) confirmado
+      - RSI en zona extrema (<30 o >70)
+      - Momentum alineado con estructura
+   ❌ RECHAZAR si solo hay 1-2 señales débiles
+
+2. SMART MONEY STRUCTURE (Peso: 30%)
+   ✅ OPERAR si detectas:
+      - Precio mitigando FVG bullish/bearish
+      - Liquidez disponible para el movimiento
+      - Estructura de mercado clara (HH/HL o LH/LL)
+   ❌ RECHAZAR si:
+      - Precio en zona de consolidación
+      - Estructura confusa o neutral
+
+3. TIMING DE ENTRADA (Peso: 20%)
+   ✅ OPERAR si:
+      - Precio en zona de valor (no persiguiendo)
+      - Retroceso a nivel clave completado
+      - Confirmación de reversión presente
+   ❌ RECHAZAR si:
+      - Precio en extensión extrema
+      - Falta confirmación de reversión
+
+4. GESTIÓN DE RIESGO (Peso: 10%)
+   ✅ OPERAR si:
+      - R:R favorable (mínimo 1:1.5)
+      - Stop loss claro identificable
+   ❌ RECHAZAR si:
+      - Riesgo excesivo o poco claro
+
+═══════════════════════════════════════════════════════════════
+⚡ MODO AGRESIVO ACTIVADO:
+- Busca oportunidades de probabilidad media-alta (>55%)
+- Opera cuando veas confluencia clara
+- Prioriza calidad sobre cantidad
+- Si hay duda razonable, OPERA (el mercado premia la acción)
+═══════════════════════════════════════════════════════════════
+
+📋 RESPONDE ÚNICAMENTE CON JSON VÁLIDO (sin markdown, sin explicaciones extra):
+{{
+    "should_trade": true/false,
+    "direction": "CALL" o "PUT",
+    "confidence": 50-95,
+    "primary_reason": "Razón principal específica basada en Smart Money (máx 80 caracteres)",
+    "risk_factors": ["factor1", "factor2"],
+    "smart_money_signal": "strong/medium/weak",
+    "suggested_expiration": 3-5,
+    "risk_reward_ratio": 1.5-3.0
+}}
+
+IMPORTANTE: 
+- Si hay 3+ señales alineadas → should_trade: true
+- Si solo hay 1-2 señales → should_trade: false
+- Confidence debe reflejar la fuerza de la confluencia
+- Primary_reason debe ser específico y técnico
+"""
+
+        try:
+            response = self._safe_query(prompt, timeout=15)
+            
+            # Limpiar respuesta y extraer JSON
+            response = response.strip()
+            
+            # Buscar el JSON en la respuesta
+            start_idx = response.find('{')
+            end_idx = response.rfind('}') + 1
+            
+            if start_idx >= 0 and end_idx > start_idx:
+                json_str = response[start_idx:end_idx]
+                try:
+                    decision = json.loads(json_str)
+                    
+                    # Validar estructura
+                    required_keys = ['should_trade', 'direction', 'confidence', 'primary_reason']
+                    if all(key in decision for key in required_keys):
+                        # Normalizar confidence a 0-100
+                        if isinstance(decision['confidence'], (int, float)):
+                            if decision['confidence'] <= 1.0:
+                                decision['confidence'] = int(decision['confidence'] * 100)
+                        
+                        # Asegurar valores por defecto
+                        decision.setdefault('risk_factors', [])
+                        decision.setdefault('smart_money_signal', 'medium')
+                        decision.setdefault('suggested_expiration', 3)
+                        decision.setdefault('risk_reward_ratio', 1.5)
+                        
+                        return decision
+                    
+                except json.JSONDecodeError as e:
+                    print(f"[ERROR] JSON inválido de Ollama: {e}")
+                    print(f"[DEBUG] Respuesta: {json_str[:200]}")
+            
+            # Si llegamos aquí, hubo error en el parsing
+            return {
+                'should_trade': False,
+                'direction': 'HOLD',
+                'confidence': 0,
+                'primary_reason': 'Error en análisis Ollama - Respuesta inválida',
+                'risk_factors': ['Timeout o respuesta malformada'],
+                'smart_money_signal': 'weak'
+            }
+            
+        except Exception as e:
+            print(f"[ERROR] Excepción en analyze_complete_trading_opportunity: {e}")
+            return {
+                'should_trade': False,
+                'direction': 'HOLD',
+                'confidence': 0,
+                'primary_reason': f'Error en análisis Ollama: {str(e)[:50]}',
+                'risk_factors': ['Error de conexión o timeout'],
+                'smart_money_signal': 'weak'
+            }
     
     def get_visual_description(self, df):
         """Convierte las últimas velas en una descripción visual para la IA"""
