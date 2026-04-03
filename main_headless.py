@@ -45,7 +45,11 @@ def main():
     global running, trader
     app = None
     if PYSIDE_AVAILABLE:
-        app = QCoreApplication(sys.argv)
+        # Solo crear QCoreApplication si no existe una
+        if QCoreApplication.instance() is None:
+            app = QCoreApplication(sys.argv)
+        else:
+            app = QCoreApplication.instance()
     else:
         print("ℹ️ Iniciando sin QCoreApplication (Modo Servidor)")
     
@@ -169,17 +173,27 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    # Bucle infinito de re-ejecución anti-crash
-    while True:
+    # Bucle de re-ejecución anti-crash con límite
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
         try:
             exit_code = main()
             # Si salió limpio (0) o por Ctrl+C, terminamos el bucle
             if exit_code == 0 or not running:
                 break
+            retry_count += 1
         except KeyboardInterrupt:
+            print("\n🛑 Detenido por el usuario")
             break
         except Exception as e:
             print(f"🔥 CRASH GLOBAL: {e}")
+            retry_count += 1
         
-        print("🔄 Reiniciando bot automáticamente en 5 segundos...")
-        time.sleep(5)
+        if retry_count < max_retries:
+            print(f"🔄 Reiniciando bot automáticamente en 5 segundos... (Intento {retry_count}/{max_retries})")
+            time.sleep(5)
+        else:
+            print(f"❌ Máximo de reintentos alcanzado ({max_retries}). Deteniendo bot.")
+            print("💡 Verifica tu conexión a internet y credenciales en .env")

@@ -61,6 +61,15 @@ from database.db_manager import db
 from datetime import datetime
 import json
 
+# Importar sistema de validación refinada (DISABLED)
+# Causa problemas de inicialización. Usando sistema base existente.
+try:
+    # from core.refined_entry_orchestrator import EntryOrchestrator, integrate_refined_validation
+    REFINED_VALIDATION_AVAILABLE = False
+except ImportError:
+    REFINED_VALIDATION_AVAILABLE = False
+    print("⚠️ Sistema de validación refinada no disponible")
+
 class LiveTrader(QThread):
     def __init__(self, market_data, feature_engineer, agent, risk_manager, asset_manager, llm_client=None):
         super().__init__()
@@ -109,6 +118,17 @@ class LiveTrader(QThread):
         # 🧠 SISTEMAS DE INTELIGENCIA PROFESIONAL (NUEVO)
         self.smart_money_analyzer = SmartMoneyAnalyzer()
         self.professional_learning = ProfessionalLearningSystem()
+        
+        # 🎯 SISTEMA DE VALIDACIÓN REFINADA (NUEVO)
+        if REFINED_VALIDATION_AVAILABLE:
+            try:
+                self.entry_orchestrator = EntryOrchestrator()
+                print("✅ Sistema de validación refinada integrado")
+            except Exception as e:
+                print(f"⚠️ Error al inicializar validacion refinada: {e}")
+                self.entry_orchestrator = None
+        else:
+            self.entry_orchestrator = None
         
         self.signals = TraderSignals()
         self.running = False
@@ -587,6 +607,44 @@ class LiveTrader(QThread):
                                     llm_advice=best_opportunity['action']
                                 )
                                 self.signals.log_message.emit("🛡️ Validación técnica completada")
+                            
+                            # 🎯 VALIDACIÓN REFINADA ADICIONAL
+                            if self.entry_orchestrator and validation.get('valid', False):
+                                self.signals.log_message.emit("\n🎯 APLICANDO VALIDACIÓN REFINADA...")
+                                
+                                # Obtener niveles de potencia
+                                power_levels = None
+                                try:
+                                    if hasattr(self.asset_manager, '_get_power_levels'):
+                                        power_levels = self.asset_manager._get_power_levels(self.current_asset)
+                                except:
+                                    pass
+                                
+                                # Evaluar con el orquestador refinado
+                                action_num = 1 if best_opportunity['action'] == 'CALL' else 2
+                                refined_result = self.entry_orchestrator.evaluate_opportunity(
+                                    df=df,
+                                    action=action_num,
+                                    asset=self.current_asset,
+                                    indicators_analysis=indicators_analysis,
+                                    rl_prediction=rl_prediction,
+                                    market_context=None,
+                                    power_levels=power_levels
+                                )
+                                
+                                if refined_result['approved']:
+                                    self.signals.log_message.emit(f"✅ VALIDACIÓN REFINADA APROBADA")
+                                    self.signals.log_message.emit(f"   Score: {refined_result['score']:.0f} | Confianza: {refined_result['confidence']*100:.0f}%")
+                                    # Actualizar confianza con valor refinado
+                                    validation['confidence'] = max(validation['confidence'], refined_result['confidence'])
+                                    validation['reasons'].append(f"Refinado: Score {refined_result['score']:.0f}")
+                                else:
+                                    self.signals.log_message.emit(f"❌ VALIDACIÓN RECHAZADA: {refined_result['message']}")
+                                    self.signals.log_message.emit(f"   Razón: {refined_result.get('rejection_reason', 'UNKNOWN')}")
+                                    validation['valid'] = False
+                                    validation['warnings'].append(refined_result['message'])
+                                    self.best_opportunity = None
+                                    continue
                             
                             # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
                             if validation['valid']:
@@ -1616,7 +1674,13 @@ Indicadores actuales:
         
         # Fair Value Gaps
         fvgs = smart_money_analysis.get('fair_value_gaps', [])
-        unfilled_fvgs = [fvg for fvg in fvgs if not fvg.get('filled', False)]
+        # Manejar tanto formato dict {'bullish': [], 'bearish': []} como lista []
+        if isinstance(fvgs, dict):
+            all_fvgs = fvgs.get('bullish', []) + fvgs.get('bearish', [])
+        else:
+            all_fvgs = fvgs if isinstance(fvgs, list) else []
+        
+        unfilled_fvgs = [fvg for fvg in all_fvgs if isinstance(fvg, dict) and not fvg.get('filled', False) and not fvg.get('is_mitigated', False)]
         if unfilled_fvgs:
             summary_parts.append(f"FVG SIN LLENAR: {len(unfilled_fvgs)}")
         
