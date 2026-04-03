@@ -129,6 +129,16 @@ class LiveTrader(QThread):
         self.meta_analyzer = MetaAnalyzer(llm_client=llm_client)
         print(f"🧠 Meta-Análisis: {len(self.meta_analyzer.corrections_made)} auto-correcciones previas")
         
+        # 📊 SISTEMA DE ANÁLISIS MULTI-TEMPORALIDAD (NUEVO)
+        from core.multi_timeframe_analyzer import MultiTimeframeAnalyzer
+        self.multi_timeframe_analyzer = MultiTimeframeAnalyzer(market_data)
+        print("📊 Multi-Timeframe Analyzer: Listo para analizar M1, M5, M15, H1")
+        
+        # 📐 SISTEMA DE ANÁLISIS FIBONACCI (NUEVO)
+        from core.fibonacci_analyzer import FibonacciAnalyzer
+        self.fibonacci_analyzer = FibonacciAnalyzer()
+        print("📐 Fibonacci Analyzer: Detectando niveles óptimos (0.618 Golden Ratio)")
+        
         # 🎯 SISTEMA DE VALIDACIÓN REFINADA (NUEVO)
         if REFINED_VALIDATION_AVAILABLE:
             try:
@@ -147,10 +157,10 @@ class LiveTrader(QThread):
         
         # Control de tiempo entre operaciones (MÁS ESTRICTO para evitar sobre-operación)
         self.last_trade_time = 0
-        # Control de tiempo entre operaciones (MÁS AGRESIVO para aprovechar oportunidades)
+        # Control de tiempo entre operaciones (MÁS CONSERVADOR para análisis profundo)
         self.last_trade_time = 0
-        self.min_time_between_trades = 10  # Mínimo 10 segundos entre operaciones
-        self.cooldown_after_loss = 30      # 30 segundos de espera después de perder
+        self.min_time_between_trades = 300  # Mínimo 5 MINUTOS entre operaciones
+        self.cooldown_after_loss = 600      # 10 MINUTOS de espera después de perder
         self.consecutive_losses = 0
         self.last_trade_result = None
         self.max_consecutive_losses = 5    
@@ -539,28 +549,30 @@ class LiveTrader(QThread):
                             smart_money_summary = self._prepare_smart_money_summary(smart_money_analysis)
                             learning_summary = self._prepare_learning_summary(learning_insights)
                             
-                            # === FAST TRACK para oportunidades ELITE (Score >= 90) ===
-                            if best_opportunity.get('score', 0) >= 90:
-                                self.signals.log_message.emit("🚀 FAST-TRACK: Oportunidad ELITE detectada. Operando sin esperar a Ollama.")
-                                validation = {
-                                    'valid': True,
-                                    'recommendation': best_opportunity['action'],
-                                    'confidence': 0.95,
-                                    'reasons': [f"Filtro Elite (Score: {best_opportunity['score']})"],
-                                    'warnings': []
-                                }
-                            # === FAST TRACK para señales técnicas fuertes (>=75% confianza) ===
-                            elif best_opportunity.get('confidence', 0) >= 75:
-                                self.signals.log_message.emit(f"🚀 FAST-TRACK: Señal técnica fuerte ({best_opportunity.get('confidence')}%). Operando sin Ollama.")
-                                validation = {
-                                    'valid': True,
-                                    'recommendation': best_opportunity['action'],
-                                    'confidence': best_opportunity.get('confidence', 75) / 100,
-                                    'reasons': [f"Señal técnica fuerte: {best_opportunity.get('setup_type', 'N/A')}"],
-                                    'warnings': []
-                                }
-                            # 6. OLLAMA TOMA LA DECISIÓN FINAL (solo para señales medias)
-                            elif self.llm_client and Config.USE_LLM:
+                            # === FAST TRACK DESACTIVADO - SIEMPRE ANALIZAR CON OLLAMA ===
+                            # Comentado para forzar análisis completo en cada operación
+                            # if best_opportunity.get('score', 0) >= 95:
+                            #     self.signals.log_message.emit("🚀 FAST-TRACK: Oportunidad ELITE detectada. Operando sin esperar a Ollama.")
+                            #     validation = {
+                            #         'valid': True,
+                            #         'recommendation': best_opportunity['action'],
+                            #         'confidence': 0.95,
+                            #         'reasons': [f"Filtro Elite (Score: {best_opportunity['score']})"],
+                            #         'warnings': []
+                            #     }
+                            # === FAST TRACK para señales técnicas fuertes (>=80% confianza) ===
+                            # Comentado para forzar análisis completo
+                            # elif best_opportunity.get('confidence', 0) >= 80:
+                            #     self.signals.log_message.emit(f"🚀 FAST-TRACK: Señal técnica fuerte ({best_opportunity.get('confidence')}%). Operando sin Ollama.")
+                            #     validation = {
+                            #         'valid': True,
+                            #         'recommendation': best_opportunity['action'],
+                            #         'confidence': best_opportunity.get('confidence', 75) / 100,
+                            #         'reasons': [f"Señal técnica fuerte: {best_opportunity.get('setup_type', 'N/A')}"],
+                            #         'warnings': []
+                            #     }
+                            # 6. OLLAMA TOMA LA DECISIÓN FINAL (OBLIGATORIO AHORA)
+                            if self.llm_client and Config.USE_LLM:
                                 try:
                                     self.signals.log_message.emit("🧠 Consultando a Ollama (Max 15s)...")
                                     
@@ -668,6 +680,133 @@ class LiveTrader(QThread):
                             
                             # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
                             if validation['valid']:
+                                # 📊 ANÁLISIS MULTI-TEMPORALIDAD (OBLIGATORIO)
+                                self.signals.log_message.emit("\n📊 ANALIZANDO MÚLTIPLES TEMPORALIDADES...")
+                                try:
+                                    mtf_context = self.multi_timeframe_analyzer.analyze_all_timeframes(self.current_asset)
+                                    
+                                    if mtf_context['confluence']['aligned']:
+                                        mtf_dir = mtf_context['confluence']['direction']
+                                        mtf_score = mtf_context['confluence']['score']
+                                        self.signals.log_message.emit(f"✅ CONFLUENCIA DETECTADA: {mtf_dir} ({mtf_score:.0f}% alineación)")
+                                        
+                                        # Mostrar análisis por temporalidad
+                                        for tf_name, tf_data in mtf_context['timeframes'].items():
+                                            trend = tf_data['trend']
+                                            rsi = tf_data['rsi']
+                                            self.signals.log_message.emit(f"   {tf_name}: {trend.upper()} | RSI: {rsi:.1f}")
+                                        
+                                        # Verificar que la dirección coincida con la validación
+                                        if mtf_dir != validation['recommendation']:
+                                            self.signals.log_message.emit(f"⚠️ CONFLICTO: Multi-timeframe dice {mtf_dir}, validación dice {validation['recommendation']}")
+                                            
+                                            # Si la confluencia es muy fuerte (>80%), usar multi-timeframe
+                                            if mtf_score >= 80:
+                                                self.signals.log_message.emit(f"   ✅ Usando señal de MULTI-TIMEFRAME (confluencia {mtf_score:.0f}%)")
+                                                validation['recommendation'] = mtf_dir
+                                                validation['confidence'] = max(validation['confidence'], mtf_score / 100)
+                                            else:
+                                                self.signals.log_message.emit(f"   ❌ RECHAZANDO: Confluencia débil ({mtf_score:.0f}%) y conflicto de dirección")
+                                                self.best_opportunity = None
+                                                continue
+                                    else:
+                                        reason = mtf_context['confluence'].get('reason', 'Temporalidades no alineadas')
+                                        self.signals.log_message.emit(f"❌ SIN CONFLUENCIA: {reason}")
+                                        self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Se requiere confluencia multi-timeframe")
+                                        
+                                        # Registrar como oportunidad observada
+                                        opportunity_data = {
+                                            'asset': self.current_asset,
+                                            'action': validation['recommendation'],
+                                            'confidence': validation.get('confidence', 0),
+                                            'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                            'state_before': df.tail(10) if not df.empty else None
+                                        }
+                                        try:
+                                            self.observational_learner.observe_opportunity(
+                                                opportunity_data,
+                                                f"Sin confluencia multi-timeframe: {reason}"
+                                            )
+                                        except Exception as obs_err:
+                                            print(f"Error en observational learner: {obs_err}")
+                                        
+                                        self.best_opportunity = None
+                                        continue
+                                
+                                except Exception as mtf_error:
+                                    self.signals.log_message.emit(f"❌ Error en análisis multi-timeframe: {mtf_error}")
+                                    self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Análisis multi-timeframe es obligatorio")
+                                    self.best_opportunity = None
+                                    continue
+                                
+                                # 📐 ANÁLISIS DE FIBONACCI (OBLIGATORIO)
+                                self.signals.log_message.emit("\n📐 ANALIZANDO NIVELES DE FIBONACCI...")
+                                try:
+                                    fib_analysis = self.fibonacci_analyzer.analyze_current_position(df)
+                                    
+                                    if fib_analysis['valid']:
+                                        # Mostrar análisis legible
+                                        fib_readable = self.fibonacci_analyzer.get_human_readable_analysis(fib_analysis)
+                                        for line in fib_readable.split('\n'):
+                                            self.signals.log_message.emit(line)
+                                        
+                                        # Verificar si debe entrar según Fibonacci
+                                        if not fib_analysis['should_enter']:
+                                            self.signals.log_message.emit(f"\n⏸️ FIBONACCI RECHAZA: {fib_analysis['entry_quality']['recommendation']}")
+                                            self.signals.log_message.emit("   Esperando nivel óptimo (0.618 Golden Ratio preferido)")
+                                            
+                                            # Registrar como oportunidad observada
+                                            opportunity_data = {
+                                                'asset': self.current_asset,
+                                                'action': validation['recommendation'],
+                                                'confidence': validation.get('confidence', 0),
+                                                'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                                'state_before': df.tail(10) if not df.empty else None
+                                            }
+                                            try:
+                                                self.observational_learner.observe_opportunity(
+                                                    opportunity_data,
+                                                    f"Fibonacci: {fib_analysis['entry_quality']['recommendation']}"
+                                                )
+                                            except Exception as obs_err:
+                                                print(f"Error en observational learner: {obs_err}")
+                                            
+                                            self.best_opportunity = None
+                                            continue
+                                        
+                                        # Verificar confluencia con validación
+                                        fib_bias = fib_analysis['trend_bias']
+                                        if fib_bias != validation['recommendation']:
+                                            self.signals.log_message.emit(f"⚠️ CONFLICTO: Fibonacci dice {fib_bias}, validación dice {validation['recommendation']}")
+                                            
+                                            # Si Fibonacci tiene score alto (≥70), usar Fibonacci
+                                            fib_score = fib_analysis['entry_quality']['score']
+                                            if fib_score >= 70:
+                                                self.signals.log_message.emit(f"   ✅ Usando señal de FIBONACCI (score {fib_score}/100)")
+                                                validation['recommendation'] = fib_bias
+                                                validation['confidence'] = max(validation['confidence'], fib_score / 100)
+                                            else:
+                                                self.signals.log_message.emit(f"   ❌ RECHAZANDO: Fibonacci score bajo ({fib_score}/100) y conflicto")
+                                                self.best_opportunity = None
+                                                continue
+                                        else:
+                                            fib_score = fib_analysis['entry_quality']['score']
+                                            self.signals.log_message.emit(f"✅ FIBONACCI CONFIRMA: {fib_bias} (Score: {fib_score}/100)")
+                                            # Boost de confianza si está en Golden Ratio
+                                            if fib_analysis['entry_quality']['level_name'] == 'golden':
+                                                validation['confidence'] = min(0.95, validation['confidence'] * 1.1)
+                                                self.signals.log_message.emit(f"   🌟 GOLDEN RATIO BOOST: Confianza aumentada a {validation['confidence']*100:.0f}%")
+                                    
+                                    else:
+                                        self.signals.log_message.emit(f"⚠️ Fibonacci: {fib_analysis['reason']}")
+                                        self.signals.log_message.emit("   Continuando sin análisis de Fibonacci...")
+                                
+                                except Exception as fib_error:
+                                    self.signals.log_message.emit(f"⚠️ Error en análisis de Fibonacci: {fib_error}")
+                                    self.signals.log_message.emit("   Continuando sin análisis de Fibonacci...")
+                                    import traceback
+                                    traceback.print_exc()
+                                
                                 if is_institutional_root:
                                     self.signals.log_message.emit("\n✅ ESTRUCTURA CONFIRMADA POR ASSET MANAGER (M15)")
                                 else:

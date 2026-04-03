@@ -410,7 +410,7 @@ RESPONDE EN JSON:
 """
         
         try:
-            response = self.llm_client._safe_query(prompt, timeout=20)
+            response = self.llm_client._safe_query(prompt)
             
             # Parsear JSON
             start = response.find('{')

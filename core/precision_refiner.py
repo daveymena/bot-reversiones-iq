@@ -21,7 +21,7 @@ class PrecisionRefiner:
                 'call': {'min': 20, 'max': 35},  # Rango óptimo para CALL
                 'put': {'min': 65, 'max': 80}    # Rango óptimo para PUT
             },
-            'confidence_threshold': 75,  # Umbral mínimo de confianza
+            'confidence_threshold': 80,  # Umbral mínimo de confianza (AUMENTADO)
             'win_rate_target': 70,       # Objetivo de win rate
             'current_win_rate': 0,
             'total_operations': 0,
