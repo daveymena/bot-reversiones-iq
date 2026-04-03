@@ -124,6 +124,11 @@ class LiveTrader(QThread):
         self.precision_refiner = PrecisionRefiner()
         print(f"🎯 Sistema de Precisión: {self.precision_refiner.precision_metrics['current_win_rate']:.1f}% winrate actual")
         
+        # 🧠 SISTEMA DE META-ANÁLISIS Y AUTO-CORRECCIÓN (NUEVO)
+        from core.meta_analyzer import MetaAnalyzer
+        self.meta_analyzer = MetaAnalyzer(llm_client=llm_client)
+        print(f"🧠 Meta-Análisis: {len(self.meta_analyzer.corrections_made)} auto-correcciones previas")
+        
         # 🎯 SISTEMA DE VALIDACIÓN REFINADA (NUEVO)
         if REFINED_VALIDATION_AVAILABLE:
             try:
@@ -1470,6 +1475,56 @@ class LiveTrader(QThread):
                             print(f"[WARNING] Error en aprendizaje profesional: {learning_error}")
                         
                         self.signals.log_message.emit(f"📝 Experiencia guardada para aprendizaje continuo")
+                        
+                        # 🧠 META-ANÁLISIS Y AUTO-CORRECCIÓN
+                        try:
+                            self.signals.log_message.emit("\n🔬 META-ANÁLISIS: Razonamiento profundo...")
+                            
+                            # Preparar contexto de mercado
+                            market_context = {
+                                'rsi': trade.get('df_before', pd.DataFrame()).iloc[-1].get('rsi', 50) if not trade.get('df_before', pd.DataFrame()).empty else 50,
+                                'macd': trade.get('df_before', pd.DataFrame()).iloc[-1].get('macd', 0) if not trade.get('df_before', pd.DataFrame()).empty else 0,
+                                'trend': 'neutral',  # TODO: Extraer de análisis
+                                'atr': trade.get('df_before', pd.DataFrame()).iloc[-1].get('atr', 0) if not trade.get('df_before', pd.DataFrame()).empty else 0,
+                                'fvg_detected': False,  # TODO: Extraer de smart money
+                                'ollama_rejected': False  # TODO: Extraer de decisión
+                            }
+                            
+                            meta_analysis = self.meta_analyzer.deep_analyze_result(
+                                trade_data=trade,
+                                result={'won': won, 'profit': profit},
+                                market_context=market_context
+                            )
+                            
+                            # Mostrar razones profundas
+                            if meta_analysis.get('deep_reasons'):
+                                self.signals.log_message.emit("📊 Razones profundas:")
+                                for reason in meta_analysis['deep_reasons'][:5]:  # Top 5
+                                    self.signals.log_message.emit(f"   {reason}")
+                            
+                            # Mostrar errores lógicos detectados
+                            if meta_analysis.get('logic_errors'):
+                                self.signals.log_message.emit("\n⚠️ Errores lógicos detectados:")
+                                for error in meta_analysis['logic_errors']:
+                                    self.signals.log_message.emit(f"   {error['description']}")
+                                    self.signals.log_message.emit(f"   🔧 {error['correction']}")
+                            
+                            # Mostrar correcciones aplicadas
+                            if meta_analysis.get('corrections_needed'):
+                                self.signals.log_message.emit(f"\n🔧 {len(meta_analysis['corrections_needed'])} auto-correcciones aplicadas")
+                            
+                            # Mostrar razonamiento LLM si está disponible
+                            if meta_analysis.get('llm_reasoning'):
+                                llm = meta_analysis['llm_reasoning']
+                                if llm.get('root_cause'):
+                                    self.signals.log_message.emit(f"\n🧠 Causa raíz (LLM): {llm['root_cause']}")
+                                if llm.get('correction_needed'):
+                                    self.signals.log_message.emit(f"🔧 Corrección sugerida: {llm['correction_needed']}")
+                        
+                        except Exception as meta_error:
+                            print(f"[WARNING] Error en meta-análisis: {meta_error}")
+                            import traceback
+                            traceback.print_exc()
             
             print("[DEBUG] process_trade_result completado")
         
