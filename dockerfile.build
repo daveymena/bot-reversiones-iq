@@ -9,9 +9,14 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Actualizar pip primero
+RUN pip install --upgrade pip
+
 # Copiar requirements de la nube (sin GUI)
 COPY requirements_cloud.txt .
-RUN pip install --no-cache-dir -r requirements_cloud.txt
+
+# Instalar dependencias con retry y timeout más largo
+RUN pip install --no-cache-dir --timeout=300 --retries=5 -r requirements_cloud.txt
 
 # Copiar código completo
 COPY . .
