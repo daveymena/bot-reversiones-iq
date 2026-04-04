@@ -741,8 +741,47 @@ class LiveTrader(QThread):
                                                     validation['confidence'] = min(0.90, validation['confidence'] * 1.05)
                                                     self.signals.log_message.emit(f"   ✅ FIBONACCI BOOST: Confianza aumentada a {validation['confidence']*100:.0f}%")
                                             else:
-                                                self.signals.log_message.emit(f"⚠️ Fibonacci dice {fib_bias}, validación dice {validation['recommendation']}")
-                                                self.signals.log_message.emit("   Continuando con validación original...")
+                                                # 🔴 CONFLICTO DETECTADO: Fibonacci vs Asset Manager
+                                                self.signals.log_message.emit(f"\n🔴 CONFLICTO DETECTADO:")
+                                                self.signals.log_message.emit(f"   Fibonacci dice: {fib_bias} (Score: {fib_score}/100)")
+                                                self.signals.log_message.emit(f"   Asset Manager dice: {validation['recommendation']}")
+                                                
+                                                # PRIORIZAR FIBONACCI si tiene alta calidad (score ≥60)
+                                                if fib_score >= 60:
+                                                    self.signals.log_message.emit(f"   ✅ CORRIGIENDO DIRECCIÓN: {validation['recommendation']} → {fib_bias}")
+                                                    self.signals.log_message.emit(f"   Razón: Fibonacci tiene score alto ({fib_score}/100)")
+                                                    
+                                                    # Corregir dirección
+                                                    validation['recommendation'] = fib_bias
+                                                    validation['confidence'] = max(validation['confidence'], 0.75)
+                                                    
+                                                    # Boost adicional si es Golden Ratio
+                                                    if fib_analysis['entry_quality']['level_name'] == 'golden':
+                                                        validation['confidence'] = min(0.95, validation['confidence'] * 1.10)
+                                                        self.signals.log_message.emit(f"   🌟 GOLDEN RATIO: Confianza {validation['confidence']*100:.0f}%")
+                                                else:
+                                                    # Fibonacci tiene score bajo → RECHAZAR operación
+                                                    self.signals.log_message.emit(f"   ❌ RECHAZANDO: Fibonacci score bajo ({fib_score}/100)")
+                                                    self.signals.log_message.emit(f"   No se puede resolver conflicto con confianza")
+                                                    
+                                                    # Registrar como oportunidad observada
+                                                    opportunity_data = {
+                                                        'asset': self.current_asset,
+                                                        'action': validation['recommendation'],
+                                                        'confidence': validation.get('confidence', 0),
+                                                        'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
+                                                        'state_before': df.tail(10) if not df.empty else None
+                                                    }
+                                                    try:
+                                                        self.observational_learner.observe_opportunity(
+                                                            opportunity_data,
+                                                            f"Conflicto Fibonacci vs Asset Manager sin resolver"
+                                                        )
+                                                    except Exception as obs_err:
+                                                        print(f"Error en observational learner: {obs_err}")
+                                                    
+                                                    self.best_opportunity = None
+                                                    continue
                                         else:
                                             self.signals.log_message.emit(f"⚠️ Fibonacci no recomienda entrada (score: {fib_analysis['entry_quality']['score']}/100)")
                                             self.signals.log_message.emit("   Continuando sin boost de Fibonacci...")
