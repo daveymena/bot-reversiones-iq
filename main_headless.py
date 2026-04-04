@@ -65,6 +65,11 @@ def main():
     print(f"🎯 Estrategias: Tendencia + Reversión + Estructura + Micro-Validación")
     print("=" * 60)
     
+    # Crear flag file para health check
+    os.makedirs('data', exist_ok=True)
+    with open('data/bot_running.flag', 'w') as f:
+        f.write(str(datetime.now()))
+    
     # Inicializar componentes
     try:
         print("🧠 Cargando módulos de IA...")
@@ -162,6 +167,11 @@ def main():
         trader.wait()
         
         market_data.disconnect()
+        
+        # Eliminar flag file
+        if os.path.exists('data/bot_running.flag'):
+            os.remove('data/bot_running.flag')
+        
         print("✅ Bot detenido correctamente")
         
         return 0
