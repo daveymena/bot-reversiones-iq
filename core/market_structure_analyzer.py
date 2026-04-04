@@ -151,3 +151,62 @@ class MarketStructureAnalyzer:
                 "reasons": [reason]
             }
         }
+    
+    def get_human_readable_analysis(self, analysis: Dict) -> str:
+        """
+        Convierte el análisis en texto legible para humanos
+        
+        Args:
+            analysis: Resultado de analyze_full_context()
+        
+        Returns:
+            str: Análisis en formato legible
+        """
+        if not analysis or 'entry_signal' not in analysis:
+            return "❌ Sin análisis disponible"
+        
+        signal = analysis['entry_signal']
+        
+        # Construir mensaje
+        lines = []
+        lines.append("📊 ANÁLISIS DE ESTRUCTURA DE MERCADO")
+        lines.append("")
+        
+        # Decisión
+        if signal['should_enter']:
+            emoji = "🟢" if signal['direction'] == "CALL" else "🔴"
+            lines.append(f"{emoji} SEÑAL: {signal['direction']}")
+            lines.append(f"   Confianza: {signal['confidence']}%")
+        else:
+            lines.append("⏸️ NO ENTRAR")
+        
+        # Razones
+        if signal.get('reasons'):
+            lines.append("")
+            lines.append("📋 RAZONES:")
+            for reason in signal['reasons']:
+                lines.append(f"   • {reason}")
+        
+        # Contexto de mercado
+        if 'market_context' in signal:
+            ctx = signal['market_context']
+            lines.append("")
+            lines.append("🔍 CONTEXTO:")
+            lines.append(f"   Tendencia: {ctx.get('trend', 'N/A')}")
+            
+            if ctx.get('near_res'):
+                lines.append("   ⚠️ Cerca de RESISTENCIA")
+            if ctx.get('near_sup'):
+                lines.append("   ⚠️ Cerca de SOPORTE")
+            
+            # Niveles
+            if 'levels' in ctx:
+                levels = ctx['levels']
+                if levels.get('resistances'):
+                    res_str = ", ".join([f"{r:.5f}" for r in levels['resistances'][-2:]])
+                    lines.append(f"   📈 Resistencias: {res_str}")
+                if levels.get('supports'):
+                    sup_str = ", ".join([f"{s:.5f}" for s in levels['supports'][:2]])
+                    lines.append(f"   📉 Soportes: {sup_str}")
+        
+        return "\n".join(lines)
