@@ -1,0 +1,30 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {}
+  },
+  "deploy": {
+    "env": {
+      "PYTHONUNBUFFERED": "1",
+      "HEADLESS_MODE": "True"
+    },
+    "volumes": [
+      {
+        "name": "data",
+        "path": "/app/data"
+      },
+      {
+        "name": "models",
+        "path": "/app/models"
+      },
+      {
+        "name": "logs",
+        "path": "/app/logs"
+      }
+    ],
+    "healthcheck": {
+      "enabled": true
+    }
+  }
+}
