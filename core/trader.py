@@ -57,6 +57,7 @@ from core.market_structure_analyzer import MarketStructureAnalyzer
 from core.consistency_manager import ConsistencyManager
 from core.smart_money_analyzer import SmartMoneyAnalyzer
 from core.professional_learning_system import ProfessionalLearningSystem
+from core.deep_learning_analyzer import DeepLearningAnalyzer
 from database.db_manager import db
 from datetime import datetime
 import json
@@ -123,6 +124,10 @@ class LiveTrader(QThread):
         from core.precision_refiner import PrecisionRefiner
         self.precision_refiner = PrecisionRefiner()
         print(f"🎯 Sistema de Precisión: {self.precision_refiner.precision_metrics['current_win_rate']:.1f}% winrate actual")
+        
+        # 🧠 SISTEMA DE APRENDIZAJE PROFUNDO (NUEVO)
+        self.deep_learning_analyzer = DeepLearningAnalyzer()
+        print(f"🧠 Deep Learning Analyzer: {len(self.deep_learning_analyzer.lessons)} lecciones previas cargadas")
         
         # 🧠 SISTEMA DE META-ANÁLISIS Y AUTO-CORRECCIÓN (NUEVO)
         from core.meta_analyzer import MetaAnalyzer
@@ -1111,9 +1116,49 @@ class LiveTrader(QThread):
             self.signals.log_message.emit(f"⏸️ Límite de {self.max_trades_per_hour} operaciones/hora alcanzado")
             return
         
+        # 🧠 DEEP LEARNING: Obtener recomendaciones basadas en lecciones aprendidas
+        try:
+            if df_current is not None and not df_current.empty:
+                last_candle = df_current.iloc[-1]
+                indicators = {
+                    'rsi': last_candle.get('rsi', 50),
+                    'macd': last_candle.get('macd', 0),
+                    'sma_20': last_candle.get('sma_20', current_price),
+                    'price': current_price
+                }
+                
+                recommendations = self.deep_learning_analyzer.get_recommendations_for_trade(
+                    asset, direction, indicators
+                )
+                
+                # Mostrar advertencias
+                if recommendations['warnings']:
+                    self.signals.log_message.emit("\n⚠️ ADVERTENCIAS DEL SISTEMA DE APRENDIZAJE:")
+                    for warning in recommendations['warnings']:
+                        self.signals.log_message.emit(f"   {warning}")
+                
+                # Mostrar recomendaciones
+                if recommendations['recommendations']:
+                    self.signals.log_message.emit("\n💡 RECOMENDACIONES:")
+                    for rec in recommendations['recommendations']:
+                        self.signals.log_message.emit(f"   {rec}")
+                
+                # Si el sistema recomienda NO operar, cancelar
+                if not recommendations['should_trade']:
+                    self.signals.log_message.emit("\n🚫 OPERACIÓN CANCELADA por sistema de aprendizaje")
+                    self.signals.log_message.emit("   El bot ha aprendido que este patrón tiende a perder")
+                    return
+                
+                # Ajustar confianza si es necesario
+                if recommendations['confidence_adjustment'] < 0:
+                    self.signals.log_message.emit(f"\n📉 Confianza ajustada: {recommendations['confidence_adjustment']:.1%}")
+        except Exception as e:
+            self.signals.log_message.emit(f"⚠️ Error en análisis de aprendizaje: {e}")
+            # Continuar con la operación aunque falle el análisis
+        
         amount = self.risk_manager.get_trade_amount()
         account_label = "[REAL]" if self.market_data.account_type == "REAL" else "[PRACTICE/DEMO]"
-        self.signals.log_message.emit(f"🚀 {account_label} Ejecutando {direction.upper()} en {asset}")
+        self.signals.log_message.emit(f"\n🚀 {account_label} Ejecutando {direction.upper()} en {asset}")
         self.signals.log_message.emit(f"   Monto: ${amount:.2f} | Expiración: {expiration_minutes} min")
         
         # Guardar estado antes de la operación para aprendizaje
@@ -1438,7 +1483,72 @@ class LiveTrader(QThread):
                 self.consecutive_losses += 1
                 self.last_trade_result = 'loss'
                 
-                # Análisis Post-Trade solo para pérdidas
+                # 🧠 DEEP LEARNING: Análisis profundo de la pérdida
+                try:
+                    self.signals.log_message.emit("\n🔬 INICIANDO ANÁLISIS PROFUNDO DE PÉRDIDA...")
+                    
+                    # Obtener datos del mercado antes y después
+                    df_before = trade.get('df_before', pd.DataFrame())
+                    
+                    # Obtener velas después de la operación
+                    df_after = self.market_data.get_candles(trade['asset'], Config.TIMEFRAME, 10)
+                    
+                    if not df_before.empty and not df_after.empty:
+                        # Preparar datos del trade
+                        trade_data = {
+                            'asset': trade['asset'],
+                            'direction': trade['direction'],
+                            'entry_price': trade['entry_price'],
+                            'exit_price': exit_price,
+                            'amount': trade['amount'],
+                            'profit': profit
+                        }
+                        
+                        # Analizar pérdida en profundidad
+                        deep_analysis = self.deep_learning_analyzer.analyze_loss(
+                            trade_data, df_before, df_after
+                        )
+                        
+                        # Mostrar resultados del análisis
+                        self.signals.log_message.emit("\n📊 RESULTADOS DEL ANÁLISIS:")
+                        
+                        # 1. Por qué perdió
+                        self.signals.log_message.emit("\n❓ ¿POR QUÉ PERDIÓ?")
+                        for reason in deep_analysis['why_lost']:
+                            self.signals.log_message.emit(f"   • {reason}")
+                        
+                        # 2. Cuándo debió entrar
+                        if deep_analysis['when_should_enter']:
+                            optimal = deep_analysis['when_should_enter']
+                            self.signals.log_message.emit("\n⏰ ¿CUÁNDO DEBIÓ ENTRAR?")
+                            self.signals.log_message.emit(f"   {optimal['lesson']}")
+                            if optimal['should_wait']:
+                                self.signals.log_message.emit(f"   💡 {optimal['reason']}")
+                        
+                        # 3. Qué variables fallaron
+                        if deep_analysis['what_failed']:
+                            self.signals.log_message.emit("\n⚠️ VARIABLES QUE FALLARON:")
+                            for failed in deep_analysis['what_failed']:
+                                self.signals.log_message.emit(f"   • {failed['variable']}: {failed['problem']}")
+                                self.signals.log_message.emit(f"     → {failed['recommendation']}")
+                        
+                        # 4. Cómo mejorar
+                        if deep_analysis['how_to_improve']:
+                            self.signals.log_message.emit("\n🎯 MEJORAS APLICADAS:")
+                            for improvement in deep_analysis['how_to_improve'][:3]:  # Top 3
+                                priority_emoji = "🔴" if improvement['priority'] == 'CRITICAL' else "🟡"
+                                self.signals.log_message.emit(f"   {priority_emoji} {improvement['action']}")
+                        
+                        self.signals.log_message.emit(f"\n✅ Lección aprendida y guardada (Total: {len(self.deep_learning_analyzer.lessons)})")
+                    else:
+                        self.signals.log_message.emit("⚠️ No hay suficientes datos para análisis profundo")
+                        
+                except Exception as e:
+                    self.signals.log_message.emit(f"⚠️ Error en análisis profundo: {e}")
+                    import traceback
+                    traceback.print_exc()
+                
+                # Análisis Post-Trade tradicional (Martingala)
                 analysis = self.trade_analyzer.analyze_loss(
                     entry_candle={'close': trade['entry_price']},
                     exit_candle=exit_candle,
@@ -1447,9 +1557,9 @@ class LiveTrader(QThread):
                 )
                 
                 if analysis['should_martingale']:
-                    self.signals.log_message.emit(f"💡 Análisis: {analysis['reason']} -> Aplicar Martingala.")
+                    self.signals.log_message.emit(f"\n💡 Análisis Martingala: {analysis['reason']} -> Aplicar Martingala.")
                 else:
-                    self.signals.log_message.emit(f"⚠️ Análisis: {analysis['reason']} -> NO Martingala.")
+                    self.signals.log_message.emit(f"\n⚠️ Análisis Martingala: {analysis['reason']} -> NO Martingala.")
                     
                 self.risk_manager.update_trade_result(profit, analysis)
             
