@@ -13,9 +13,10 @@ class IntelligentFilters:
     """
     
     def __init__(self, db_path: str = "data/learning_database.json"):
-        self.min_pattern_win_rate = 55.0
-        self.min_pattern_occurrences = 10
-        self.min_hourly_win_rate = 50.0
+        self.min_pattern_win_rate = 52.0  # Reducido de 58% (más realista)
+        self.min_pattern_occurrences = 12    # Aumentado de 8 (más confiable)
+        self.min_hourly_win_rate = 50.0    # Reducido de 55% (más realista)
+        self.min_hourly_occurrences = 8    # Nuevo: Requiere más datos
         self.db_path = Path(db_path)
         self.history_cache = []
         self.last_load_time = 0
@@ -133,7 +134,8 @@ class IntelligentFilters:
         if total == 0: return True, "N/A"
         win_rate = (wins / total) * 100
         
-        if total < 5:
+        # Requiere más datos antes de rechazar
+        if total < self.min_pattern_occurrences:
             return True, f"Patrón {pattern_type}: Solo {total} obs."
             
         if win_rate < self.min_pattern_win_rate:
@@ -164,7 +166,8 @@ class IntelligentFilters:
         
         win_rate = (wins / total) * 100
         
-        if total < 5:
+        # Requiere más datos antes de rechazar
+        if total < self.min_hourly_occurrences:
             return True, f"Hora {current_hour}: Pocos datos ({total})"
             
         if win_rate < self.min_hourly_win_rate:

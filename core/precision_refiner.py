@@ -22,6 +22,8 @@ class PrecisionRefiner:
                 'put': {'min': 60, 'max': 80}    # Rango más amplio
             },
             'confidence_threshold': 70,  # Reducido de 80% a 70%
+            'confidence_min': 60,        # Mínimo permitido
+            'confidence_max': 85,        # Máximo permitido
             'win_rate_target': 65,       # Objetivo más realista
             'current_win_rate': 0,
             'total_operations': 0,
@@ -168,8 +170,8 @@ class PrecisionRefiner:
             if len(self.precision_metrics['failed_patterns']) > 30:
                 self.precision_metrics['failed_patterns'] = self.precision_metrics['failed_patterns'][-30:]
         
-        # REFINAMIENTO AUTOMÁTICO cada 5 operaciones
-        if total % 5 == 0:
+        # REFINAMIENTO AUTOMÁTICO cada 3 operaciones (antes 5)
+        if total % 3 == 0:
             self._auto_refine()
         
         # Guardar datos
@@ -184,6 +186,7 @@ class PrecisionRefiner:
     def _auto_refine(self):
         """
         Refinamiento automático de parámetros basado en resultados
+        MEJORADO: Ajustes más agresivos y frecuentes
         """
         adjustments = []
         
@@ -191,7 +194,7 @@ class PrecisionRefiner:
         if len(self.history) < 10:
             return
         
-        recent = self.history[-20:]  # Últimas 20 operaciones
+        recent = self.history[-15:]  # Últimas 15 operaciones (antes 20)
         
         # 1. REFINAR RANGOS DE RSI
         for action in ['call', 'put']:
@@ -221,28 +224,38 @@ class PrecisionRefiner:
                         'reason': f'Basado en {len(wins)} operaciones ganadoras'
                     })
         
-        # 2. REFINAR UMBRAL DE CONFIANZA
+        # 2. REFINAR UMBRAL DE CONFIANZA (MÁS AGRESIVO)
         win_rate = self.precision_metrics['current_win_rate']
         old_threshold = self.precision_metrics['confidence_threshold']
         
-        if win_rate < 55 and len(recent) >= 15:
-            # Win rate bajo → Aumentar umbral (ser más selectivo)
-            self.precision_metrics['confidence_threshold'] = min(85, old_threshold + 5)
-            adjustments.append({
-                'type': 'confidence_threshold',
-                'old': old_threshold,
-                'new': self.precision_metrics['confidence_threshold'],
-                'reason': f'Win rate bajo ({win_rate:.1f}%) - Aumentando selectividad'
-            })
-        elif win_rate > 70 and len(recent) >= 15:
-            # Win rate alto → Reducir umbral (operar más)
-            self.precision_metrics['confidence_threshold'] = max(65, old_threshold - 3)
-            adjustments.append({
-                'type': 'confidence_threshold',
-                'old': old_threshold,
-                'new': self.precision_metrics['confidence_threshold'],
-                'reason': f'Win rate alto ({win_rate:.1f}%) - Reduciendo selectividad'
-            })
+        if win_rate < 55 and len(recent) >= 12:  # Antes: 55% y 15 ops
+            # Win rate bajo → Aumentar umbral FUERTE
+            new_threshold = min(
+                self.precision_metrics['confidence_max'],
+                old_threshold + 10  # +10% (antes +5%)
+            )
+            if new_threshold != old_threshold:
+                self.precision_metrics['confidence_threshold'] = new_threshold
+                adjustments.append({
+                    'type': 'confidence_threshold',
+                    'old': old_threshold,
+                    'new': new_threshold,
+                    'reason': f'Win rate bajo ({win_rate:.1f}%) - Aumentando selectividad FUERTE'
+                })
+        elif win_rate > 70 and len(recent) >= 12:  # Antes: 70% y 15 ops
+            # Win rate alto → Reducir umbral FUERTE
+            new_threshold = max(
+                self.precision_metrics['confidence_min'],
+                old_threshold - 5  # -5% (antes -3%)
+            )
+            if new_threshold != old_threshold:
+                self.precision_metrics['confidence_threshold'] = new_threshold
+                adjustments.append({
+                    'type': 'confidence_threshold',
+                    'old': old_threshold,
+                    'new': new_threshold,
+                    'reason': f'Win rate alto ({win_rate:.1f}%) - Reduciendo selectividad FUERTE'
+                })
         
         # Guardar ajustes
         if adjustments:

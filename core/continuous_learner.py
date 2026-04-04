@@ -19,22 +19,21 @@ class ContinuousLearner:
         self.market_data = market_data
         self.experience_buffer = ExperienceBuffer()
         
-        # Configuración de Re-entrenamiento
-        self.min_experiences_to_train = 20  # Mínimo de experiencias (reducido de 50 a 20)
-        self.retrain_frequency = 20  # Re-entrenar cada 20 operaciones (reducido de 100 a 20)
-        self.retrain_timesteps = 2000  # Pasos de re-entrenamiento
+        # Configuración OPTIMIZADA para mayor rentabilidad
+        self.min_experiences_to_train = 10  # Mínimo 10 experiencias
+        self.retrain_frequency = 15  # Re-entrenar cada 15 operaciones
+        self.retrain_timesteps = 3000  # Más pasos para mejor aprendizaje
         
         # Configuración de Evaluación Continua
-        self.evaluation_frequency = 10  # Evaluar cada 10 operaciones
-        self.min_win_rate = 0.40  # Win rate mínimo aceptable (40%)
-        self.max_consecutive_losses = 5  # Máximo de pérdidas consecutivas antes de re-entrenar
+        self.evaluation_frequency = 5  # Evaluar cada 5 operaciones
+        self.min_win_rate = 0.52  # Win rate mínimo aceptable (52% - más rentable)
+        self.max_consecutive_losses = 3  # REDUCIDO: 3 pérdidas (antes 4)
         
         # Control de re-entrenamientos
-        # IMPORTANTE: Inicializar con el número de experiencias cargadas para evitar bucle
         self.last_retrain_count = len(self.experience_buffer.experiences)
-        self.retraining_in_progress = False  # Flag para evitar re-entrenamientos simultáneos
-        self.last_retrain_time = 0  # Timestamp del último re-entrenamiento
-        self.retrain_cooldown = 300  # Cooldown de 5 minutos (300s) después de re-entrenar
+        self.retraining_in_progress = False
+        self.last_retrain_time = 0
+        self.retrain_cooldown = 180  # Cooldown de 3 minutos después de re-entrenar
         
     def add_real_trade_experience(self, state_before, action, profit, state_after, metadata=None):
         """
@@ -308,15 +307,15 @@ class ContinuousLearner:
             return result
 
         # CRITERIO 2: Muchas pérdidas consecutivas (más sensible)
-        if consecutive_losses >= 4:  # Reducido de 5 a 4
+        if consecutive_losses >= 3:  # REDUCIDO de 4 a 3
             result['should_retrain'] = True
             result['reason'] = f"{consecutive_losses} pérdidas consecutivas"
             result['action'] = 'RETRAIN_URGENT'
             return result
 
-        # CRITERIO 3: Profit negativo significativo
+        # CRITERIO 3: Profit negativo significativo (más sensible)
         recent_profit = sum(exp['reward'] for exp in recent)
-        if recent_profit < -30:  # Reducido de -50 a -30
+        if recent_profit < -20:  # REDUCIDO de -30 a -20
             result['should_retrain'] = True
             result['reason'] = f"Profit negativo reciente (${recent_profit:.2f})"
             result['action'] = 'RETRAIN'
@@ -374,7 +373,7 @@ class ContinuousLearner:
                 break
         
         # PAUSAR si hay muchas pérdidas consecutivas
-        if consecutive_losses >= self.max_consecutive_losses:
+        if consecutive_losses >= self.max_consecutive_losses:  # Ahora 3 (antes 4)
             return True, f"🛑 {consecutive_losses} pérdidas consecutivas - PAUSANDO para re-entrenar"
         
         # PAUSAR si el win rate es muy bajo
