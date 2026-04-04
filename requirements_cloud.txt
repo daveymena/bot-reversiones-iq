@@ -3,9 +3,9 @@ pandas==2.0.3
 numpy==1.24.4
 ta==0.11.0
 
-# Machine Learning - Versiones específicas para evitar conflictos
+# Machine Learning - Versiones compatibles
+gymnasium==0.28.1
 stable-baselines3==2.0.0
-gymnasium==0.29.1
 
 # Broker API
 websocket-client==1.8.0
