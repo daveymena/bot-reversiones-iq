@@ -1131,6 +1131,13 @@ class LiveTrader(QThread):
                     asset, direction, indicators
                 )
                 
+                # Mostrar patrones exitosos (NUEVO)
+                if recommendations['success_patterns']:
+                    self.signals.log_message.emit("\n✅ PATRONES EXITOSOS DETECTADOS:")
+                    for pattern in recommendations['success_patterns']:
+                        self.signals.log_message.emit(f"   {pattern}")
+                    self.signals.log_message.emit(f"   📈 Confianza aumentada: +{recommendations['confidence_adjustment']:.1%}")
+                
                 # Mostrar advertencias
                 if recommendations['warnings']:
                     self.signals.log_message.emit("\n⚠️ ADVERTENCIAS DEL SISTEMA DE APRENDIZAJE:")
@@ -1150,8 +1157,9 @@ class LiveTrader(QThread):
                     return
                 
                 # Ajustar confianza si es necesario
-                if recommendations['confidence_adjustment'] < 0:
-                    self.signals.log_message.emit(f"\n📉 Confianza ajustada: {recommendations['confidence_adjustment']:.1%}")
+                if recommendations['confidence_adjustment'] != 0:
+                    adjustment_text = "aumentada" if recommendations['confidence_adjustment'] > 0 else "reducida"
+                    self.signals.log_message.emit(f"\n📊 Confianza {adjustment_text}: {recommendations['confidence_adjustment']:+.1%}")
         except Exception as e:
             self.signals.log_message.emit(f"⚠️ Error en análisis de aprendizaje: {e}")
             # Continuar con la operación aunque falle el análisis
@@ -1476,6 +1484,70 @@ class LiveTrader(QThread):
                 self.consecutive_losses = 0
                 self.last_trade_result = 'win'
                 self.signals.log_message.emit(f"✅ Racha de pérdidas reseteada")
+                
+                # 🧠 DEEP LEARNING: Análisis de optimización para operaciones ganadas
+                try:
+                    self.signals.log_message.emit("\n💎 INICIANDO ANÁLISIS DE OPTIMIZACIÓN...")
+                    
+                    # Obtener datos del mercado antes y después
+                    df_before = trade.get('df_before', pd.DataFrame())
+                    
+                    # Obtener velas después de la operación
+                    df_after = self.market_data.get_candles(trade['asset'], Config.TIMEFRAME, 10)
+                    
+                    if not df_before.empty and not df_after.empty:
+                        # Preparar datos del trade
+                        trade_data = {
+                            'asset': trade['asset'],
+                            'direction': trade['direction'],
+                            'entry_price': trade['entry_price'],
+                            'exit_price': exit_price,
+                            'amount': trade['amount'],
+                            'profit': profit
+                        }
+                        
+                        # Analizar operación ganada
+                        win_analysis = self.deep_learning_analyzer.analyze_win(
+                            trade_data, df_before, df_after
+                        )
+                        
+                        # Mostrar resultados del análisis
+                        self.signals.log_message.emit("\n📊 RESULTADOS DE OPTIMIZACIÓN:")
+                        
+                        # 1. Por qué ganó
+                        self.signals.log_message.emit("\n✅ ¿POR QUÉ GANÓ?")
+                        for reason in win_analysis['why_won'][:3]:  # Top 3
+                            self.signals.log_message.emit(f"   • {reason}")
+                        
+                        # 2. ¿Pudo ganar más?
+                        if win_analysis['could_improve']:
+                            better = win_analysis['could_improve']
+                            self.signals.log_message.emit("\n💰 ¿PUDO GANAR MÁS?")
+                            self.signals.log_message.emit(f"   {better['reason']}")
+                            if better['could_improve']:
+                                self.signals.log_message.emit(f"   💡 Ganancia adicional potencial: +{better['additional_profit']:.2f}%")
+                        
+                        # 3. Qué variables funcionaron
+                        if win_analysis['what_worked']:
+                            self.signals.log_message.emit("\n✨ VARIABLES QUE FUNCIONARON:")
+                            for worked in win_analysis['what_worked'][:3]:  # Top 3
+                                self.signals.log_message.emit(f"   • {worked['variable']}: {worked['success']}")
+                        
+                        # 4. Cómo maximizar
+                        if win_analysis['how_to_maximize']:
+                            self.signals.log_message.emit("\n🚀 MAXIMIZACIONES APLICADAS:")
+                            for maximization in win_analysis['how_to_maximize'][:3]:  # Top 3
+                                priority_emoji = "🔴" if maximization['priority'] == 'CRITICAL' else ("🟡" if maximization['priority'] == 'HIGH' else "🟢")
+                                self.signals.log_message.emit(f"   {priority_emoji} {maximization['action']}")
+                        
+                        self.signals.log_message.emit(f"\n✅ Patrón exitoso guardado (Total lecciones: {len(self.deep_learning_analyzer.lessons)})")
+                    else:
+                        self.signals.log_message.emit("⚠️ No hay suficientes datos para análisis de optimización")
+                        
+                except Exception as e:
+                    self.signals.log_message.emit(f"⚠️ Error en análisis de optimización: {e}")
+                    import traceback
+                    traceback.print_exc()
             else:
                 self.signals.log_message.emit(f"❌ PERDIDA: ${profit:.2f}")
                 
