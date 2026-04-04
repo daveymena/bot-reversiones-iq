@@ -18,11 +18,11 @@ class PrecisionRefiner:
         self.history = []
         self.precision_metrics = {
             'rsi_optimal_ranges': {
-                'call': {'min': 20, 'max': 35},  # Rango óptimo para CALL
-                'put': {'min': 65, 'max': 80}    # Rango óptimo para PUT
+                'call': {'min': 20, 'max': 40},  # Rango más amplio
+                'put': {'min': 60, 'max': 80}    # Rango más amplio
             },
-            'confidence_threshold': 80,  # Umbral mínimo de confianza (AUMENTADO)
-            'win_rate_target': 70,       # Objetivo de win rate
+            'confidence_threshold': 70,  # Reducido de 80% a 70%
+            'win_rate_target': 65,       # Objetivo más realista
             'current_win_rate': 0,
             'total_operations': 0,
             'successful_patterns': [],

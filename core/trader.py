@@ -132,7 +132,7 @@ class LiveTrader(QThread):
         # 📊 SISTEMA DE ANÁLISIS MULTI-TEMPORALIDAD (NUEVO)
         from core.multi_timeframe_analyzer import MultiTimeframeAnalyzer
         self.multi_timeframe_analyzer = MultiTimeframeAnalyzer(market_data)
-        print("📊 Multi-Timeframe Analyzer: Listo para analizar M1, M5, M15, H1")
+        print("📊 Multi-Timeframe Analyzer: Listo para analizar M1, M15, M30 (Modo Balanceado)")
         
         # 📐 SISTEMA DE ANÁLISIS FIBONACCI (NUEVO)
         from core.fibonacci_analyzer import FibonacciAnalyzer
@@ -680,38 +680,17 @@ class LiveTrader(QThread):
                             
                             # 6. FLUJO DE EJECUCIÓN (ROOT Y NORMAL)
                             if validation['valid']:
-                                # 📊 ANÁLISIS MULTI-TEMPORALIDAD (OBLIGATORIO - ESPECÍFICO PARA BINARIAS)
-                                self.signals.log_message.emit("\n📊 ANALIZANDO TEMPORALIDADES M1, M15, M30...")
+                                # 📊 ANÁLISIS MULTI-TEMPORALIDAD (MODO BALANCEADO)
+                                self.signals.log_message.emit("\n📊 Verificando tendencia multi-timeframe...")
                                 try:
                                     mtf_context = self.multi_timeframe_analyzer.analyze_all_timeframes(self.current_asset)
                                     
-                                    # Mostrar análisis de cada temporalidad
+                                    # Mostrar análisis resumido
                                     for tf_name, tf_data in mtf_context['timeframes'].items():
                                         if tf_data:
                                             trend = tf_data['trend']
                                             rsi = tf_data['rsi']
-                                            at_support = "📍Soporte" if tf_data.get('at_support') else ""
-                                            at_resistance = "📍Resistencia" if tf_data.get('at_resistance') else ""
-                                            level_info = f" {at_support}{at_resistance}" if (at_support or at_resistance) else ""
-                                            self.signals.log_message.emit(f"   {tf_name}: {trend.upper()} | RSI: {rsi:.1f}{level_info}")
-                                    
-                                    # Mostrar niveles de confluencia
-                                    conf_levels = mtf_context['confluence'].get('confluence_levels', {})
-                                    if conf_levels:
-                                        supports = conf_levels.get('supports', [])
-                                        resistances = conf_levels.get('resistances', [])
-                                        
-                                        if supports:
-                                            self.signals.log_message.emit(f"\n   🟢 SOPORTES CON CONFLUENCIA:")
-                                            for sup in supports:
-                                                tfs = ', '.join(sup['timeframes'])
-                                                self.signals.log_message.emit(f"      {sup['price']:.5f} ({tfs})")
-                                        
-                                        if resistances:
-                                            self.signals.log_message.emit(f"\n   🔴 RESISTENCIAS CON CONFLUENCIA:")
-                                            for res in resistances:
-                                                tfs = ', '.join(res['timeframes'])
-                                                self.signals.log_message.emit(f"      {res['price']:.5f} ({tfs})")
+                                            self.signals.log_message.emit(f"   {tf_name}: {trend.upper()} | RSI: {rsi:.1f}")
                                     
                                     # Verificar confluencia
                                     if mtf_context['confluence']['aligned']:
@@ -719,70 +698,22 @@ class LiveTrader(QThread):
                                         mtf_score = mtf_context['confluence']['score']
                                         mtf_reason = mtf_context['confluence']['reason']
                                         
-                                        self.signals.log_message.emit(f"\n✅ CONFLUENCIA DETECTADA: {mtf_dir} ({mtf_score:.0f}%)")
-                                        self.signals.log_message.emit(f"   Razón: {mtf_reason}")
+                                        self.signals.log_message.emit(f"✅ {mtf_reason} → {mtf_dir}")
                                         
-                                        # Verificar que la dirección coincida con la validación
+                                        # Verificar coherencia con validación
                                         if mtf_dir != validation['recommendation']:
-                                            self.signals.log_message.emit(f"⚠️ CONFLICTO: Multi-timeframe dice {mtf_dir}, validación dice {validation['recommendation']}")
-                                            
-                                            # Si la confluencia es fuerte (>60%), usar multi-timeframe
-                                            if mtf_score >= 60:
-                                                self.signals.log_message.emit(f"   ✅ Usando señal de MULTI-TIMEFRAME (confluencia {mtf_score:.0f}%)")
+                                            # Si M30 está alineada, usar multi-timeframe
+                                            if mtf_score >= 50:
+                                                self.signals.log_message.emit(f"   ✅ Usando señal multi-timeframe")
                                                 validation['recommendation'] = mtf_dir
                                                 validation['confidence'] = max(validation['confidence'], mtf_score / 100)
-                                            else:
-                                                self.signals.log_message.emit(f"   ❌ RECHAZANDO: Confluencia débil ({mtf_score:.0f}%) y conflicto de dirección")
-                                                
-                                                # Registrar como oportunidad observada
-                                                opportunity_data = {
-                                                    'asset': self.current_asset,
-                                                    'action': validation['recommendation'],
-                                                    'confidence': validation.get('confidence', 0),
-                                                    'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
-                                                    'state_before': df.tail(10) if not df.empty else None
-                                                }
-                                                try:
-                                                    self.observational_learner.observe_opportunity(
-                                                        opportunity_data,
-                                                        f"Conflicto multi-timeframe: {mtf_reason}"
-                                                    )
-                                                except Exception as obs_err:
-                                                    print(f"Error en observational learner: {obs_err}")
-                                                
-                                                self.best_opportunity = None
-                                                continue
                                     else:
-                                        reason = mtf_context['confluence'].get('reason', 'Temporalidades no alineadas')
-                                        self.signals.log_message.emit(f"\n❌ SIN CONFLUENCIA: {reason}")
-                                        self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Se requiere confluencia de temporalidades Y niveles S/R")
-                                        
-                                        # Registrar como oportunidad observada
-                                        opportunity_data = {
-                                            'asset': self.current_asset,
-                                            'action': validation['recommendation'],
-                                            'confidence': validation.get('confidence', 0),
-                                            'entry_price': df.iloc[-1]['close'] if not df.empty else 0,
-                                            'state_before': df.tail(10) if not df.empty else None
-                                        }
-                                        try:
-                                            self.observational_learner.observe_opportunity(
-                                                opportunity_data,
-                                                f"Sin confluencia multi-timeframe: {reason}"
-                                            )
-                                        except Exception as obs_err:
-                                            print(f"Error en observational learner: {obs_err}")
-                                        
-                                        self.best_opportunity = None
-                                        continue
+                                        reason = mtf_context['confluence'].get('reason', 'Sin tendencia clara')
+                                        self.signals.log_message.emit(f"⚠️ {reason} - Continuando con validación técnica")
                                 
                                 except Exception as mtf_error:
-                                    self.signals.log_message.emit(f"❌ Error en análisis multi-timeframe: {mtf_error}")
-                                    self.signals.log_message.emit("⏸️ OPERACIÓN CANCELADA - Análisis multi-timeframe es obligatorio")
-                                    import traceback
-                                    traceback.print_exc()
-                                    self.best_opportunity = None
-                                    continue
+                                    self.signals.log_message.emit(f"⚠️ Error multi-timeframe: {mtf_error}")
+                                    self.signals.log_message.emit("   Continuando sin análisis multi-timeframe")
                                 
                                 # 📐 ANÁLISIS DE FIBONACCI (OPCIONAL - BOOST SI DISPONIBLE)
                                 self.signals.log_message.emit("\n📐 ANALIZANDO NIVELES DE FIBONACCI...")
