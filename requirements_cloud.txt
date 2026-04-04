@@ -3,7 +3,7 @@ pandas==2.0.3
 numpy==1.24.4
 ta==0.11.0
 
-# Machine Learning - Versiones compatibles
+# Machine Learning - CPU only (torch se instala por separado en Dockerfile)
 gymnasium==0.28.1
 stable-baselines3==2.0.0
 

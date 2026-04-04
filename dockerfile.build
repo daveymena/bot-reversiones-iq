@@ -15,7 +15,12 @@ RUN pip install --upgrade pip
 # Copiar requirements de la nube (sin GUI)
 COPY requirements_cloud.txt .
 
-# Instalar dependencias con retry y timeout más largo
+# Instalar PyTorch CPU primero (más ligero y rápido)
+RUN pip install --no-cache-dir --timeout=300 --retries=5 \
+    --index-url https://download.pytorch.org/whl/cpu \
+    torch==2.0.1+cpu
+
+# Instalar resto de dependencias
 RUN pip install --no-cache-dir --timeout=300 --retries=5 -r requirements_cloud.txt
 
 # Copiar código completo
