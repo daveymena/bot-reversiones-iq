@@ -1,0 +1,1631 @@
+{
+  "history": [
+    {
+      "timestamp": "2026-04-03T11:19:27.428911",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (71.3) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:23:24.202988",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:27:21.884371",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:31:21.523212",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:35:22.145323",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:39:40.810893",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:43:21.597393",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (78.9) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:46:59.713689",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (71.2) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T11:50:38.492900",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (73.9) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:08:49.127131",
+      "trade_id": null,
+      "asset": "GBPUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:13:57.694551",
+      "trade_id": null,
+      "asset": "GBPUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:18:22.301114",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (49.9) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Discrepancia cr\u00edtica entre indicadores de momentum ignorada por el sistema. El MACD positivo (0.032) indicaba momentum alcista d\u00e9bil pero presente, mientras que el RSI en 49.9 (neutral, no 'bajo') no proporcionaba se\u00f1al bajista v\u00e1lida. El sistema oper\u00f3 PUT (direcci\u00f3n bajista) en contra del momentum del MACD y sin confirmaci\u00f3n de sobreventa en el RSI, en una condici\u00f3n de mercado lateral (tendencia neutral). Adem\u00e1s, oper\u00f3 con 0% de confianza, indicando que el algoritmo carec\u00eda de certeza estad\u00edstica pero ejecut\u00f3 la operaci\u00f3n de todos modos.",
+        "system_error": "M\u00faltiples fallos cr\u00edticos: (1) Interpretaci\u00f3n err\u00f3nea del RSI: 49.9 es neutral, no 'bajo' o sobrevendido (que requerir\u00eda <30); (2) Ignorancia del MACD positivo que contradec\u00eda la posici\u00f3n PUT; (3) Violaci\u00f3n de protocolo de riesgo: ejecut\u00f3 operaci\u00f3n con 0% de confianza; (4) Falta de validaci\u00f3n de congruencia entre indicadores - no debe operarse cuando RSI y MACD est\u00e1n en conflicto sin una se\u00f1al de fuerza dominante.",
+        "system_success": null,
+        "correction_needed": "Implementar un sistema de scoring ponderado que requiera: (a) Confianza m\u00ednima >60% para cualquier operaci\u00f3n; (b) Para PUT: RSI < 40 (zona bajista clara) AND MACD < 0 (confirmaci\u00f3n bajista), O RSI < 30 (sobreventa extrema) como excepci\u00f3n; (c) Para CALL: RSI > 60 AND MACD > 0; (d) Prohibici\u00f3n expl\u00edcita de operaciones cuando tendencia = neutral Y RSI entre 45-55 (zona de indecisi\u00f3n), independientemente de otros factores.",
+        "hypothesis_to_change": "La hip\u00f3tesis 'RSI < 50 es condici\u00f3n suficiente para operar PUT' debe ser reemplazada por 'Se requiere alineaci\u00f3n de momentum: para operar PUT, el RSI debe estar en zona de sobreventa (<30) o al menos <40 con confirmaci\u00f3n expl\u00edcita de MACD negativo (<-0.01), nunca contra un MACD positivo, y nunca con confianza del sistema <60%'. Adem\u00e1s, eliminar la categorizaci\u00f3n de RSI 45-50 como 'bajo' - es rango neutral de alta incertidumbre.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-03T19:23:20.066000",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El sistema ejecut\u00f3 una operaci\u00f3n CALL (alcista) en un contexto de momentum bajista confirmado (MACD negativo: -0.112) y ausencia total de confirmaci\u00f3n de reversi\u00f3n. El RSI de 31.80, aunque cercano a sobreventa, no constituye se\u00f1al de compra v\u00e1lida sin divergencia alcista o cambio de estructura de tendencia, especialmente cuando el momentum (MACD) sigue siendo negativo. Adem\u00e1s, operar con 0% de confianza indica que el sistema carec\u00eda de edge estad\u00edstico pero ejecut\u00f3 la operaci\u00f3n de todos modos, violando el principio b\u00e1sico de gesti\u00f3n de riesgo.",
+        "system_error": "Error cr\u00edtico de validaci\u00f3n de se\u00f1ales: El sistema permiti\u00f3 la ejecuci\u00f3n de una operaci\u00f3n direccional (CALL) con confianza del 0% y con indicadores t\u00e9cnicos contradictorios (RSI bajo sin confirmaci\u00f3n de reversi\u00f3n + MACD bajista). Esto representa una falla en los filtros de entrada: oper\u00f3 en direcci\u00f3n contraria al momentum sin se\u00f1ales de agotamiento de la tendencia bajista ni confirmaci\u00f3n de cambio de direcci\u00f3n.",
+        "system_success": null,
+        "correction_needed": "Implementar filtros de alineaci\u00f3n obligatorios: 1) Umbral m\u00ednimo de confianza >70% para ejecutar operaciones; 2) Validaci\u00f3n de direcci\u00f3n del MACD: solo operar CALL si MACD > 0 o cruzando al alza con histograma creciente; 3) Para operaciones contrarian basadas en RSI, requerir divergencia de precio (m\u00ednimos descendentes en precio, m\u00ednimos ascendentes en RSI) antes de entrar CALL; 4) Bloqueo absoluto de operaciones cuando la tendencia es 'neutral' y no hay confirmaci\u00f3n de ruptura de estructura.",
+        "hypothesis_to_change": "Hip\u00f3tesis err\u00f3nea: 'RSI cercano a 30 en tendencia neutral anticipa rebote alcista inmediato' debe reemplazarse por: 'RSI en zona de sobreventa solo genera oportunidad de compra cuando se combina con: (a) divergencia alcista confirmada, (b) MACD cruzando a positivo o en recuperaci\u00f3n, y (c) confianza algor\u00edtmica >70%'. Adem\u00e1s, eliminar la hip\u00f3tesis impl\u00edcita de que 'operar con confianza 0% es aceptable en ciertos contextos'.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-03T19:33:45.890986",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (21.6) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Divergencia fatal entre momentum y oscilador sin confirmaci\u00f3n de reversi\u00f3n. El RSI en 21.58 indicaba sobreventa estad\u00edstica, pero el MACD negativo (-0.21) confirmaba momentum bajista activo y dominante. En mercados OTC, el RSI puede permanecer en sobreventa extrema (<20) durante per\u00edodos prolongados mientras el precio contin\u00faa cayendo en 'escalera bajista', especialmente cuando la tendencia general es neutral sin presi\u00f3n compradora institucional. El sistema interpret\u00f3 el RSI como se\u00f1al de reversi\u00f3n inmediata, ignorando que la ausencia de tendencia alcista + MACD negativo indicaba que la sobreventa era 'sana' dentro de una estructura bajista continua, no un punto de inflexi\u00f3n.",
+        "system_error": "Operaci\u00f3n ejecutada con CONFIANZA 0% violando el principio de umbral m\u00ednimo de certeza. El sistema aplic\u00f3 la heur\u00edstica r\u00edgida 'RSI<30 = CALL' sin validar coherencia inter-indicador: MACD negativo contradec\u00eda expl\u00edcitamente la entrada alcista, y la tendencia neutral eliminaba el contexto de 'rebote en tendencia alcista' que hubiera validado el RSI. Adem\u00e1s, oper\u00f3 en activo OTC (menos l\u00edquido, m\u00e1s susceptible a gaps y manipulaci\u00f3n de precio) sin filtros de volatilidad adicionales.",
+        "system_success": null,
+        "correction_needed": "Implementar 'Confirmaci\u00f3n de Confluencia Obligatoria': (1) Prohibir operaciones con confianza <60%, (2) Para entradas CALL con RSI<30, exigir MACD en cruce alcista o al menos histograma decreciente en negativo (se\u00f1al de debilitamiento bajista), (3) Agregar filtro de 'vela de reversi\u00f3n' (martillo, envolvente alcista) en timeframe inferior antes de ejecutar, (4) Para OTC, duplicar el per\u00edodo de confirmaci\u00f3n (esperar 2-3 velas de consolidaci\u00f3n tras RSI extremo) para evitar 'trampas de sobreventa'.",
+        "hypothesis_to_change": "Cambiar de 'RSI extremo = reversi\u00f3n inmediata' a 'RSI extremo + divergencia/convergencia de momentum = posible reversi\u00f3n'. Espec\u00edficamente: RSI<30 solo es se\u00f1al de entrada CALL si coincide con: (a) MACD mostrando divergencia alcista (precio hace m\u00ednimo m\u00e1s bajo pero MACD no), o (b) Tendencia identificada como alcista (no neutral), o (c) Volumen/Order Flow mostrando absorci\u00f3n en soporte. En ausencia de estos, RSI extremo en tendencia neutral/bajista = NO OPERAR (esperar).",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-03T19:43:53.710474",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (72.2) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:48:25.967328",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (72.5) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:52:38.283926",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T19:56:46.388761",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El precio se encontraba en una fase de correcci\u00f3n dentro de un rango consolidado (tendencia neutral). Aunque los indicadores mostraban valores 'neutrales', exist\u00eda un sesgo bajista t\u00e9cnico medible: RSI < 50 (45.25) indicaba presi\u00f3n vendedora emergente tras rechazar la zona de 50, y el MACD negativo (-0.002) confirmaba que el momentum alcista se hab\u00eda agotado y estaba invirtiendo. En mercados OTC, estos micro-momentums de reversi\u00f3n dentro de rangos operativos tienen alta probabilidad de \u00e9xito para operaciones de corta duraci\u00f3n (scalping), ya que el precio busca revertir a la media del rango. El sistema captur\u00f3 correctamente la direcci\u00f3n del impulso bajista residual, aunque subestim\u00f3 la validez estad\u00edstica de la se\u00f1al.",
+        "system_error": "Error de calibraci\u00f3n en el algoritmo de confianza: clasific\u00f3 una se\u00f1al con convergencia t\u00e9cnica v\u00e1lida (RSI<50 + MACD<0 + Tendencia neutral que sugiere reversi\u00f3n a media) como 0% de probabilidad, cuando debi\u00f3 asignar al menos 25-35% de confianza. El sistema utiliz\u00f3 umbrales r\u00edgidos que ignoraron la direcci\u00f3n impl\u00edcita del momentum.",
+        "system_success": "Identificaci\u00f3n correcta de la direcci\u00f3n del trade (PUT) al detectar que, aunque d\u00e9bil, el momentum t\u00e9cnico favorec\u00eda la baja. El sistema no se dej\u00f3 enga\u00f1ar por la etiqueta 'neutral' y ejecut\u00f3 la operaci\u00f3n acorde a la lectura subyacente de los indicadores de momentum.",
+        "correction_needed": "Implementar un modelo de confianza ponderado y continuo (fuzzy logic) que asigne pesos a la direcci\u00f3n de los indicadores incluso dentro de rangos 'neutrales'. Espec\u00edficamente: RSI < 50 debe sumar peso bajista proporcional a (50 - RSI_value), y MACD negativo debe ponderar seg\u00fan su distancia relativa al cruce de l\u00edneas. Eliminar el umbral binario de 'confianza 0%' cuando haya alineaci\u00f3n direccional de 2+ indicadores, incluso si son d\u00e9biles.",
+        "hypothesis_to_change": "Cambiar de: 'Las operaciones en tendencia neutral son aleatorias y deben evitarse' a: 'En tendencia neutral, la posici\u00f3n relativa del RSI respecto a 50 y la direcci\u00f3n del MACD proporcionan edge direccional medible para operaciones de corto plazo, especialmente cuando el precio se aleja de la media del rango'. Adem\u00e1s, incorporar la hip\u00f3tesis de que 'Confianza baja \u2260 Se\u00f1al inv\u00e1lida, sino tama\u00f1o de posici\u00f3n reducido'.",
+        "confidence_in_analysis": 88
+      }
+    },
+    {
+      "timestamp": "2026-04-03T20:00:50.971655",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Ejecuci\u00f3n de operaci\u00f3n CALL (alcista) en condiciones de momentum bajista confirmado por MACD negativo (-0.055) y ausencia total de criterios de calidad (confianza 0%), resultando en una entrada contratrend no validada. El RSI en 30.63 (sobreventa) actu\u00f3 como se\u00f1al falsa de reversi\u00f3n sin confirmaci\u00f3n de cambio de momentum, comport\u00e1ndose como 'catching a falling knife' en un contexto donde el precio continu\u00f3 su trayectoria descendente o lateral bajista t\u00edpica de mercados OTC con spreads manipulados.",
+        "system_error": "Fallo cr\u00edtico en los filtros de calidad de entrada: el sistema ejecut\u00f3 operaci\u00f3n pese a tener 0% de confianza y con se\u00f1ales t\u00e9cnicas contradictorias (RSI sugiere sobreventa/compra vs MACD confirmando momentum bajista). Adem\u00e1s, oper\u00f3 en mercado OTC (USDJPY-OTC) con volatilidad sint\u00e9tica sin ajustar los umbrales de sensibilidad de los indicadores, ignorando que en OTC el precio suele respetar menos los niveles t\u00e9cnicos est\u00e1ndar.",
+        "system_success": null,
+        "correction_needed": "Implementar filtros de validaci\u00f3n obligatorios: (1) Confianza m\u00ednima >60% para ejecutar, (2) Alineaci\u00f3n direccional entre RSI y MACD (no operar CALL si MACD < 0 y histograma negativo), (3) Confirmaci\u00f3n de vela de reversi\u00f3n o divergencia bullish en MACD antes de entrar en RSI < 30, (4) Bloqueo de operaciones en OTC sin confirmaci\u00f3n de volumen an\u00f3malo o patr\u00f3n de agotamiento, (5) Stop loss t\u00e9cnico basado en fractal inferior previo para evitar 'averaging down' en ca\u00eddas.",
+        "hypothesis_to_change": "Hip\u00f3tesis obsoleta: 'RSI < 30 en timeframe operativo = se\u00f1al de compra inmediata'. Debe evolucionar a: 'RSI en zona de sobreventa requiere confirmaci\u00f3n de desaceleraci\u00f3n bajista mediante (a) divergencia bullish en MACD, (b) cambio de pendiente en el histograma MACD de negativo a menos negativo, y (c) cierre de vela alcista con mecha inferior que respete soporte clave'. Adem\u00e1s, descartar la hip\u00f3tesis de que 'operar con confianza 0% es neutral' - la confianza debe ser umbral de veto absoluto.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-03T20:06:21.985178",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:16:33.525498",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (73.2) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:20:41.344869",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Ejecuci\u00f3n de orden PUT en condiciones de mercado que no sustentaban una posici\u00f3n bajista: (1) Tendencia neutral sin momentum bajista confirmado, (2) MACD positivo (0.000226) indicando presi\u00f3n compradora residual aunque m\u00ednima, (3) RSI 57.4 en zona neutral sin condici\u00f3n de sobrecompra (>70) que justifique una reversi\u00f3n a la baja, y (4) operaci\u00f3n realizada con 0% de confianza algor\u00edtmica, lo que implica que el sistema detect\u00f3 ausencia total de edge estad\u00edstico pero ejecut\u00f3 igualmente la orden violando principios de gesti\u00f3n de riesgo.",
+        "system_error": "Fallo cr\u00edtico en la l\u00f3gica de validaci\u00f3n de se\u00f1ales: el sistema ejecut\u00f3 una operaci\u00f3n con 0% de confianza calculada, demostrando que carece de filtros de umbral m\u00ednimo de probabilidad. Adicionalmente, no existe verificaci\u00f3n de convergencia de indicadores (divergencia bajista entre RSI/MACD/tendencia) antes de emitir se\u00f1ales contrarias al momentum detectado (MACD positivo vs acci\u00f3n PUT).",
+        "system_success": null,
+        "correction_needed": "Implementar tres capas de validaci\u00f3n obligatorias: (1) Umbral m\u00ednimo de confianza >65% para ejecuci\u00f3n de cualquier orden, bloqueando operaciones con confianza 0%, (2) Matriz de alineaci\u00f3n de indicadores: para PUT requerir RSI>70 (sobrecompra) + MACD<0 (momentum bajista) + tendencia\u2260alcista; para CALL requerir RSI<30 + MACD>0 + tendencia\u2260bajista, y (3) Filtro de tendencia neutral: prohibir operaciones direccionales (PUT/CALL) cuando la tendencia sea neutral a menos que exista divergencia extrema (RSI>80 o <20) con confirmaci\u00f3n de volumen.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis de que 'es posible operar direccionalmente en mercados neutrales con indicadores mixtos' por 'solo operar cuando exista alineaci\u00f3n estad\u00edsticamente significativa de al menos 2 factores t\u00e9cnicos (tendencia + momentum) y confianza algor\u00edtmica >65%'. Eliminar la premisa de que 'valores MACD cercanos a cero son se\u00f1ales v\u00e1lidas' - estos representan indecisi\u00f3n del mercado, no oportunidades.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-03T20:27:47.500435",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:32:22.095226",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:36:33.207248",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:40:47.737155",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (69.4) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T20:46:22.125058",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El precio descendi\u00f3 porque exist\u00eda un sesgo bajista t\u00e9cnico real pero sutil: el RSI en 43.95 (por debajo del equilibrio de 50) indicaba presi\u00f3n vendedora emergente, mientras que el MACD negativo (-0.000337) confirmaba desaceleraci\u00f3n del momentum alcista y posible cruce bajista de medias m\u00f3viles. En mercados OTC de corto plazo, esta combinaci\u00f3n (RSI < 50 + MACD < 0) en contexto 'neutral' suele preceder micro-movimientos descendentes por agotamiento de compradores, no por tendencia macro bajista.",
+        "system_error": null,
+        "system_success": "El sistema acert\u00f3 en la direcci\u00f3n (PUT) al detectar correctamente el momentum negativo del MACD y el posicionamiento del RSI por debajo de 50, aunque no cuantific\u00f3 adecuadamente esta se\u00f1al como confianza v\u00e1lida.",
+        "correction_needed": "Reemplazar el algoritmo de confianza binario/excluyente (que asigna 0% ante tendencia neutral) por un modelo de confianza ponderada continua que: (1) Asigne peso positivo a RSI entre 40-50 como sesgo bajista d\u00e9bil v\u00e1lido, (2) Ponder\u00e9 el MACD negativo como confirmaci\u00f3n de momentum, (3) Calcule confianza proporcional a la alineaci\u00f3n de estos factores incluso en ausencia de tendencia direccional clara, permitiendo operaciones de 'reversi\u00f3n a la media' o 'momentum inicial' con riesgo calibrado.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis 'Tendencia neutral = ausencia de edge predictivo / confianza 0%' por 'En tendencia neutral, la combinaci\u00f3n de RSI < 50 + MACD < 0 constituye un setup v\u00e1lido de venta con probabilidad de \u00e9xito >50%, especialmente en activos OTC donde la volatilidad de corto plazo responde a desequilibrios de momentum antes que a tendencias estructurales'.",
+        "confidence_in_analysis": 88
+      }
+    },
+    {
+      "timestamp": "2026-04-03T20:50:33.482827",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T21:29:30.923852",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (78.1) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-03T21:36:22.016386",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T12:29:15.939652",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (70.2) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Divergencia contradictoria entre indicadores sin confirmaci\u00f3n de reversi\u00f3n. El sistema interpret\u00f3 el RSI en sobrecompra (70.2) como se\u00f1al bajista inmediata, pero ignor\u00f3 que: (1) el MACD positivo (0.0805) indicaba momentum alcista persistente, (2) la tendencia neutral permit\u00eda que el precio mantuviera sobrecompra extendida sin correcci\u00f3n, y (3) el activo OTC (USDJPY-OTC) suele tener manipulaci\u00f3n de precios que invalidan se\u00f1ales cl\u00e1sicas de reversi\u00f3n. El precio continu\u00f3 subiendo o lateraliz\u00f3 ligeramente al alza durante la temporalidad de la operaci\u00f3n, invalidando el PUT.",
+        "system_error": "Ejecuci\u00f3n con confianza 0% sin confirmaci\u00f3n cruzada. El sistema cometi\u00f3 un error cr\u00edtico de 'falso contrarian': asumi\u00f3 que el RSI en sobrecompra garantizaba ca\u00edda inminente sin verificar: (a) divergencia bajista en el MACD (que segu\u00eda positivo), (b) ruptura de soporte en la tendencia neutral, o (c) formaci\u00f3n de velas de reversi\u00f3n. Adem\u00e1s, oper\u00f3 ignorando su propia m\u00e9trica de confianza (0%), lo que indica que el algoritmo prioriz\u00f3 la se\u00f1al del RSI sobre la ausencia de probabilidad estad\u00edstica favorable.",
+        "system_success": null,
+        "correction_needed": "Implementar 'Filtro de Confirmaci\u00f3n Momentum' obligatorio: (1) Prohibir operaciones PUT cuando Confianza < 60%, (2) Requerir MACD < 0 o cruce bearish confirmado para operar contra tendencia en RSI sobrecompra, (3) En tendencia NEUTRAL + MACD positivo, ignorar se\u00f1ales de sobrecompra RSI para PUTs, (4) Agregar validaci\u00f3n de volumen o an\u00e1lisis de estructura de velas (rechazo de m\u00e1ximos) antes de entrar en contratendencia, (5) Para activos OTC, aplicar factor de descuento de 30% a la fiabilidad de indicadores est\u00e1ndar debido a manipulaci\u00f3n del proveedor de liquidez.",
+        "hypothesis_to_change": "Cambiar de 'RSI > 70 = entrada PUT inmediata' a 'RSI > 70 + Confirmaci\u00f3n de debilitamiento momentum = entrada PUT'. Espec\u00edficamente: el RSI en sobrecompra solo es v\u00e1lido para operaciones bajistas cuando el MACD muestra divergencia bajista o cruce negativo, y la confianza del sistema debe ser >60%. Adem\u00e1s, descartar la hip\u00f3tesis de que los activos OTC siguen patrones t\u00e9cnicos cl\u00e1sicos sin ajuste por manipulaci\u00f3n.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T12:34:31.396674",
+      "trade_id": null,
+      "asset": "EURJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (20.9) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T12:44:46.350448",
+      "trade_id": null,
+      "asset": "EURJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobreventa (25.3) + CALL funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T12:49:17.553150",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T12:54:28.180220",
+      "trade_id": null,
+      "asset": "EURJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T12:58:41.894153",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (54.2) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:04:22.580595",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Ejecuci\u00f3n de operaci\u00f3n bajista (PUT) en condiciones de mercado neutro-alcistas sin confluencia t\u00e9cnica. El RSI en 51.10 indica ligera presi\u00f3n compradora (por encima de 50), contradiciendo la posici\u00f3n bajista. El MACD en -0.02 es estad\u00edsticamente insignificante (ruido), y la tendencia neutral carec\u00eda de direccionalidad clara. El activo OTC amplifica el riesgo al tener comportamientos err\u00e1ticos fuera de horario regular, pero la causa principal fue la contradicci\u00f3n entre la se\u00f1al bajista y el momentum ligeramente alcista del RSI.",
+        "system_error": "Fallo cr\u00edtico en la l\u00f3gica de filtrado de riesgo: el sistema ejecut\u00f3 la operaci\u00f3n con 0% de confianza, violando el principio b\u00e1sico de no operar sin probabilidad estad\u00edstica favorable. Adem\u00e1s, error de interpretaci\u00f3n de tendencia: clasific\u00f3 como 'neutral' pero oper\u00f3 direccionalmente (PUT) sin confirmaci\u00f3n de reversi\u00f3n bajista. El sistema ignor\u00f3 la divergencia alcista impl\u00edcita (RSI > 50 vs intenci\u00f3n de ca\u00edda).",
+        "system_success": null,
+        "correction_needed": "Implementar hard-stop de confianza m\u00ednima (umbral >65-70%) que bloquee ejecuci\u00f3n cuando confianza \u226410%. Agregar validaci\u00f3n de coherencia direccional: para operaciones PUT, requerir RSI < 45 (sobreventa o tendencia a ella) + MACD confirmado bajo l\u00ednea de se\u00f1al con histograma negativo creciente + m\u00ednimo 2 indicadores alineados. Incluir filtro de 'no operar' cuando tendencia='neutral' y RSI entre 48-52 (zona de indecisi\u00f3n).",
+        "hypothesis_to_change": "Hip\u00f3tesis err\u00f3nea: 'Un MACD negativo cercano a cero en tendencia neutral predice movimientos bajistas'. Realidad: valores MACD entre -0.05 y 0.05 en activos OTC representan consolidaci\u00f3n, no momentum. Nueva hip\u00f3tesis: 'Operar direccionalmente en mercados neutrales con RSI cerca de 50 es azar puro; se requiere ruptura de estructura o divergencia clara'. Tambi\u00e9n corregir: 'Confianza 0% significa operar de todos modos' \u2192 'Confianza < umbral m\u00ednimo significa abstenci\u00f3n obligatoria'.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:14:20.784302",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (74.4) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:18:47.102390",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (27.2) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:24:16.967475",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (70.7) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:28:27.507188",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobreventa (23.6) + CALL funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:32:37.637676",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:38:00.565747",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (45.6) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:48:25.242454",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:52:34.573564",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T13:56:47.979897",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:01:22.380166",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:06:23.203312",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (47.6) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:11:28.323416",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (76.9) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:15:38.681577",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobreventa (26.6) + CALL funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:19:59.179711",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (70.9) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:24:22.628712",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (29.5) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:29:30.489402",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (56.3) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:39:52.673715",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:44:20.479716",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:49:25.053513",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobreventa (28.7) + CALL funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T14:53:39.760457",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (29.9) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:00:48.616431",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:06:23.534210",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (72.8) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:10:44.537737",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "La operaci\u00f3n gan\u00f3 porque exist\u00eda una convergencia t\u00e9cnica v\u00e1lida de momentum bajista no capturada por el modelo de confianza: el RSI en 43.48 (por debajo de 50, indicando presi\u00f3n vendedora sin estar en sobreventa extrema) combinado con el MACD negativo (-0.012) cre\u00f3 una se\u00f1al de continuaci\u00f3n bajista en timeframe corto. En mercados OTC con tendencia neutral, el precio a menudo realiza micro-movimientos direccionales guiados por el momentum de los indicadores, incluso sin una tendencia macro definida. El sistema ignor\u00f3 esta sinergia t\u00e9cnica al enfocarse exclusivamente en la clasificaci\u00f3n binaria de 'tendencia neutral = riesgo alto', subestimando el poder predictivo de la alineaci\u00f3n RSI-MACD en zonas de transici\u00f3n.",
+        "system_error": null,
+        "system_success": "El sistema ejecut\u00f3 correctamente la direcci\u00f3n (PUT) al detectar la presi\u00f3n bajista impl\u00edcita en los datos t\u00e9cnicos, demostrando que el motor de se\u00f1ales subyacente tiene capacidad para identificar oportunidades reales incluso cuando el algoritmo de confianza falla en cuantificarlas.",
+        "correction_needed": "Implementar un 'Momentum-Confluence Score' independiente del 'Trend Direction Score'. El sistema debe calcular confianza basada en: (1) Alineaci\u00f3n de osciladores (RSI < 50 + MACD < 0 = +40% confianza base), (2) Distancia del RSI a niveles extremos (43 tiene margen de movimiento vs 30), y (3) Volatilidad impl\u00edcita del activo OTC. Eliminar la penalizaci\u00f3n autom\u00e1tica del 100% a la confianza cuando la tendencia es neutral; en su lugar, usar un multiplicador de 0.6-0.7 que permita operaciones con 40-60% de confianza cuando el momentum est\u00e9 alineado.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis 'Operar en tendencia neutral es de alto riesgo y baja probabilidad' por 'En tendencia neutral, la probabilidad de \u00e9xito depende de la fuerza relativa del momentum y la posici\u00f3n del RSI respecto a la l\u00ednea 50, no de la ausencia de tendencia en s\u00ed'. Adem\u00e1s, revisar la hip\u00f3tesis de que el MACD cercano a cero (-0.012) indica debilidad; en realidad, valores negativos peque\u00f1os en timeframe corto a menudo preceden aceleraciones bajistas inmediatas.",
+        "confidence_in_analysis": 88
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:14:50.243905",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:19:23.033484",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (70.4) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:23:45.147495",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (76.7) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:28:22.795786",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (72.7) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:33:23.201015",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (21.1) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:43:47.825326",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:48:27.720166",
+      "trade_id": null,
+      "asset": "AUDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (27.4) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [
+        {
+          "type": "hypothesis_change",
+          "target": "rsi_oversold_works",
+          "action": "Cambiar de True a False",
+          "reason": "Evidencia insuficiente: 36.4% de soporte",
+          "priority": "HIGH"
+        }
+      ],
+      "hypothesis_updates": [
+        {
+          "hypothesis": "rsi_oversold_works",
+          "old_value": true,
+          "new_value": false,
+          "reason": "Evidencia insuficiente: 36.4% de soporte",
+          "evidence": {
+            "support": 4,
+            "against": 9
+          }
+        }
+      ],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T18:53:04.473031",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (42.8) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:03:47.144318",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (72.1) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:09:23.150882",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Disociaci\u00f3n cr\u00edtica entre la se\u00f1al de confianza del sistema y la ejecuci\u00f3n real. El sistema oper\u00f3 una posici\u00f3n PUT (bajista) cuando: (1) la confianza era 0%, indicando ausencia total de alineaci\u00f3n de factores, (2) el RSI de 58.59 mostraba momentum alcista d\u00e9bil pero presente (nivel >50), (3) el MACD positivo (0.00049) confirmaba presi\u00f3n compradora residual, y (4) la tendencia neutral sin confirmaci\u00f3n de reversi\u00f3n bajista. El precio probablemente mantuvo su drift alcista o lateral-alcista, invalidando la premisa bajista.",
+        "system_error": "Fallo de validaci\u00f3n de umbral de confianza. El sistema ejecut\u00f3 una operaci\u00f3n de riesgo real (PUT) con 0% de confianza calculada, violando el principio b\u00e1sico de no-exposici\u00f3n cuando no existe edge estad\u00edstico. Adicionalmente, error de interpretaci\u00f3n direccional: en contexto de tendencia neutral, RSI > 50 + MACD > 0 sesga la probabilidad hacia el alza, haciendo que la operaci\u00f3n PUT tuviera expectativa matem\u00e1tica negativa desde el inicio.",
+        "system_success": null,
+        "correction_needed": "Implementar un filtro de seguridad obligatorio: bloquear ejecuci\u00f3n de operaciones si confidence < 60%. Establecer reglas de congruencia direccional: prohibir PUT si MACD > 0 y RSI > 55; prohibir CALL si MACD < 0 y RSI < 45. En tendencia neutral, requerir divergencia expl\u00edcita en ambos indicadores (RSI sobrecomprado/sobrevendido + MACD cruzando se\u00f1al) para generar se\u00f1al v\u00e1lida.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis 'tendencia neutral permite operaciones direccionales basadas en un solo factor' por 'tendencia neutral requiere convergencia de m\u00ednimo 3 factores confirmados (precio, volumen, momentum) y confianza >70% para justificar exposici\u00f3n direccional'. Adem\u00e1s, invalidar la premisa de que OTC sigue patrones t\u00e9cnicos est\u00e1ndar sin ajustar por spreads y manipulaci\u00f3n de precios t\u00edpica de mercados OTC.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:14:22.851849",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:18:35.860150",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (80.7) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:22:45.059671",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:26:54.397920",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El precio experiment\u00f3 un impulso alcista de corto plazo impulsado por momentum t\u00e9cnico positivo (RSI 66 en zona alcista fuerte + MACD positivo) que no fue capturado por el algoritmo de confianza del sistema. Aunque la tendencia estructural se clasific\u00f3 como 'neutral', en mercados OTC los movimientos err\u00e1ticos suelen respetar niveles de momentum t\u00e9cnico inmediato m\u00e1s que tendencias macro. El RSI > 60 indica presi\u00f3n compradora activa, y el MACD > 0 confirma que la velocidad de cambio alcista supera a la bajista, creando una ventana de oportunidad v\u00e1lida para CALL que el sistema descart\u00f3 por sobre-dependencia de la clasificaci\u00f3n de tendencia general.",
+        "system_error": null,
+        "system_success": "La direcci\u00f3n de la operaci\u00f3n (CALL) fue t\u00e9cnicamente correcta aline\u00e1ndose con el momentum alcista impl\u00edcito en los indicadores (RSI bullish + MACD positivo), demostrando que la se\u00f1al base ten\u00eda fundamento t\u00e9cnico a pesar de la mala calibraci\u00f3n de confianza.",
+        "correction_needed": "Recalibrar el motor de confianza para asignar peso significativo a la convergencia de momentum t\u00e9cnico (RSI entre 55-70 + MACD > 0) incluso cuando la tendencia estructural sea neutral, especialmente para activos OTC donde la volatilidad intr\u00ednseca favorece operaciones basadas en momentum de corto plazo. Implementar un multiplicador de confianza para setups de 'momentum en consolidaci\u00f3n' que actualmente est\u00e1n siendo filtrados incorrectamente.",
+        "hypothesis_to_change": "Hip\u00f3tesis actual: 'Tendencia neutral = operaci\u00f3n de baja probabilidad/confianza cero'. Nueva hip\u00f3tesis: 'En activos OTC, la tendencia neutral con momentum t\u00e9cnico convergente (RSI>55 + MACD>0) representa una oportunidad de alta probabilidad para operaciones direccionales de corto plazo, ya que el precio tiende a seguir el vector de momentum hasta encontrar resistencia en la estructura neutral.'",
+        "confidence_in_analysis": 82
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:31:22.945472",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobrecompra (70.2) + PUT fall\u00f3 \u2192 Analizar por qu\u00e9"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Conflicto no resuelto entre indicadores t\u00e9cnicos en contexto de tendencia neutral. El RSI (70.15) indicaba sobrecompra (se\u00f1al bajista), pero el MACD positivo (0.00036) confirmaba que el momentum alcista a\u00fan no se hab\u00eda agotado ni revertido. En tendencias neutrales, el precio tiende a mantenerse en rangos extendidos, permitiendo que el RSI permanezca en zonas extremas sin reversi\u00f3n inmediata. El sistema ignor\u00f3 que el MACD a\u00fan no mostraba divergencia bajista ni cruce de se\u00f1al negativo, operando en contra del momentum dominante. Adem\u00e1s, el 0% de confianza sugiere que el algoritmo detect\u00f3 internamente la falta de convergencia de factores pero ejecut\u00f3 la operaci\u00f3n de todos modos, violando sus propios criterios de validaci\u00f3n.",
+        "system_error": "Operaci\u00f3n forzada con confianza nula (0%) sin confirmaci\u00f3n multi-indicador. El sistema fall\u00f3 en aplicar filtros de coherencia direccional: no verific\u00f3 que el MACD estuviera alineado con la se\u00f1al del RSI (deber\u00eda ser negativo o al menos decreciente para validar un PUT), ignor\u00f3 el estado 'neutral' de la tendencia que reduce la probabilidad de reversi\u00f3n por sobrecompra, y careci\u00f3 de un 'circuit breaker' que impida operar cuando la confianza calculada sea inferior a un umbral m\u00ednimo (ej. 60%).",
+        "system_success": null,
+        "correction_needed": "Implementar un sistema de 'confirmaci\u00f3n ponderada' que requiera: (1) Concordancia entre RSI (>70) Y MACD < 0 (negativo) o con histograma decreciente claro, (2) Tendencia no neutral (preferiblemente bajista) o al menos ruptura de soporte confirmada, (3) Umbral m\u00ednimo de confianza >65% para ejecutar operaciones, (4) Filtro de tiempo: esperar 1-2 velas de confirmaci\u00f3n despu\u00e9s del cruce de RSI a sobrecompra para verificar agotamiento real, y (5) Para OTC espec\u00edficamente, agregar an\u00e1lisis de volatilidad impl\u00edcita y spreads antes de entrar, ya que estos mercados sint\u00e9ticos pueden desviarse del spot real.",
+        "hypothesis_to_change": "Cambiar de 'RSI en sobrecompra (>70) = se\u00f1al inmediata de PUT' a 'RSI en sobrecompra (>70) solo genera alerta de posible reversi\u00f3n; la entrada PUT requiere confirmaci\u00f3n de agotamiento del momentum alcista mediante MACD negativo o divergencia bajista, especialmente en tendencias neutrales donde el RSI puede permanecer sobrecomprado por tiempo extendido sin reversi\u00f3n del precio'. Adem\u00e1s, incorporar la hip\u00f3tesis de que 'Confianza 0% = No operar bajo ninguna circunstancia'.",
+        "confidence_in_analysis": 88
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:36:18.798141",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (46.9) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Operaci\u00f3n ejecutada en condiciones de mercado de indecisi\u00f3n extrema (tendencia neutral) con indicadores de momentum d\u00e9biles (RSI 46.9 en zona limbo, MACD -0.014 sin fuerza) y, cr\u00edticamente, con 0% de confianza calculada. El mercado no ten\u00eda direccionalidad clara, y el RSI de 46.9 no representaba 'sobrevendido' (que hubiera generado rebote alcista contra la PUT), sino simplemente ausencia de momentum alcista, insuficiente para garantizar ca\u00edda en un rango lateral.",
+        "system_error": "Error cr\u00edtico de interpretaci\u00f3n del RSI: el sistema confundi\u00f3 'RSI < 50' con 'sobrevendido/riesgo de rebote', cuando en realidad RSI 46.9 es zona neutral-bajista d\u00e9bil, no zona de reversi\u00f3n (que ocurre <30). Adem\u00e1s, viol\u00f3 la regla fundamental de gesti\u00f3n de riesgo: oper\u00f3 con 0% de confianza, es decir, sin edge estad\u00edstico v\u00e1lido. Finalmente, ignor\u00f3 que en tendencia neutral las operaciones direccionales (PUT/CALL) tienen probabilidad de \u00e9xito cercana al azar (50%), invalidando la expectativa positiva.",
+        "system_success": null,
+        "correction_needed": "1. Implementar filtro de confianza m\u00ednima: NO operar si confianza < 60%. 2. Corregir la l\u00f3gica del RSI: PUT v\u00e1lido solo cuando RSI < 45 (momentum bajista confirmado) o RSI > 70 (sobrecompra extrema buscando reversi\u00f3n), evitando la zona 45-55 (neutral). 3. Bloquear operaciones direccionales cuando tendencia = 'neutral', a menos que exista ruptura de soporte/resistencia confirmada con volumen. 4. Requerir alineaci\u00f3n: para PUT, MACD debe ser negativo y decreciente, no apenas negativo cercano a cero.",
+        "hypothesis_to_change": "Cambiar: 'RSI < 50 es contrario a operaciones PUT porque indica precio bajo' \u2192 Por: 'RSI < 30 es contrario a PUT (riesgo de rebote), RSI 45-55 es zona de no-operaci\u00f3n por indecisi\u00f3n, y PUT requiere RSI < 45 con tendencia bajista confirmada'. Adem\u00e1s: 'Operar con confianza baja es aceptable si otros indicadores compensan' \u2192 Por: 'La confianza es el filtro principal; sin ella, la operaci\u00f3n es inv\u00e1lida independientemente de otros indicadores'.",
+        "confidence_in_analysis": 95
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:46:34.981426",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Discrepancia cr\u00edtica entre momentum y se\u00f1al de sobrecompra. El RSI (69.69) indicaba proximidad a sobrecompra, pero el MACD positivo (0.102) confirmaba que el momentum alcista segu\u00eda vigente y sin agotamiento. En tendencia neutral, el precio continu\u00f3 el impulso residual alcista o mantuvo lateralidad superior, invalidando la operaci\u00f3n bajista (PUT) antes de que el RSI pudiera confirmar una reversi\u00f3n efectiva desde niveles de sobrecompra (>70). Adem\u00e1s, el activo OTC (GBPJPY-OTC) suele tener mayor ruido y manipulaci\u00f3n de precios en rangos cortos, haciendo que operar contra el momentum sea de alto riesgo.",
+        "system_error": "Entrada forzada con confianza nula (0%) y contradicci\u00f3n de se\u00f1ales. El sistema oper\u00f3 una posici\u00f3n bajista (PUT) mientras el MACD mostraba valor positivo (momentum alcista) y sin esperar confirmaci\u00f3n de cruce descendente del RSI desde zona de sobrecompra (>70). Operar con 0% de confianza viola principios b\u00e1sicos de gesti\u00f3n de riesgo, indicando que el algoritmo prioriz\u00f3 el umbral num\u00e9rico del RSI (69.7 \u2248 70) sobre la estructura de momentum y la ausencia de confirmaci\u00f3n de reversi\u00f3n.",
+        "system_success": null,
+        "correction_needed": "Implementar 'Regla de Concordancia de Momentum': Para operaciones PUT, requerir (1) RSI > 70 confirmado, (2) MACD < 0 o cruzando se\u00f1al descendente, y (3) Confianza m\u00ednima > 65%. Adem\u00e1s, a\u00f1adir filtro de 'espera de agotamiento': tras RSI > 65, esperar 1-2 velas de confirmaci\u00f3n bajista o divergencia antes de entrar. Prohibir operaciones con confianza < 50% independientemente de los indicadores.",
+        "hypothesis_to_change": "Cambiar de 'RSI cercano a 70 en tendencia neutral = oportunidad de reversi\u00f3n bajista inmediata' a 'RSI > 70 sin confirmaci\u00f3n de momentum bajista (MACD negativo/descendente) y sin divergencia de precio = se\u00f1al de ALTO RIESGO, no operar'. Tambi\u00e9n eliminar la hip\u00f3tesis de que '0% de confianza es aceptable si los indicadores t\u00e9cnicos lo sugieren'.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:50:48.872881",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:54:51.209607",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 RSI sobrecompra (72.7) + PUT funcion\u00f3 \u2192 Hip\u00f3tesis confirmada",
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T19:59:18.585928",
+      "trade_id": null,
+      "asset": "EURGBP-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8700000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:03:25.919575",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (53.2) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Ejecuci\u00f3n de operaci\u00f3n CALL en condiciones de mercado sin direccionalidad clara. La tendencia 'neutral' combinada con momentum insignificante (MACD 0.000295 \u2248 flat) y ausencia de confianza estad\u00edstica (0%) cre\u00f3 un escenario de alta probabilidad de consolidaci\u00f3n o reversi\u00f3n menor. El precio no tuvo presi\u00f3n compradora suficiente para generar el movimiento alcista esperado, resultando en una p\u00e9rdida por oscilaci\u00f3n lateral o retroceso en rango.",
+        "system_error": "Fallo cr\u00edtico de validaci\u00f3n de entrada: El sistema ejecut\u00f3 operaci\u00f3n con 0% de confianza, violando el principio b\u00e1sico de no exponer capital sin ventaja probabil\u00edstica. Adicionalmente, el an\u00e1lisis preliminar contiene un error conceptual grave al etiquetar RSI 53.17 como 'alto', cuando est\u00e1 en zona neutral (50 \u00b1 10 puntos). Operar CALL en tendencia neutral sin confirmaci\u00f3n de ruptura alcista ni momentum significativo constituye una entrada especulativa sin edge estad\u00edstico.",
+        "system_success": null,
+        "correction_needed": "1. Implementar hard-stop: Prohibir operaciones cuando confianza < 70%. 2. Corregir umbrales RSI: 53 es neutral, no 'alto'. Definir: 70+ = sobrecomprado (evitar CALL), 30- = sobrevendido (evitar PUT), 40-60 = zona de no-operaci\u00f3n sin tendencia clara. 3. Establecer umbral m\u00ednimo MACD para CALL en tendencia neutral: > 0.0010 (el valor actual 0.0003 indica ausencia de momentum). 4. Requerir confirmaci\u00f3n de tendencia alcista (no neutral) para operar CALL, o esperar ruptura de rango con volumen/momentum confirmado.",
+        "hypothesis_to_change": "Hip\u00f3tesis err\u00f3nea actual: 'RSI > 50 es nivel alto que contraindica operaciones CALL'. Nueva hip\u00f3tesis: 'RSI 50-70 es zona neutral-alcista d\u00e9bil que requiere confirmaci\u00f3n de tendencia alcista y momentum MACD significativo (>0.001) para operar CALL. RSI > 70 indica sobrecompra (evitar CALL). La confianza 0% es se\u00f1al absoluta de abstenci\u00f3n, no de operaci\u00f3n con riesgo m\u00e1ximo.'",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:09:23.356601",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "put",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El precio se encontraba en una zona de sobrecompra relativa (RSI 58.14) dentro de una tendencia neutral, con momentum alcista agot\u00e1ndose (MACD 0.049 cercano a cero, indicando fuerza compradora m\u00ednima). Esto gener\u00f3 una correcci\u00f3n natural hacia la media que favoreci\u00f3 la posici\u00f3n PUT. El sistema fall\u00f3 al evaluar este escenario como 'sin confianza' por depender de umbrales r\u00edgidos de RSI (>70) para considerar sobrecompra, ignorando el contexto de agotamiento de momentum en rango lateral.",
+        "system_error": "El sistema calcul\u00f3 0% de confianza al aplicar criterios binarios y r\u00edgidos: requiere RSI en extremos (>70 para PUT, <30 para CALL) para generar se\u00f1al, descalificando completamente configuraciones de 'pre-sobrecompra' o 'agotamiento de momentum' donde el MACD tiende a cero en tendencia neutral. No ponder\u00f3 la convergencia de indicadores de debilidad (RSI moderado + MACD d\u00e9bil + tendencia neutral) como se\u00f1al de alta probabilidad para retroceso.",
+        "system_success": "La direcci\u00f3n PUT fue t\u00e9cnicamente correcta al identir la debilidad impl\u00edcita en el tope del rango neutral, capturando el retroceso desde niveles donde la presi\u00f3n compradora se agotaba (RSI 58 + MACD plano). Sin embargo, esto fue probablemente accidental o basado en una l\u00f3gica secundaria no reflejada en el c\u00e1lculo de confianza mostrado.",
+        "correction_needed": "Reemplazar el c\u00e1lculo de confianza binario por un modelo ponderado de 'fuerza de reversi\u00f3n' que: (1) Asigne peso a RSI en zona 55-70 como 'sobrecompra relativa' cuando la tendencia es neutral (no alcista fuerte), (2) Detecte MACD cercano a cero (\u00b10.05) como se\u00f1al de momentum agotado, no como tendencia alcista/bajista confirmada, (3) Calcule confianza proporcional al 'espacio de retroceso' disponible hasta el siguiente soporte relevante en OTC. Implementar validaci\u00f3n de 'divergencia oculta' en timeframe menor para confirmar entrada.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis 'Solo operar en extremos de RSI (>70/<30) para reversi\u00f3n' por 'Operar en niveles intermedios de RSI (50-70 para PUT, 30-50 para CALL) cuando el MACD muestre convergencia hacia cero en contexto de tendencia neutral o rango, indicando agotamiento del impulso previo'. Adem\u00e1s, eliminar la asignaci\u00f3n de 0% confianza para setups t\u00e9cnicamente v\u00e1lidos de debilidad/fortaleza relativa.",
+        "confidence_in_analysis": 88
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:13:20.987400",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (22.4) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El sistema oper\u00f3 una se\u00f1al de contratendencia (CALL) bas\u00e1ndose \u00fanicamente en RSI en sobreventa extrema (22.4) sin confirmaci\u00f3n de reversi\u00f3n de momentum, ignorando que el MACD (-0.139) manten\u00eda momentum bajista activo y que la confianza era 0%. En mercados OTC, el RSI puede permanecer en sobreventa durante per\u00edodos prolongados mientras el precio contin\u00faa cayendo ('catching a falling knife'), especialmente cuando no hay se\u00f1ales de agotamiento de la tendencia bajista.",
+        "system_error": "Entrada precipitada basada en indicador \u00fanico (RSI) sin validaci\u00f3n cruzada: 1) No esper\u00f3 confirmaci\u00f3n de reversi\u00f3n en MACD (cruce bullish o histograma positivo), 2) Oper\u00f3 con confianza 0% (apuesta sin convicci\u00f3n algor\u00edtmica), 3) Ignor\u00f3 que en tendencias fuertes bajistas el RSI <30 no garantiza rebote inmediato, 4) No consider\u00f3 la naturaleza OTC donde la manipulaci\u00f3n de precios invalida se\u00f1ales t\u00e9cnicas est\u00e1ndar sin contexto de volumen/estructura.",
+        "system_success": null,
+        "correction_needed": "Implementar sistema de confirmaci\u00f3n multi-factor obligatorio: 1) Prohibir operaciones con confianza <70%, 2) Para se\u00f1ales RSI sobreventa (<30), requerir: a) MACD cruzando se\u00f1al hacia positivo o divergencia bullish, b) Vela de reversi\u00f3n (martillo/doji) en timeframe operativo, c) Tendencia neutral/cambio en timeframe superior, 3) Agregar filtro de momentum: no operar CALL si MACD < -0.1 y decreciente, 4) Para OTC, exigir margen de seguridad adicional (esperar RSI <20 + 2 confirmaciones).",
+        "hypothesis_to_change": "Cambiar 'RSI en sobreventa (<30) = se\u00f1al de compra inmediata' por 'RSI en sobreventa = condici\u00f3n necesaria pero no suficiente; requiere confirmaci\u00f3n de agotamiento de momentum (MACD convergente) y estructura de mercado (soporte relevante) antes de entrada CALL'. Adem\u00e1s, eliminar la premisa de que indicadores t\u00e9cnicos funcionan igual en OTC que en mercados regulados.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:18:43.642576",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI sobreventa (18.2) + CALL fall\u00f3 \u2192 \u00bfPor qu\u00e9? Analizar contexto"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El sistema ejecut\u00f3 una operaci\u00f3n de reversi\u00f3n alcista (CALL) en condiciones de sobreventa extrema (RSI 18.2) sin confirmaci\u00f3n de agotamiento del momentum bajista. El MACD negativo (-0.150) indicaba que la presi\u00f3n vendedora segu\u00eda dominante, mientras que la clasificaci\u00f3n de 'tendencia neutral' fue err\u00f3nea - con RSI < 20 y MACD < 0 se trata de una tendencia bajista fuerte. En mercados OTC, el precio puede mantenerse en sobreventa extendida ('falling knife') sin reversi\u00f3n inmediata, especialmente cuando falta volumen comprador. El sistema intent\u00f3 anticipar el rebote en lugar de esperar la confirmaci\u00f3n del cambio de direcci\u00f3n.",
+        "system_error": "M\u00faltiples errores cr\u00edticos: (1) Clasificaci\u00f3n incorrecta de tendencia como 'neutral' cuando los indicadores mostraban clara direcci\u00f3n bajista; (2) Entrada CALL sin confirmaci\u00f3n de reversi\u00f3n (esperar RSI cruce ascendente >20 o MACD cruce alcista); (3) Ignorar la se\u00f1al de confianza 0% que deber\u00eda haber bloqueado la operaci\u00f3n; (4) Falta de an\u00e1lisis de divergencia - en sobreventa extrema se requiere divergencia alcista en el RSI antes de entrar; (5) No considerar el contexto OTC donde los brokers pueden mantener precios en sobreventa para liquidar posiciones largas.",
+        "system_success": null,
+        "correction_needed": "Implementar un sistema de filtros de confirmaci\u00f3n obligatorios para operaciones de reversi\u00f3n: (1) Bloquear operaciones cuando confianza = 0%; (2) Para CALL en RSI < 30: requerir RSI cruce ascendente + MACD histograma cambiando a positivo o al menos decreciendo en negatividad + vela de reversi\u00f3n (martillo/pin bar); (3) Reclasificar tendencia autom\u00e1ticamente como 'bajista fuerte' cuando RSI < 25 y MACD < 0; (4) A\u00f1adir delay de 1-2 velas tras se\u00f1al de sobreventa para confirmar agotamiento; (5) Para OTC, aumentar el umbral de RSI a < 15 para considerar sobreventa extrema v\u00e1lida o exigir doble suelo en precio.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis 'RSI en sobreventa (<30) = se\u00f1al directa de compra/CALL' por 'RSI en sobreventa = condici\u00f3n necesaria pero no suficiente; se requiere confirmaci\u00f3n de cambio de momentum y estructura de mercado antes de operar reversi\u00f3n'. Adem\u00e1s, eliminar la hip\u00f3tesis de que OTC sigue patrones t\u00e9cnicos est\u00e1ndar sin considerar manipulaci\u00f3n de precios.",
+        "confidence_in_analysis": 92
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:28:53.027747",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (52.6) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:33:16.852283",
+      "trade_id": null,
+      "asset": "USDJPY-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (51.7) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:38:23.116050",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:42:32.132545",
+      "trade_id": null,
+      "asset": "AUDUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (61.5) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:47:43.770422",
+      "trade_id": null,
+      "asset": "GBPJPY-OTC",
+      "action": "call",
+      "won": true,
+      "profit": 0.8500000000000001,
+      "deep_reasons": [
+        "\u2705 Baja confianza (0%) pero gan\u00f3 \u2192 Subestimamos la oportunidad",
+        "   \ud83d\udca1 LECCI\u00d3N: Revisar c\u00e1lculo de confianza para este setup"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "Rebote t\u00e9cnico desde nivel de sobreventa relativa (RSI 33.33) en contexto de momentum bajista agot\u00e1ndose (MACD -0.088 cercano a cero), generando una reversi\u00f3n a la media alcista t\u00edpica de operaciones de corto plazo en pares vol\u00e1tiles como GBPJPY-OTC",
+        "system_error": "El algoritmo de confianza aplic\u00f3 una l\u00f3gica binaria r\u00edgida: penaliz\u00f3 severamente el MACD negativo (-0.088) como 'se\u00f1al bajista' sin analizar su magnitud (cercana a cero indica debilidad vendedora), e ignor\u00f3 que RSI 33 representa sobreventa funcional en timeframes intrad\u00eda, especialmente en mercados OTC donde los niveles t\u00e9cnicos de 30/70 son zonas de rebote, no l\u00edmites absolutos",
+        "system_success": null,
+        "correction_needed": "Implementar sistema de puntuaci\u00f3n ponderada no lineal: (1) RSI 30-40 debe asignar +35% confianza base para CALL en tendencia neutral (zona de valor), (2) MACD entre -0.15 y +0.15 debe considerarse 'zona de transici\u00f3n' con impacto m\u00ednimo (-10%), no se\u00f1al direccional fuerte, (3) A\u00f1adir factor de 'velocidad de cambio' del RSI - si ven\u00eda cayendo r\u00e1pido y llega a 33, la probabilidad de rebote supera el 60%",
+        "hypothesis_to_change": "Cambiar de 'Indicadores t\u00e9cnicos contradictorios generan confianza 0%' a 'RSI en zona 30-40 + MACD cercano a cero en tendencia neutral = Configuraci\u00f3n \u00f3ptima de reversi\u00f3n a la media (mean reversion) con alta tasa de \u00e9xito para operaciones CALL de corta duraci\u00f3n'",
+        "confidence_in_analysis": 87
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:51:46.244258",
+      "trade_id": null,
+      "asset": "EURUSD-OTC",
+      "action": "put",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI bajo (47.9) + PUT fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar PUT con RSI < 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {}
+    },
+    {
+      "timestamp": "2026-04-04T20:57:31.048290",
+      "trade_id": null,
+      "asset": "GBPUSD-OTC",
+      "action": "call",
+      "won": false,
+      "profit": -1.0,
+      "deep_reasons": [
+        "\u274c RSI alto (66.6) + CALL fue mala idea \u2192 Error l\u00f3gico detectado",
+        "   \ud83d\udd27 CORRECCI\u00d3N: NO operar CALL con RSI > 50"
+      ],
+      "logic_errors": [],
+      "corrections_needed": [],
+      "hypothesis_updates": [],
+      "llm_reasoning": {
+        "root_cause": "El sistema oper\u00f3 en condiciones de m\u00e1xima incertidumbre (confianza 0%) dentro de una tendencia neutral sin momentum confirmado. El RSI de 66.6 en contexto neutral indicaba que el precio ya hab\u00eda experimentado un impulso alcista reciente (sobrecompra relativa) sin una tendencia estructural alcista que sostuviera la continuaci\u00f3n. El MACD positivo pero infinitesimal (0.0005) confirmaba momentum alcista d\u00e9bil o agot\u00e1ndose. Al operar CALL, el sistema 'persegu\u00eda' el precio al final de un microciclo alcista en un mercado sin direcci\u00f3n definida, resultando en una reversi\u00f3n natural o estancamiento.",
+        "system_error": "Error cr\u00edtico de gesti\u00f3n de riesgo: permiti\u00f3 la ejecuci\u00f3n de una operaci\u00f3n con 0% de confianza. Adicionalmente, fall\u00f3 en el filtrado de contexto: no debe operar CALL cuando la tendencia es neutral y el RSI > 60 (indicando agotamiento del impulso alcista sin tendencia de respaldo), especialmente cuando el MACD muestra valores positivos marginales que indican falta de fuerza direccional.",
+        "system_success": null,
+        "correction_needed": "Implementar un umbral m\u00ednimo de confianza absoluto (ej: >65%) que bloquee cualquier operaci\u00f3n si no se cumple. Para tendencias neutrales: prohibir operaciones de seguimiento (CALL/PUT) cuando RSI est\u00e9 entre 45-65; solo permitir operaciones en extremos (>70 para PUT, <30 para CALL) o esperar ruptura confirmada de la neutralidad. A\u00f1adir filtro de momentum: MACD debe mostrar divergencia clara o valor significativo (>0.0010 para GBPUSD) en direcci\u00f3n de la operaci\u00f3n.",
+        "hypothesis_to_change": "Cambiar la hip\u00f3tesis de que 'RSI > 50 es malo para CALL' por: 'En tendencia neutral, RSI > 60 indica sobreextensi\u00f3n alcista sin soporte estructural, siendo zona de alto riesgo para CALLs (probabilidad de reversi\u00f3n o consolidaci\u00f3n)'. Tambi\u00e9n cambiar la hip\u00f3tesis de que 'baja confianza es mejor que nada' por 'confianza 0% es se\u00f1al de prohibici\u00f3n absoluta de operaci\u00f3n'.",
+        "confidence_in_analysis": 92
+      }
+    }
+  ],
+  "corrections": [
+    {
+      "timestamp": "2026-04-04T18:48:48.277381",
+      "correction": {
+        "type": "hypothesis_change",
+        "target": "rsi_oversold_works",
+        "action": "Cambiar de True a False",
+        "reason": "Evidencia insuficiente: 36.4% de soporte",
+        "priority": "HIGH"
+      }
+    }
+  ],
+  "hypotheses": {
+    "rsi_oversold_works": false,
+    "rsi_overbought_works": true,
+    "trend_following_works": true,
+    "counter_trend_works": false,
+    "high_confidence_reliable": true,
+    "fvg_mitigation_works": true,
+    "ollama_adds_value": true
+  },
+  "evidence": {
+    "rsi_oversold_works": {
+      "support": 4,
+      "against": 9
+    },
+    "rsi_overbought_works": {
+      "support": 12,
+      "against": 8
+    },
+    "trend_following_works": {
+      "support": 0,
+      "against": 0
+    },
+    "counter_trend_works": {
+      "support": 0,
+      "against": 0
+    },
+    "high_confidence_reliable": {
+      "support": 0,
+      "against": 0
+    },
+    "fvg_mitigation_works": {
+      "support": 0,
+      "against": 0
+    },
+    "ollama_adds_value": {
+      "support": 0,
+      "against": 0
+    }
+  }
+}

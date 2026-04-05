@@ -1,6 +1,14 @@
 import time
 from data.market_data import MarketDataHandler
 
+# Importar scorer refinado (DISABLED)
+# Causa problemas. Usando sistema base existente.
+try:
+    # from core.refined_opportunity_scorer import RefinedOpportunityScorer
+    REFINED_SCORER_AVAILABLE = False
+except ImportError:
+    REFINED_SCORER_AVAILABLE = False
+
 class AssetManager:
     def __init__(self, market_data: MarketDataHandler):
         self.market_data = market_data
@@ -12,6 +20,12 @@ class AssetManager:
         self.multi_asset_mode = True  # Monitorear múltiples activos
         self.monitored_assets = []  # Activos siendo monitoreados
         self.asset_scores = {}  # Scores de cada activo
+        
+        # 🎯 Scoring refinado
+        if REFINED_SCORER_AVAILABLE:
+            self.refined_scorer = RefinedOpportunityScorer()
+        else:
+            self.refined_scorer = None
         
         # Lista de activos OTC disponibles 24/7
         self.otc_assets = [
@@ -212,6 +226,23 @@ class AssetManager:
                 if feature_engineer:
                     df = feature_engineer.prepare_for_rl(df)
                 
+                # 🎯 USAR SCORING REFINADO SI ESTÁ DISPONIBLE
+                if self.refined_scorer:
+                    power_levels = self._get_power_levels(asset)
+                    refined_analysis = self.refined_scorer.calculate_score(df, asset, power_levels)
+                    
+                    if refined_analysis['score'] > best_score:
+                        best_score = refined_analysis['score']
+                        best_opportunity = {
+                            'asset': asset,
+                            'score': refined_analysis['score'],
+                            'action': refined_analysis['action'],
+                            'confidence': refined_analysis['confidence'],
+                            'indicators': refined_analysis['details'],
+                            'reasoning': ', '.join(refined_analysis['reasons'][:3])
+                        }
+                    continue
+                
                 # Analizar el activo
                 analysis = self._analyze_asset_opportunity(df, asset)
                 
@@ -222,8 +253,9 @@ class AssetManager:
             except Exception as e:
                 continue
         
-        # Solo retornar si encontró un setup técnico con score >= 3 (Mínimo histórico)
-        if best_opportunity and best_opportunity['score'] >= 5:
+        # Solo retornar si encontró un setup técnico con score >= 15 (REFINADO)
+        min_score_threshold = 15 if self.refined_scorer else 5
+        if best_opportunity and best_opportunity['score'] >= min_score_threshold:
             return best_opportunity
         
         return None

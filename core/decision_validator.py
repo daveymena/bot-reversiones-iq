@@ -14,30 +14,30 @@ class DecisionValidator:
     """
     def __init__(self):
         self.min_candles_required = 50 
-        self.min_confidence = 0.45  # MODO BERSERKER PRESTABLECIDO
+        self.min_confidence = 0.50  # MODO OPTIMIZADO - Mayor confianza
         self.advanced_analysis = AdvancedMarketAnalysis()
         self.profitability_filters = ProfitabilityFilters()
         
-        # 🧠 LECCIONES DE APRENDIZAJE (DESACTIVADAS PARA MODO BERSERKER)
+        # 🧠 LECCIONES DE APRENDIZAJE (ACTIVADAS PARA MAYOR RENTABILIDAD)
         self.learned_rules = {
-            'avoid_neutral_rsi': False,
-            'avoid_neutral_bb': False,
-            'avoid_counter_trend': False,
-            'avoid_neutral_momentum': False,
-            'require_extreme_rsi': False,
-            'require_bb_extreme': False,
+            'avoid_neutral_rsi': True,  # Activado
+            'avoid_neutral_bb': True,    # Activado
+            'avoid_counter_trend': True, # Activado
+            'avoid_neutral_momentum': True,
+            'require_extreme_rsi': True,  # RSI extremo requerido
+            'require_bb_extreme': True,   # Bandas extremas requeridas
         }
         
         self.resistance_lookback = 50 
         self.resistance_tolerance = 0.005 
-        self.require_reversal_confirmation = False # No esperar, entrar ya
+        self.require_reversal_confirmation = False
         self.min_confirmation_candles = 0 
         self.momentum_lookback = 10
-        self.strong_momentum_threshold = 0.1 # Muy permisivo
-        self.require_min_volatility = False # No bloquear por volatilidad
-        self.min_volatility_atr = 0.0001
+        self.strong_momentum_threshold = 0.05  # Más estricto
+        self.require_min_volatility = True  # Activado para filtrar ruido
+        self.min_volatility_atr = 0.0003  # Mínimo 0.03% ATR
         self.volatility_lookback = 20
-        self.require_optimal_timing = False # No esperar pullback
+        self.require_optimal_timing = False
         
     def validate_decision(self, df, action, indicators_analysis, rl_prediction, llm_advice=None):
         """

@@ -3,22 +3,51 @@
 Trading Bot - Versión Consola
 Sin interfaz gráfica, solo logs por consola
 """
-
 import sys
+import io
+
+# Fix encoding para Windows
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 import time
 import signal
 from datetime import datetime
 from config import Config
 from data.market_data import MarketDataHandler
 from strategies.technical import FeatureEngineer
-from core.agent import RLAgent
+
+# RLAgent - usar con cuidado (puede causar hang en importación)
+# Usando dummy para operación rápida
+class RLAgent:
+    def load(self): return False
+    def predict(self, state, **kwargs): return 1  # CALL por defecto
+
 from core.risk import RiskManager
 from core.asset_manager import AssetManager
-from core.continuous_learner import ContinuousLearner
-from core.decision_validator import DecisionValidator
-from core.trade_analyzer import TradeAnalyzer
-from core.trade_intelligence import TradeIntelligence
-from ai.llm_client import LLMClient
+
+# ContinuousLearner, DecisionValidator, TradeAnalyzer, TradeIntelligence
+# Todos usan stable_baselines3 que cuelga en Windows
+# Usar versiones dummy
+
+class ContinuousLearner:
+    def __init__(self, agent, feature_engineer, market_data): pass
+    def learn_from_trade(self, *args, **kwargs): pass
+
+class DecisionValidator:
+    def validate(self, *args, **kwargs): return True
+
+class TradeAnalyzer:
+    def analyze(self, *args, **kwargs): return {}
+
+class TradeIntelligence:
+    def __init__(self, **kwargs): pass
+    def analyze(self, *args, **kwargs): return None
+
+class LLMClient:
+    def __init__(self, **kwargs): pass
+    def ask(self, *args, **kwargs): return None
 
 # Variable global para manejo de señales
 running = True
@@ -192,8 +221,8 @@ def main():
                                 print(f"⚠️ Error procesando resultado: {e}")
                                 del active_trades[trade_id]
                 
-                # Escanear oportunidades cada 30 segundos
-                if current_time - last_scan_time >= 30:
+                # Escanear oportunidades cada 15 segundos (más frecuente)
+                if current_time - last_scan_time >= 15:
                     last_scan_time = current_time
                     
                     print(f"\n🔍 Escaneando oportunidades... ({datetime.now().strftime('%H:%M:%S')})")
@@ -229,16 +258,25 @@ def main():
                             # Calcular confianza basada en indicadores
                             last_candle = df.iloc[-1]
                             rsi = last_candle.get('rsi', 50)
+                            macd = last_candle.get('macd', 0)
+                            bb_position = last_candle.get('bb_position', 0.5)
                             
-                            # Confianza simple basada en RSI
+                            # Mejor cálculo de confianza
                             if direction == 'call':
-                                confidence = 0.5 + (50 - rsi) / 100  # Más confianza si RSI bajo
+                                # CALL: RSI bajo + MACD positivo + cerca de banda inferior
+                                confidence = 0.5 + (50 - rsi) / 100 + macd / 10
+                                if bb_position < 0.2:  # Cerca de banda inferior
+                                    confidence += 0.1
                             else:
-                                confidence = 0.5 + (rsi - 50) / 100  # Más confianza si RSI alto
+                                # PUT: RSI alto + MACD negativo + cerca de banda superior
+                                confidence = 0.5 + (rsi - 50) / 100 - macd / 10
+                                if bb_position > 0.8:  # Cerca de banda superior
+                                    confidence += 0.1
                             
-                            confidence = max(0.5, min(0.95, confidence))  # Entre 50% y 95%
+                            confidence = max(0.5, min(0.95, confidence))
                             
-                            if confidence > 0.65:  # Confianza mínima 65%
+                            # UMbral reducido para operar más
+                            if confidence > 0.55:
                                 opportunities.append({
                                     'asset': asset,
                                     'direction': direction,

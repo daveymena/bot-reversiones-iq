@@ -163,45 +163,50 @@ def main():
     
     if dialog.exec() == QDialog.Accepted:
         if radio_local.isChecked():
-            # Modo local - inicializar todos los componentes
-            from core.trader import LiveTrader
-            from core.agent import RLAgent
-            from core.risk import RiskManager
-            from core.asset_manager import AssetManager
-            from data.market_data import MarketDataHandler
-            from strategies.technical import FeatureEngineer
-            from gui.modern_main_window import ModernMainWindow
-            from ai.llm_client import LLMClient # <--- IMPORTAR CLIENTE IA
-            
-            # Inicializar componentes
-            from config import Config
-            
-            market_data = MarketDataHandler()
-            feature_engineer = FeatureEngineer()
-            agent = RLAgent()
-            risk_manager = RiskManager(
-                capital_per_trade=Config.CAPITAL_PER_TRADE,
-                stop_loss_pct=Config.STOP_LOSS_PERCENT,
-                take_profit_pct=Config.TAKE_PROFIT_PERCENT
-            )
-            asset_manager = AssetManager(market_data)
-            llm_client = LLMClient() # <--- INICIALIZAR IA
-            
-            # Crear trader con todos los componentes
-            trader = LiveTrader(
-                market_data=market_data,
-                feature_engineer=feature_engineer,
-                agent=agent,
-                risk_manager=risk_manager,
-                asset_manager=asset_manager,
-                llm_client=llm_client # <--- CONECTAR IA AL TRADER
-            )
-            
-            window = ModernMainWindow(trader)
-            window.show()
-            splash.finish(window)
-            
-            return app.exec()
+            try:
+                # Modo local - inicializar todos los componentes
+                from core.trader import LiveTrader
+                from core.agent import RLAgent
+                from core.risk import RiskManager
+                from core.asset_manager import AssetManager
+                from data.market_data import MarketDataHandler
+                from strategies.technical import FeatureEngineer
+                from gui.modern_main_window import ModernMainWindow
+                from ai.llm_client import LLMClient # <--- IMPORTAR CLIENTE IA
+                
+                # Inicializar componentes
+                from config import Config
+                
+                market_data = MarketDataHandler()
+                feature_engineer = FeatureEngineer()
+                agent = RLAgent()
+                risk_manager = RiskManager(
+                    capital_per_trade=Config.CAPITAL_PER_TRADE,
+                    stop_loss_pct=Config.STOP_LOSS_PERCENT,
+                    take_profit_pct=Config.TAKE_PROFIT_PERCENT
+                )
+                asset_manager = AssetManager(market_data)
+                llm_client = LLMClient() # <--- INICIALIZAR IA
+                
+                # Crear trader con todos los componentes
+                trader = LiveTrader(
+                    market_data=market_data,
+                    feature_engineer=feature_engineer,
+                    agent=agent,
+                    risk_manager=risk_manager,
+                    asset_manager=asset_manager,
+                    llm_client=llm_client # <--- CONECTAR IA AL TRADER
+                )
+                
+                window = ModernMainWindow(trader)
+                window.show()
+                splash.finish(window)
+                
+                return app.exec()
+            except Exception as e:
+                import traceback
+                QMessageBox.critical(None, "Error Fatal", f"Error al iniciar el bot:\n{str(e)}\n\n{traceback.format_exc()}")
+                return 1
         else:
             # Modo remoto - usar GUI con API client
             backend_url = url_input.text().strip()

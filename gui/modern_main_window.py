@@ -1135,26 +1135,38 @@ class ModernMainWindow(QMainWindow):
             return f"{seconds//3600}h"
     
     def on_new_candle(self, candle_data):
-        """Maneja nueva vela - fuerza actualización del gráfico"""
+        """Maneja nueva vela - solo actualiza si no hay operación activa"""
         try:
-            print("[DEBUG] Nueva vela recibida - Forzando actualización del gráfico")
+            # Verificar si hay operación activa
+            has_active_trade = False
+            if hasattr(self.trader, 'active_trades') and self.trader.active_trades:
+                has_active_trade = True
             
-            # Forzar actualización inmediata del gráfico con timeframe actual
+            # Durante operación activa, NO actualizar gráfico para evitar freeze
+            if has_active_trade:
+                return
+            
+            # Solo actualizar si ha pasado suficiente tiempo desde la última actualización
+            current_time = time.time()
+            if not hasattr(self, 'last_new_candle_update'):
+                self.last_new_candle_update = 0
+            
+            if current_time - self.last_new_candle_update < 5:
+                return  # Mínimo 5 segundos entre actualizaciones
+            
+            self.last_new_candle_update = current_time
+            
             if hasattr(self.trader, 'market_data') and self.trader.market_data.connected:
                 current_asset = getattr(self.trader, 'current_asset', 'EURUSD-OTC')
-                
-                # Usar timeframe actual
                 timeframe = getattr(self, 'current_timeframe', 60)
                 df = self.trader.market_data.get_candles(current_asset, timeframe, 100)
                 
                 if df is not None and not df.empty and len(df) >= 10:
-                    # Calcular indicadores si no están
                     if 'rsi' not in df.columns:
                         from strategies.technical import FeatureEngineer
                         feature_engineer = FeatureEngineer()
                         df = feature_engineer.prepare_for_rl(df)
                     
-                    # Actualizar gráfico directamente
                     self.update_chart_data(current_asset, df)
         except Exception as e:
             print(f"[ERROR] Error en on_new_candle: {e}")
@@ -1379,23 +1391,57 @@ class ModernMainWindow(QMainWindow):
     @Slot()
     def toggle_bot(self):
         """Inicia/detiene el bot"""
-        if not self.trader.isRunning():
-            self.trader.start()
-            self.btn_toggle.setText("⏸️ DETENER BOT")
-            self.btn_toggle.setObjectName("btnStop")
-            self.btn_toggle.setStyle(self.btn_toggle.style())
-            self.log("▶️ Bot iniciado")
-        else:
-            self.trader.paused = not self.trader.paused
-            if self.trader.paused:
-                self.btn_toggle.setText("▶️ REANUDAR BOT")
-                self.btn_toggle.setObjectName("btnStart")
-                self.log("⏸️ Bot pausado")
+        try:
+            if not self.trader.isRunning():
+                # Verificar conexión primero
+                if not self.trader.market_data.connected:
+                    self.log_error("Debes conectarte al broker primero")
+                    return
+                
+                self.log("▶️ Iniciando bot...")
+                self.btn_toggle.setEnabled(False)
+                self.btn_toggle.setText("⏳ Iniciando...")
+                
+                # Procesar eventos
+                QApplication.processEvents()
+                
+                # Iniciar en hilo separado
+                self.trader.start()
+                
+                # Esperar a que inicie
+                QTimer.singleShot(500, lambda: self._on_bot_started())
             else:
+                # Ya está corriendo, solo pausar/reanudar
+                self.trader.paused = not self.trader.paused
+                if self.trader.paused:
+                    self.btn_toggle.setText("▶️ REANUDAR BOT")
+                    self.btn_toggle.setObjectName("btnStart")
+                    self.log("⏸️ Bot pausado")
+                else:
+                    self.btn_toggle.setText("⏸️ DETENER BOT")
+                    self.btn_toggle.setObjectName("btnStop")
+                    self.log("▶️ Bot reanudado")
+                self.btn_toggle.setStyle(self.btn_toggle.style())
+        except Exception as e:
+            self.log_error(f"Error al iniciar bot: {e}")
+            self.btn_toggle.setEnabled(True)
+            self.btn_toggle.setText("▶️ INICIAR BOT")
+    
+    def _on_bot_started(self):
+        """Callback después de iniciar el bot"""
+        try:
+            if self.trader.isRunning():
                 self.btn_toggle.setText("⏸️ DETENER BOT")
                 self.btn_toggle.setObjectName("btnStop")
-                self.log("▶️ Bot reanudado")
-            self.btn_toggle.setStyle(self.btn_toggle.style())
+                self.btn_toggle.setEnabled(True)
+                self.btn_toggle.setStyle(self.btn_toggle.style())
+                self.log("✅ Bot iniciado correctamente")
+            else:
+                self.log_error("El bot no pudo iniciar")
+                self.btn_toggle.setText("▶️ INICIAR BOT")
+                self.btn_toggle.setEnabled(True)
+        except Exception as e:
+            self.log_error(f"Error en callback: {e}")
     
     def manual_trade(self, direction):
         """Ejecuta operación manual"""
@@ -1529,17 +1575,21 @@ class ModernMainWindow(QMainWindow):
     def update_chart(self, timestamp, price):
         """Actualiza el gráfico profesional sin congelar la GUI"""
         try:
-            # Limitar actualizaciones (cada 3 segundos para tiempo real)
+            # Verificar si hay operación activa
+            has_active_trade = hasattr(self.trader, 'active_trades') and len(self.trader.active_trades) > 0
+            
+            # Limitar actualizaciones basado en si hay operación activa
             current_time = time.time()
             if not hasattr(self, 'last_chart_update'):
                 self.last_chart_update = 0
             
-            if current_time - self.last_chart_update < 3:
-                return  # Saltar actualización
+            # Durante operación activa: cada 10 segundos, fuera: cada 3 segundos
+            min_interval = 10 if has_active_trade else 3
+            
+            if current_time - self.last_chart_update < min_interval:
+                return
             
             self.last_chart_update = current_time
-            
-            print(f"[DEBUG] Actualizando gráfico en tiempo real... (timestamp: {timestamp})")
             
             # Verificaciones rápidas
             if not hasattr(self, 'trader') or not hasattr(self.trader, 'market_data'):
@@ -1552,22 +1602,17 @@ class ModernMainWindow(QMainWindow):
             from threading import Thread
             def update_async():
                 try:
-                    # Obtener activo actual
                     current_asset = getattr(self.trader, 'current_asset', 'EURUSD-OTC')
-                    
-                    # Obtener velas con indicadores (100 velas para análisis completo)
                     df = self.trader.market_data.get_candles(current_asset, 60, 100)
                     
                     if df is None or df.empty or len(df) < 10:
                         return
                     
-                    # Calcular indicadores si no están
                     if 'rsi' not in df.columns:
                         from strategies.technical import FeatureEngineer
                         feature_engineer = FeatureEngineer()
                         df = feature_engineer.prepare_for_rl(df)
                     
-                    # Actualizar GUI de forma segura
                     QMetaObject.invokeMethod(self, "update_chart_data",
                                             Qt.QueuedConnection,
                                             Q_ARG(str, current_asset),
@@ -1582,19 +1627,33 @@ class ModernMainWindow(QMainWindow):
     
     @Slot(str, object)
     def update_chart_data(self, asset, df):
-        """Actualiza el gráfico de forma segura ant-crash"""
+        """Actualiza el gráfico de forma segura anti-crash y anti-freeze"""
         try:
-            # print(f"[DEBUG] update_chart_data llamado...") # Comentado para evitar flood
-            
             if df is None or df.empty:
                 return
+            
+            # Detectar si hay operación activa - si sí, reducir actualizaciones
+            has_active_trade = hasattr(self.trader, 'active_trades') and len(self.trader.active_trades) > 0
+            
+            # Limitar aún más si hay operación activa (cada 10s en vez de 3s)
+            if has_active_trade:
+                current_time = time.time()
+                if not hasattr(self, 'last_chart_update_during_trade'):
+                    self.last_chart_update_during_trade = 0
+                
+                if current_time - self.last_chart_update_during_trade < 10:
+                    return  # Saltar actualización durante operación
+                
+                self.last_chart_update_during_trade = current_time
+            
+            # Preparar datos
+            num_candles = min(len(df), 60)
+            df_display = df.tail(num_candles).reset_index(drop=True)
             
             # 🎯 Actualizar título (Ligero)
             try:
                 last_price = float(df.iloc[-1]['close'])
-                rsi_value = float(df.iloc[-1].get('rsi', 0)) if 'rsi' in df.columns else 0
                 
-                # Calcular cambio
                 change_pct = 0
                 change_color = "white"
                 change_symbol = ""
@@ -1612,80 +1671,120 @@ class ModernMainWindow(QMainWindow):
                 
                 self.chart.setTitle(title)
             except:
-                pass # Fallo actualizando título no es crítico
+                pass
 
-            # 🛠️ DIBUJADO DE VELAS (CRÍTICO) 🛠️
-            # Evitar recrear todo si no es necesario (Optimización simple pendiente)
-            # Por ahora, proteger contra crash de Qt
+            # 🛠️ DIBUJADO OPTIMIZADO 🛠️
+            # Limpiar y dibujar todo en una sola operación
+            if not hasattr(self, 'candle_items'):
+                self.candle_items = []
+                self.indicator_lines = []
             
-            # Limpiar
-            if not hasattr(self, 'candle_items'): self.candle_items = []
+            # Limpiar items antiguos
+            try:
+                for item in self.candle_items + self.indicator_lines:
+                    try:
+                        self.chart.removeItem(item)
+                    except:
+                        pass
+                self.candle_items = []
+                self.indicator_lines = []
+            except:
+                pass
             
-            # Borrar items viejos (Solo si hay demasiados para evitar memory leak explícito)
-            # pyqtgraph suele manejar esto mejor con clear()
-            self.chart.clear() # ¡MUCHO MÁS SEGURO Y RÁPIDO QUE BORRAR UNO POR UNO!
-            
-            # Re-agregar grid
+            # Limpiar el chart principal
+            self.chart.clear()
             self.chart.showGrid(x=True, y=True, alpha=0.15)
             
-            # Dibujar velas
-            num_candles = min(len(df), 60) # Mostrar 60 velas max
-            df_display = df.tail(num_candles).reset_index(drop=True)
-            
-            # Usar una lista temporal para no tener referencias colgadas
-            new_items = []
+            # Preparar arrays para dibujar todo de una vez (MUCHO más rápido)
+            bull_bodies = []
+            bull_wicks = []
+            bear_bodies = []
+            bear_wicks = []
             
             for i, row in df_display.iterrows():
-                # Dibujar vela individualmente (ineficiente pero funcional si se protege)
-                self.draw_candlestick(i, row['open'], row['high'], row['low'], row['close'])
-            
-            # Plotear indicadores (Simplificado)
-            # EMA 20
-            if 'sma_20' in df_display.columns:
-                self.chart.plot(df_display.index, df_display['sma_20'], pen=pg.mkPen('#00d4aa', width=1))
+                idx = df_display.index.get_loc(i)
+                open_p = row['open']
+                high = row['high']
+                low = row['low']
+                close = row['close']
+                is_bullish = close >= open_p
                 
-        except Exception as e:
-            # Crash grafico capturado - NO matar app
-            print(f"[GUI ERROR] Error pintando gráfico: {str(e)}")
-            pass
+                if is_bullish:
+                    bull_bodies.append((idx, open_p, close))
+                    bull_wicks.append((idx, low, high))
+                else:
+                    bear_bodies.append((idx, open_p, close))
+                    bear_wicks.append((idx, low, high))
             
-            # 📈 Dibujar EMAs (20 y 50) en gráfico principal
+            # Dibujar mechas alcistas
+            if bull_wicks:
+                x_vals = [w[0] for w in bull_wicks]
+                y_low = [w[1] for w in bull_wicks]
+                y_high = [w[2] for w in bull_wicks]
+                for i in range(len(x_vals)):
+                    wick = pg.PlotDataItem([x_vals[i], x_vals[i]], [y_low[i], y_high[i]], pen=pg.mkPen(color='#00ff88', width=2))
+                    self.chart.addItem(wick)
+                    self.candle_items.append(wick)
+            
+            # Dibujar cuerpos alcistas
+            if bull_bodies:
+                for idx, open_p, close in bull_bodies:
+                    body_height = max(close - open_p, 0.00001)
+                    body = pg.BarGraphItem(x=[idx], height=[body_height], width=0.7, brushes=['#00ff88'])[0]
+                    body.setPos(idx, min(open_p, close))
+                    self.chart.addItem(body)
+                    self.candle_items.append(body)
+            
+            # Dibujar mechas bajistas
+            if bear_wicks:
+                for idx, low, high in bear_wicks:
+                    wick = pg.PlotDataItem([idx, idx], [low, high], pen=pg.mkPen(color='#ff4444', width=2))
+                    self.chart.addItem(wick)
+                    self.candle_items.append(wick)
+            
+            # Dibujar cuerpos bajistas
+            if bear_bodies:
+                for idx, open_p, close in bear_bodies:
+                    body_height = max(open_p - close, 0.00001)
+                    body = pg.BarGraphItem(x=[idx], height=[body_height], width=0.7, brushes=['#ff4444'])[0]
+                    body.setPos(idx, min(open_p, close))
+                    self.chart.addItem(body)
+                    self.candle_items.append(body)
+            
+            # 📈 EMAs (20 y 50)
             if 'sma_20' in df_display.columns:
                 ema20_line = self.chart.plot(
                     list(range(len(df_display))),
                     df_display['sma_20'].values,
-                    pen=pg.mkPen(color='#FFA500', width=2.5),  # Naranja brillante
+                    pen=pg.mkPen(color='#FFA500', width=2.5),
                     name='EMA 20'
                 )
+                self.chart.addItem(ema20_line)
                 self.indicator_lines.append(ema20_line)
             
             if 'sma_50' in df_display.columns:
                 ema50_line = self.chart.plot(
                     list(range(len(df_display))),
                     df_display['sma_50'].values,
-                    pen=pg.mkPen(color='#FF1493', width=2.5),  # Rosa brillante
+                    pen=pg.mkPen(color='#FF1493', width=2.5),
                     name='EMA 50'
                 )
+                self.chart.addItem(ema50_line)
                 self.indicator_lines.append(ema50_line)
             
-            # 📊 Dibujar RSI en subgráfico
+            # 📊 RSI en subgráfico
             if 'rsi' in df_display.columns:
                 self.indicator_chart.clear()
-                
-                # Re-agregar líneas de referencia
                 self.indicator_chart.addLine(y=70, pen=pg.mkPen('#ff4444', width=1, style=Qt.DashLine))
                 self.indicator_chart.addLine(y=50, pen=pg.mkPen('#888888', width=1, style=Qt.DotLine))
                 self.indicator_chart.addLine(y=30, pen=pg.mkPen('#00ff88', width=1, style=Qt.DashLine))
                 
-                # Dibujar línea RSI
                 rsi_line = self.indicator_chart.plot(
                     list(range(len(df_display))),
                     df_display['rsi'].values,
-                    pen=pg.mkPen(color='#ffaa00', width=2),  # Amarillo/naranja
+                    pen=pg.mkPen(color='#ffaa00', width=2),
                     name='RSI'
                 )
-                
-                # Sincronizar eje X con gráfico principal
                 self.indicator_chart.setXRange(-1, num_candles, padding=0)
             
             # Auto-ajustar rango
@@ -1696,18 +1795,11 @@ class ModernMainWindow(QMainWindow):
                     padding = (max_price - min_price) * 0.15
                     self.chart.setYRange(min_price - padding, max_price + padding, padding=0)
                     self.chart.setXRange(-1, num_candles, padding=0)
-            except Exception as e:
-                print(f"[WARNING] Error ajustando rango: {e}")
+            except:
+                pass
             
-            # Procesar eventos
-            QApplication.processEvents()
-            
-            print(f"[DEBUG] Dibujadas {len(self.candle_items)//2} velas + indicadores")
-        
         except Exception as e:
             print(f"[ERROR] Error actualizando gráfico: {e}")
-            import traceback
-            traceback.print_exc()
     
     def draw_candlestick(self, x, open_price, high, low, close):
         """Dibuja una vela japonesa individual (estilo Exnova)"""

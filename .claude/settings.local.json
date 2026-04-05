@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(chcp 65001)",
+      "Bash(pip install:*)",
+      "Bash(cat /c/Users/ADMIN/AppData/Local/Temp/claude/C--Users-ADMIN-Downloads-bot-reversiones-iq-new/*/tasks/b6tbid8o8.output)",
+      "Bash(cat /c/Users/ADMIN/AppData/Local/Temp/claude/C--Users-ADMIN-Downloads-bot-reversiones-iq-new/*/tasks/bc05vgcgo.output)"
+    ]
+  }
+}

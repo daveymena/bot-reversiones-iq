@@ -1,0 +1,128 @@
+[
+  {
+    "timestamp": "2026-03-28T16:50:37.099806",
+    "asset": "AUDUSD-OTC",
+    "direction": "put",
+    "rsi": 67.82178217821799,
+    "pattern": "PUT (RSI alto + precio BAJA)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      0.692335,
+      0.692545,
+      0.692545,
+      0.692665,
+      0.692875,
+      0.692615,
+      0.692985,
+      0.693145,
+      0.693035,
+      0.692975
+    ]
+  },
+  {
+    "timestamp": "2026-03-28T16:51:03.201523",
+    "asset": "EURUSD-OTC",
+    "direction": "call",
+    "rsi": 33.16326530612132,
+    "pattern": "CALL (RSI bajo + precio SUBE)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      1.161805,
+      1.162275,
+      1.162465,
+      1.162785,
+      1.161655,
+      1.161655,
+      1.161475,
+      1.161725,
+      1.161685,
+      1.161755
+    ]
+  },
+  {
+    "timestamp": "2026-03-28T16:51:30.145519",
+    "asset": "AUDUSD-OTC",
+    "direction": "put",
+    "rsi": 69.89795918367167,
+    "pattern": "PUT (RSI alto + precio BAJA)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      0.692545,
+      0.692545,
+      0.692665,
+      0.692875,
+      0.692615,
+      0.692985,
+      0.693145,
+      0.693035,
+      0.692985,
+      0.692975
+    ]
+  },
+  {
+    "timestamp": "2026-03-28T16:52:14.128529",
+    "asset": "AUDUSD-OTC",
+    "direction": "put",
+    "rsi": 70.7070707070685,
+    "pattern": "PUT (RSI alto + precio BAJA)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      0.692545,
+      0.692665,
+      0.692875,
+      0.692615,
+      0.692985,
+      0.693145,
+      0.693035,
+      0.692985,
+      0.693015,
+      0.692925
+    ]
+  },
+  {
+    "timestamp": "2026-03-28T16:52:41.065185",
+    "asset": "AUDUSD-OTC",
+    "direction": "put",
+    "rsi": 66.98564593301107,
+    "pattern": "PUT (RSI alto + precio BAJA)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      0.692545,
+      0.692665,
+      0.692875,
+      0.692615,
+      0.692985,
+      0.693145,
+      0.693035,
+      0.692985,
+      0.693015,
+      0.692815
+    ]
+  },
+  {
+    "timestamp": "2026-03-28T16:53:08.416721",
+    "asset": "USDCAD-OTC",
+    "direction": "call",
+    "rsi": 31.313993174060784,
+    "pattern": "CALL (RSI bajo + precio SUBE)",
+    "result": null,
+    "profit": null,
+    "close_prices": [
+      1.408175,
+      1.409845,
+      1.409885,
+      1.409045,
+      1.408155,
+      1.405585,
+      1.404915,
+      1.404155,
+      1.404705,
+      1.404985
+    ]
+  }
+]

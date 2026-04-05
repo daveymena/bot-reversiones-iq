@@ -37,10 +37,10 @@ class MarketDataHandler:
                     # Cambiar a cuenta PRACTICE o REAL
                     self.api.change_balance(self.account_type)
                     time.sleep(1)  # Esperar a que se aplique el cambio
-                    print(f"✅ Conectado a IQ OPTION ({self.account_type})")
+                    print(f" Conectado a IQ OPTION ({self.account_type})")
                     self.connected = True
                 else:
-                    print(f"❌ Error de conexión IQ: {reason}")
+                    print(f" Error de conexión IQ: {reason}")
                     self.connected = False
             
             elif self.broker_name == "exnova":
@@ -55,10 +55,8 @@ class MarketDataHandler:
                 if check:
                     # Verificar websocket
                     if self.api.check_connect():
-                        # Cambiar a cuenta PRACTICE o REAL
-                        self.api.change_balance(self.account_type)
-                        time.sleep(1)  # Esperar a que se aplique el cambio
-                        print(f"✅ Conectado a EXNOVA ({self.account_type})")
+                        print(f" Conectado a EXNOVA ({self.account_type})")
+                        # NO llamar change_balance - causa bug con balance
                         # Actualizar códigos de activos
                         try:
                             self.api.update_ACTIVES_OPCODE()
@@ -66,10 +64,10 @@ class MarketDataHandler:
                             pass
                         self.connected = True
                     else:
-                        print("❌ WebSocket no conectado")
+                        print(" WebSocket no conectado")
                         self.connected = False
                 else:
-                    print(f"❌ Error de conexión Exnova: {reason}")
+                    print(f" Error de conexión Exnova: {reason}")
                     self.connected = False
             
             else:
@@ -77,7 +75,7 @@ class MarketDataHandler:
                 return False
 
         except Exception as e:
-            print(f"❌ Excepción durante conexión: {e}")
+            print(f" Excepción durante conexión: {e}")
             import traceback
             traceback.print_exc()
             self.connected = False
@@ -100,7 +98,7 @@ class MarketDataHandler:
                     candles = self.api.get_candles(asset, timeframe, num_candles, end_time)
                 except TypeError:
                     # Fallback a 3 argumentos si falla
-                    print(f"⚠️ Exnova get_candles falló con 4 args, intentando con 3...")
+                    print(f" Exnova get_candles falló con 4 args, intentando con 3...")
                     candles = self.api.get_candles(asset, timeframe, num_candles)
             else:
                 candles = self.api.get_candles(asset, timeframe, num_candles, end_time)
@@ -114,9 +112,9 @@ class MarketDataHandler:
         # Error handling for cases where the API returns a dict with an error message
         if isinstance(candles, dict):
             if 'message' in candles:
-                print(f"⚠️ API Error en get_candles ({asset}): {candles['message']}")
+                print(f" API Error en get_candles ({asset}): {candles['message']}")
             else:
-                print(f"⚠️ API devolvió formato inesperado en get_candles ({asset}): {candles}")
+                print(f" API devolvió formato inesperado en get_candles ({asset}): {candles}")
             return pd.DataFrame()
             
         df = pd.DataFrame(candles)
@@ -276,7 +274,7 @@ class MarketDataHandler:
         """
         Intenta reconectar al broker
         """
-        print(f"🔄 Intentando reconectar a {self.broker_name.upper()}...")
+        print(f" Intentando reconectar a {self.broker_name.upper()}...")
         
         # Marcar como desconectado
         self.connected = False
@@ -301,7 +299,7 @@ class MarketDataHandler:
             return True, result
             
         # Si falló, analizar si vale la pena reintentar con OTC/Normal
-        print(f"⚠️ Falló intento principal en {asset}: {result}")
+        print(f" Falló intento principal en {asset}: {result}")
         
         # Generar nombre alternativo
         if asset.endswith("-OTC"):
@@ -309,13 +307,13 @@ class MarketDataHandler:
         else:
             alt_asset = asset + "-OTC" # Pruebo OTC
             
-        print(f"🔄 Intentando FALLBACK automático con: {alt_asset} ...")
+        print(f" Intentando FALLBACK automático con: {alt_asset} ...")
         
         # 2. Intento Secundario (Fallback)
         success_alt, result_alt = self._execute_buy_logic(alt_asset, amount, action, duration)
         
         if success_alt:
-            print(f"✅ ÉXITO en Fallback: {alt_asset}")
+            print(f" ÉXITO en Fallback: {alt_asset}")
             return True, result_alt
         else:
             return False, f"Falló en {asset} ({result}) y en {alt_asset} ({result_alt})"
@@ -331,18 +329,18 @@ class MarketDataHandler:
                     payout = self.api.get_digital_to_payout(asset, duration)
                     
                     if payout and payout > 0:
-                        print(f"📦 Digital disponible en {asset} (Payout: {payout}%)")
+                        print(f" Digital disponible en {asset} (Payout: {payout}%)")
                         check, order_id = self.api.buy_digital_spot(asset, amount, action, duration)
                         if check:
                             return True, order_id
                     else:
-                        print(f"⚠️ Digital no disponible/payout 0 en {asset}")
+                        print(f" Digital no disponible/payout 0 en {asset}")
                 except Exception as e:
-                    print(f"⚠️ Error check Digital: {e}")
+                    print(f" Error check Digital: {e}")
 
             # B) Intentar Binaria/Turbo (Fallback estándar)
             # Turbo es 1-5 min, Binaria es >15. La API usually maneja esto con 'buy'
-            print(f"📦 Intentando Binaria/Turbo en {asset}...")
+            print(f" Intentando Binaria/Turbo en {asset}...")
             check, order_id = self.api.buy(amount, asset, action, duration)
             
             if check:
@@ -364,4 +362,4 @@ class MarketDataHandler:
         
         self.connected = False
         self.api = None
-        print(f"🔌 Desconectado de {self.broker_name.upper()}")
+        print(f" Desconectado de {self.broker_name.upper()}")

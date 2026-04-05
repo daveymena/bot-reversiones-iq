@@ -1,269 +1,256 @@
-# 🤖 Trading Bot Pro - Exnova Edition
+# 🤖 Trading Bot Pro - IA + Reinforcement Learning
 
-Bot de trading automático con IA para opciones binarias en **Exnova**.
+Bot de trading automático para opciones binarias que combina **Reinforcement Learning (PPO)**, **análisis técnico avanzado** y **consultas a LLMs** para tomar decisiones de trading informadas.
 
 ## ✨ Características Principales
 
-- 🤖 **Reinforcement Learning (PPO)** - Agente que aprende de operaciones reales
-- 🧠 **Análisis LLM (Groq)** - Validación inteligente con IA generativa
-- 📊 **Análisis Técnico Avanzado** - RSI, MACD, Bollinger Bands, Smart Money Concepts
-- 🎯 **Filtros Inteligentes** - Volatilidad, impulso, timing óptimo de entrada
-- 📈 **Gráficos en Tiempo Real** - Visualización profesional con pyqtgraph
-- 🔄 **Aprendizaje Continuo** - Se adapta automáticamente a las condiciones del mercado
-- 🛡️ **Gestión de Riesgo** - Stop Loss, Take Profit, Martingala Inteligente
-- 🌍 **Multi-Activos** - Monitorea 9 pares OTC simultáneamente
+- **🧠 Reinforcement Learning**: Agente PPO entrenado que aprende patrones del mercado
+- **📊 Análisis Técnico Avanzado**: Multi-timeframe (M1/M15/M30), Fibonacci, Smart Money, Price Action
+- **🤖 Integración LLM**: Validación de decisiones con Groq/Ollama
+- **📈 Aprendizaje Continuo**: Se adapta automáticamente guardando experiencias
+- **🛡️ Gestión de Riesgo**: Stop Loss, Take Profit, límites de martingala
+- **🔄 Martingala Inteligente**: Análisis de pérdidas antes de duplicar apuesta
+- **🌍 Multi-Broker**: Exnova (recomendado) e IQ Option
+- **🐳 Docker Ready**: Deployment en EasyPanel o cualquier servidor
 
 ## 🚀 Inicio Rápido
 
-**Ejecutar el bot:**
-```bash
-start.bat
-```
-
-### ⚙️ Configuración Actual
-
-| Parámetro | Valor |
-|-----------|-------|
-| 💰 Monto por operación | $1 |
-| 🚫 Martingala | DESHABILITADA |
-| ⏰ Horario | 7:00 AM - 11:00 AM |
-| 🧠 Aprendizaje | ACTIVO |
-| 🏦 Broker | Exnova (REAL) |
-
 ### Requisitos
-
 - Python 3.10+
-- Cuenta en Exnova
-- API Key de Groq (opcional, para análisis LLM)
+- pip o conda
+- Cuenta en Exnova (PRACTICE o REAL)
 
-### Instalación
+### Instalación Local
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/daveymena/bot-reversiones-iq.git
-cd bot-reversiones-iq
+git clone <repo-url>
+cd trading-bot
+
+# Crear entorno virtual
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Configurar credenciales en .env
+# Configurar credenciales
+cp .env.example .env
 # Editar .env con tus credenciales de Exnova
-
-# Instalar dependencias
-pip install -r requirements.txt
 ```
 
-### Configuración
+### Ejecutar el Bot
 
-Crea un archivo `.env` basado en `.env.example`:
-
+**Modo GUI (Local)**
 ```bash
-# Credenciales Exnova
-EXNOVA_EMAIL=tu@email.com
-EXNOVA_PASSWORD=tupassword
-
-# Configuración
-ACCOUNT_TYPE=PRACTICE
-
-# LLM (opcional)
-GROQ_API_KEY=tu_groq_api_key
-USE_LLM=True
-```
-
-### Ejecutar
-
-```bash
-# Modo recomendado (consola estable)
-start.bat
-
-# O alternativas:
-EJECUTAR_BOT_CONSOLA.bat
-python main_console.py
-
-# Interfaz gráfica (puede ser inestable)
 python main_modern.py
 ```
 
-## 📖 Cómo Usar
-
-1. **Conectar** - Haz clic en "CONECTAR" para conectarte a Exnova
-2. **Iniciar** - Haz clic en "INICIAR BOT"
-3. **Monitorear** - El bot escaneará oportunidades automáticamente
-4. **Operar** - Ejecutará operaciones cuando las condiciones sean óptimas
-
-## 🎯 Activos Soportados (OTC 24/7)
-
-- EURUSD-OTC
-- GBPUSD-OTC
-- USDJPY-OTC
-- AUDUSD-OTC
-- USDCAD-OTC
-- EURJPY-OTC
-- EURGBP-OTC
-- GBPJPY-OTC
-- AUDJPY-OTC
-
-## 🛡️ Seguridad y Mejores Prácticas
-
-- ✅ **Usa PRACTICE primero** - Valida el bot antes de usar dinero real
-- ✅ **Filtros de seguridad** - Volatilidad, impulso, timing óptimo
-- ✅ **Validación multi-capa** - RL + Indicadores + LLM
-- ✅ **Stop Loss automático** - Protección de capital
-- ✅ **Límites de pérdidas** - Pausa automática después de pérdidas consecutivas
-
-## 📊 Arquitectura
-
-```
-main_modern.py (Interfaz Gráfica)
-    ↓
-core/trader.py (Motor de Trading)
-    ↓
-├── core/agent.py (RL Agent - PPO)
-├── core/decision_validator.py (Validación Multi-Capa)
-├── core/risk.py (Gestión de Riesgo)
-├── strategies/technical.py (Análisis Técnico)
-├── ai/llm_client.py (Groq LLM)
-└── exnovaapi/ (API de Exnova)
+**Modo Headless (Servidor)**
+```bash
+python main_headless.py
 ```
 
-## 🔧 Compilar Ejecutable
+### Deployment en Docker
 
 ```bash
-# Requiere Python 3.11+
-.\COMPILAR_CON_PYTHON311.bat
+# Construir imagen
+docker build -t trading-bot .
 
-# Resultado: dist/TradingBotPro.exe
+# Ejecutar contenedor
+docker run -d \
+  --name trading-bot \
+  -e EXNOVA_EMAIL=tu@email.com \
+  -e EXNOVA_PASSWORD=tupassword \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/models:/app/models \
+  -v $(pwd)/logs:/app/logs \
+  trading-bot
 ```
+
+**Con Docker Compose**
+```bash
+# Configurar .env
+cp .env.example .env
+# Editar .env con tus credenciales
+
+# Ejecutar
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f trading-bot
+```
+
+## 📁 Estructura del Proyecto
+
+```
+trading-bot/
+├── core/                    # Lógica de trading
+│   ├── trader.py           # Loop principal
+│   ├── agent.py            # Agente RL (PPO)
+│   ├── risk.py             # Gestión de riesgo
+│   ├── decision_validator.py # Validación multi-capa
+│   ├── trade_analyzer.py   # Análisis post-trade
+│   ├── deep_learning_analyzer.py # Análisis de pérdidas/ganancias
+│   └── ...
+├── strategies/             # Análisis técnico
+│   ├── technical.py        # Indicadores
+│   ├── smart_money_filter.py
+│   ├── fibonacci_analyzer.py
+│   └── ...
+├── data/                   # Datos y experiencias
+│   ├── market_data.py      # Interfaz con brokers
+│   ├── experiences.json    # Experiencias de entrenamiento
+│   └── deep_lessons.json   # Lecciones aprendidas
+├── ai/                     # Integración LLM
+│   └── llm_client.py       # Cliente Groq/Ollama
+├── gui/                    # Interfaz gráfica
+│   ├── modern_main_window.py
+│   ├── chart_widget.py
+│   └── ...
+├── models/                 # Modelos entrenados
+│   └── rl_agent.zip        # Modelo PPO
+├── main_modern.py          # Entrada GUI
+├── main_headless.py        # Entrada Headless
+├── config.py               # Configuración centralizada
+├── requirements.txt        # Dependencias
+├── requirements_cloud.txt  # Dependencias sin GUI
+├── Dockerfile              # Contenedor Docker
+├── docker-compose.yml      # Orquestación Docker
+└── docs/                   # Documentación
+```
+
+## ⚙️ Configuración
+
+### Variables de Entorno (.env)
+
+```bash
+# Broker
+EXNOVA_EMAIL=tu@email.com
+EXNOVA_PASSWORD=tupassword
+BROKER_NAME=exnova
+ACCOUNT_TYPE=PRACTICE  # o REAL
+
+# Trading
+CAPITAL_PER_TRADE=1
+MAX_MARTINGALE=0
+
+# AI/LLM
+USE_LLM=True
+USE_GROQ=False
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:1b
+```
+
+Ver `.env.example` para todas las opciones disponibles.
 
 ## 📚 Documentación
 
-- [Cómo Ejecutar](COMO_EJECUTAR.md) - Guía detallada de ejecución
-- [Cómo Funciona el Aprendizaje](COMO_FUNCIONA_APRENDIZAJE.md) - Sistema de aprendizaje
-- [Análisis Inteligente](ANALISIS_INTELIGENTE_DEL_BOT.md) - Análisis del bot
+- **[DEPLOYMENT_EASYPANEL.md](docs/DEPLOYMENT_EASYPANEL.md)** - Guía de deployment en EasyPanel
+- **[SISTEMA_APRENDIZAJE_PROFUNDO.md](docs/SISTEMA_APRENDIZAJE_PROFUNDO.md)** - Sistema de Deep Learning
+- **[COMO_EJECUTAR.md](docs/COMO_EJECUTAR.md)** - Guía de ejecución
+- **[GUIA_USO_BOT.md](docs/GUIA_USO_BOT.md)** - Guía de uso completa
 
-## 🎓 Sistema de Aprendizaje
+## 🧪 Testing
 
-El bot utiliza tres capas de aprendizaje:
+```bash
+# Test de conexión con Exnova
+python -m pytest tests/test_exnova_connection.py
 
-1. **Reinforcement Learning (PPO)** - Aprende patrones del mercado
-2. **Aprendizaje Continuo** - Se adapta con cada operación
-3. **Aprendizaje Observacional** - Aprende de oportunidades no ejecutadas
+# Test del bot completo
+python -m pytest tests/test_bot_complete.py
 
-## ⚠️ Advertencias Importantes
+# Test de LLM
+python -m pytest tests/test_llm_integration.py
+```
 
-- **Riesgo financiero**: El trading de opciones binarias conlleva riesgo de pérdida
-- **Sin garantías**: El bot no garantiza ganancias
-- **Responsabilidad**: Usa bajo tu propio riesgo
-- **Validación**: Siempre prueba en PRACTICE primero
+## 🔧 Desarrollo
+
+### Estructura de Código
+
+- **Separación de responsabilidades**: GUI, Core, Data, Strategies, AI
+- **Configuración centralizada**: `config.py`
+- **Logging estructurado**: Logs a archivo y consola
+- **Type hints**: Código tipado para mejor mantenibilidad
+
+### Agregar Nueva Estrategia
+
+1. Crear archivo en `strategies/`
+2. Heredar de `BaseStrategy`
+3. Implementar método `analyze()`
+4. Registrar en `decision_validator.py`
+
+## 📊 Monitoreo
+
+### Logs
+
+```bash
+# Ver logs en tiempo real
+tail -f logs/bot_*.log
+
+# Ver logs en Docker
+docker-compose logs -f trading-bot
+```
+
+### Métricas
+
+El bot guarda automáticamente:
+- `data/experiences.json` - Experiencias de trading
+- `data/deep_lessons.json` - Lecciones aprendidas
+- `data/history.csv` - Historial de operaciones
+
+## 🐛 Troubleshooting
+
+### Error: "EXNOVA_EMAIL no configurado"
+```bash
+# Solución: Configurar .env
+cp .env.example .env
+# Editar .env con tus credenciales
+```
+
+### Error: "Conexión rechazada"
+```bash
+# Verificar credenciales
+python -c "from config import Config; print(f'Email: {Config.EXNOVA_EMAIL}')"
+
+# Test de conexión
+python -m pytest tests/test_exnova_connection.py -v
+```
+
+### Bot se detiene en Docker
+```bash
+# Ver logs
+docker-compose logs trading-bot
+
+# Reiniciar
+docker-compose restart trading-bot
+```
 
 ## 🤝 Contribuir
 
-Las contribuciones son bienvenidas:
+Las contribuciones son bienvenidas. Por favor:
 
 1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/mejora`)
-3. Commit tus cambios (`git commit -m 'Añadir mejora'`)
-4. Push a la rama (`git push origin feature/mejora`)
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-## 📝 Licencia
+## ⚠️ Disclaimer
 
-Este proyecto es de código abierto. Úsalo bajo tu propia responsabilidad.
+Este bot es para propósitos educativos. El trading de opciones binarias conlleva riesgo. 
+**Usa siempre PRACTICE primero** antes de operar con dinero real.
 
-## 🙏 Agradecimientos
+## 📄 Licencia
 
-- **Exnova** por su API estable
-- **Groq** por el análisis LLM ultrarrápido
-- **Stable-Baselines3** por el framework de RL
-- **PySide6** por la interfaz gráfica profesional
-
----
-
-**Versión:** 2.0.0 - Exnova Edition  
-**Última actualización:** 2025-11-27  
-**Estado:** ✅ Producción  
-**Broker:** Exnova únicamente
-
----
+Este proyecto está bajo licencia MIT. Ver `LICENSE` para más detalles.
 
 ## 📞 Soporte
 
-Si encuentras problemas o tienes preguntas, abre un issue en GitHub.
+Para reportar bugs o sugerencias, abre un issue en el repositorio.
 
-**⚠️ Nota:** Este bot está optimizado para Exnova. IQ Option ya no es soportado.
+---
 
-
-## 📚 Documentación Completa
-
-### Guías de Usuario
-- **[RESUMEN_EJECUTIVO.md](RESUMEN_EJECUTIVO.md)** - Resumen general del bot
-- **[INSTRUCCIONES_RAPIDAS.txt](INSTRUCCIONES_RAPIDAS.txt)** - Guía rápida de inicio
-- **[RESUMEN_CAMBIOS_FINALES.md](RESUMEN_CAMBIOS_FINALES.md)** - Últimos cambios aplicados
-
-### Configuración
-- **[CONFIGURACION_HORARIO.md](CONFIGURACION_HORARIO.md)** - Horarios de operación
-- **[CHECKLIST_VERIFICACION.md](CHECKLIST_VERIFICACION.md)** - Lista de verificación
-
-### Sistema de Aprendizaje
-- **[SISTEMA_APRENDIZAJE_ACTIVO.md](SISTEMA_APRENDIZAJE_ACTIVO.md)** - Cómo aprende el bot
-
-### Arquitectura Técnica
-- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Estructura del proyecto
-- **[DATABASE_ARCHITECTURE.md](DATABASE_ARCHITECTURE.md)** - Arquitectura de base de datos
-
-## 🔒 Seguridad y Límites
-
-El bot está configurado con múltiples protecciones:
-
-- ✅ **Monto fijo**: $1 por operación (no puede aumentar)
-- ✅ **Sin martingala**: No duplica apuestas después de pérdidas
-- ✅ **Horario limitado**: Solo opera 4 horas al día (7:00-11:00 AM)
-- ✅ **Verificación de volatilidad**: No opera si el mercado está plano
-- ✅ **Detención automática**: Se detiene a las 11:00 AM
-- ✅ **Cooldown**: Espera entre operaciones
-
-## 🧠 Sistema de Aprendizaje
-
-El bot mejora continuamente mientras opera:
-
-1. **Continuous Learner**: Re-entrena cada 20 operaciones
-2. **Parallel Trainer**: Simula operaciones en paralelo
-3. **Observational Learner**: Aprende de oportunidades no tomadas
-4. **Trade Analyzer**: Analiza cada operación para mejorar
-
-**Importante**: El aprendizaje NO afecta el monto ($1), martingala (0) ni horario. Solo mejora la calidad de las decisiones.
-
-## 📈 Evolución Esperada
-
-- **Semana 1**: Win rate ~45-55% (aprendiendo patrones básicos)
-- **Semana 2**: Win rate ~55-65% (reconoce setups ganadores)
-- **Semana 3**: Win rate ~60-70% (filtra señales débiles)
-- **Semana 4+**: Win rate ~65-75% (optimizado para tu broker)
-
-## ⚠️ Advertencias
-
-- Este bot opera con **dinero real** en Exnova
-- Solo usa capital que puedas permitirte perder
-- Los resultados pasados no garantizan resultados futuros
-- El trading de opciones binarias conlleva riesgos
-- Revisa las leyes de tu país sobre trading
-
-## 🆘 Soporte
-
-Si tienes problemas:
-
-1. Revisa **[CHECKLIST_VERIFICACION.md](CHECKLIST_VERIFICACION.md)**
-2. Lee **[RESUMEN_CAMBIOS_FINALES.md](RESUMEN_CAMBIOS_FINALES.md)**
-3. Verifica que `.env` tenga `CAPITAL_PER_TRADE=1` y `MAX_MARTINGALE=0`
-4. Revisa los logs en consola
-
-## 🎯 Próximos Pasos
-
-Después de ejecutar `start.bat`:
-
-1. El bot esperará hasta las 7:00 AM
-2. Verificará volatilidad entre 7:00-7:30 AM
-3. Operará hasta las 11:00 AM
-4. Se detendrá automáticamente mostrando resumen
-
-**¡Listo para operar de forma segura y controlada!** 🚀
+**Última actualización**: Abril 2026
+**Versión**: V5-PRODUCTION
+**Estado**: ✅ Listo para producción

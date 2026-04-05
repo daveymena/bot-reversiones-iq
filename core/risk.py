@@ -9,10 +9,10 @@ class RiskManager:
         self.total_trades = 0
         self.wins = 0
         
-        # Martingala
+        # Martingala DESHABILITADA para mayor estabilidad
         self.martingale_step = 0
-        self.max_martingale_steps = max_martingale_steps
-        self.martingale_multiplier = 2.2 # Para cubrir y ganar algo
+        self.max_martingale_steps = 0  # 0 = Sin martingala
+        self.martingale_multiplier = 2.0
 
     def can_trade(self, current_balance):
         """Verifica si se puede operar según las reglas de riesgo."""

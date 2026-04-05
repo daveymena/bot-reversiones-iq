@@ -1,0 +1,410 @@
+#!/usr/bin/env python3
+"""
+Bot de Trading con IA Orquestador OPTIMIZADO - Versión Consola Profesional
+Análisis Top-Down: M5 (Niveles S/R) + M1 (Gatillo/Momentum)
+"""
+import sys
+import os
+
+# Fix encoding Windows
+if sys.platform == 'win32':
+    import io
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    except:
+        pass
+
+import time
+import signal
+import json
+from datetime import datetime
+import pandas as pd
+
+# Agregar el directorio raíz al path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Importar componentes
+from data.market_data import MarketDataHandler
+from strategies.technical import FeatureEngineer
+from core.agent import RLAgent
+from core.risk import RiskManager
+from core.asset_manager import AssetManager
+from ai.llm_client import LLMClient
+from config import Config
+from core.market_structure_analyzer import MarketStructureAnalyzer
+
+# Variable global para control
+running = True
+
+class TradingControl:
+    """Clase para controlar los resultados y límites del bot - MODO REFINADO"""
+    def __init__(self):
+        self.wins = 0
+        self.losses = 0
+        self.total_pnl = 0.0
+        self.consecutive_losses = 0
+        self.max_consecutive_losses = 2  # Mas estricto
+        self.daily_stop_loss = -10.0  # $ en perdidas
+        self.daily_take_profit = 25.0 # $ en ganancias
+        self.max_trades_per_day = 12  # Reducido para calidad
+        self.trades_count = 0
+        self.start_balance = 0.0
+        self.last_trade_time = 0
+        
+        # PARAMETROS REFINADOS
+        self.min_confidence = 0.80  # 80% minima
+        self.cooldown_seconds = 180  # 3 minutos exactos
+        self.best_hours = [21, 22, 2, 3, 12, 13]
+        
+        # Tracking de analisis
+        self.asset_stats = {}
+        self.last_decision = None
+        self.last_result = None
+        self.operation_history = []
+        self.best_asset = None
+        self.best_direction = None
+        
+    def can_trade(self, current_balance):
+        # Verificar horario optimo
+        current_hour = datetime.now().hour
+        if current_hour not in self.best_hours:
+            if self.trades_count == 0:
+                print(f"⏰ Hora actual ({current_hour}:00) no optima - horarios: {self.best_hours}")
+        
+        if self.trades_count >= self.max_trades_per_day:
+            print(f"🛑 Limite operaciones: {self.max_trades_per_day}")
+            return False
+        if self.total_pnl <= self.daily_stop_loss:
+            print(f"🛑 Stop Loss: ${self.total_pnl:.2f}")
+            return False
+        if self.total_pnl >= self.daily_take_profit:
+            print(f"✅ Take Profit: ${self.total_pnl:.2f}")
+            return False
+        if self.consecutive_losses >= self.max_consecutive_losses:
+            print(f"⚠️ Max perdidas consecutivas: {self.consecutive_losses}")
+            return False
+        
+        # Cooldown estricto de 3 minutos
+        elapsed = time.time() - self.last_trade_time
+        if elapsed < self.cooldown_seconds:
+            print(f"⏳ Esperando {int(self.cooldown_seconds - elapsed)}s para proximo analisis...")
+            return False
+        return True
+
+    def update_result(self, profit):
+        self.trades_count += 1
+        self.total_pnl += profit
+        self.last_trade_time = time.time()
+        
+        # Guardar resultado para analisis
+        self.last_result = {'profit': profit, 'decision': self.last_decision}
+        
+        if profit > 0:
+            self.wins += 1
+            self.consecutive_losses = 0
+            print(f"💰 GANADA (+${profit:.2f})")
+            self._refine_after_win()
+        else:
+            self.losses += 1
+            self.consecutive_losses += 1
+            print(f"📉 PERDIDA (${profit:.2f})")
+            self._refine_after_loss()
+        
+        self._log_operation()
+        self.print_summary()
+    
+    def _refine_after_win(self):
+        if self.last_decision:
+            asset = self.last_decision.get('asset')
+            direction = self.last_decision.get('direction')
+            confidence = self.last_decision.get('confidence', 0)
+            
+            if asset not in self.asset_stats:
+                self.asset_stats[asset] = {'wins': 0, 'losses': 0, 'directions': {}}
+            self.asset_stats[asset]['wins'] += 1
+            
+            if direction not in self.asset_stats[asset]['directions']:
+                self.asset_stats[asset]['directions'][direction] = {'wins': 0, 'losses': 0}
+            self.asset_stats[asset]['directions'][direction]['wins'] += 1
+            
+            print(f"   📈 Ganada - Conf: {confidence*100:.0f}%")
+    
+    def _refine_after_loss(self):
+        if self.last_decision:
+            asset = self.last_decision.get('asset')
+            direction = self.last_decision.get('direction')
+            
+            if asset not in self.asset_stats:
+                self.asset_stats[asset] = {'wins': 0, 'losses': 0, 'directions': {}}
+            self.asset_stats[asset]['losses'] += 1
+            
+            if direction not in self.asset_stats[asset]['directions']:
+                self.asset_stats[asset]['directions'][direction] = {'wins': 0, 'losses': 0}
+            self.asset_stats[asset]['directions'][direction]['losses'] += 1
+            
+            print(f"   📉 Perdida registrada")
+            self._adjust_after_loss(asset)
+    
+    def _adjust_after_loss(self, asset):
+        if asset in self.asset_stats:
+            stats = self.asset_stats[asset]
+            total = stats['wins'] + stats['losses']
+            if total > 3:
+                win_rate = stats['wins'] / total
+                if win_rate < 0.4:
+                    print(f"   ⚠️ Bajo rendimiento: {asset} ({win_rate*100:.0f}% winrate)")
+    
+    def _log_operation(self):
+        if self.last_result and self.last_decision:
+            self.operation_history.append({
+                'asset': self.last_decision.get('asset'),
+                'direction': self.last_decision.get('direction'),
+                'profit': self.last_result.get('profit'),
+                'confidence': self.last_decision.get('confidence'),
+                'timestamp': datetime.now().strftime('%H:%M:%S')
+            })
+            self._analyze_patterns()
+    
+    def _analyze_patterns(self):
+        if len(self.operation_history) < 3:
+            return
+        
+        # Analizar mejor asset
+        asset_perf = {}
+        for op in self.operation_history:
+            asset = op['asset']
+            if asset not in asset_perf:
+                asset_perf[asset] = {'wins': 0, 'total': 0}
+            asset_perf[asset]['total'] += 1
+            if op['profit'] > 0:
+                asset_perf[asset]['wins'] += 1
+        
+        for asset, stats in asset_perf.items():
+            if stats['total'] >= 2:
+                rate = stats['wins'] / stats['total']
+                if rate >= 0.6:
+                    self.best_asset = asset
+                    print(f"   🎯 Mejor activo: {asset} ({rate*100:.0f}%)")
+
+    def print_summary(self):
+        print("\n" + "="*50)
+        print(f"📊 RESUMEN - W/L: {self.wins}/{self.losses} | PnL: ${self.total_pnl:.2f}")
+        print(f"   Trades: {self.trades_count}/{self.max_trades_per_day} | Conf minima: {self.min_confidence*100:.0f}%")
+        if self.best_asset:
+            print(f"   🎯 Mejor activo: {self.best_asset}")
+        print("="*50 + "\n")
+
+# Instancias globales
+control = TradingControl()
+structure_analyzer = MarketStructureAnalyzer()
+
+def signal_handler(sig, frame):
+    global running
+    print("\n🛑 Deteniendo bot...")
+    running = False
+    sys.exit(0)
+
+def get_detailed_context(asset, analysis):
+    """Genera contexto rico basado en el análisis Top-Down"""
+    try:
+        sig = analysis.get('entry_signal', {})
+        if not sig:
+            return f"Asset: {asset} | Sin seal"
+        
+        ctx = sig.get('market_context', {})
+        if not ctx:
+            return f"Asset: {asset} | Sin contexto de mercado"
+        
+        lvls = ctx.get('levels', {'resistances': [], 'supports': []})
+        
+        # Formatear niveles para la IA
+        res = ", ".join([f"{r:.5f}" for r in lvls.get('resistances', [])])
+        sup = ", ".join([f"{s:.5f}" for s in lvls.get('supports', [])])
+        
+        context = (
+            f"Activo: {asset}\n"
+            f"Tendencia: {ctx.get('trend', 'neutral').upper()}\n"
+            f"Zona: {'CERCA RESISTENCIA' if ctx.get('near_res') else 'CERCA SOPORTE' if ctx.get('near_sup') else 'ZONA LIBRE'}\n"
+            f"Resistencias: [{res}] | Soportes: [{sup}]\n"
+            f"Razones: {', '.join(sig.get('reasons', []))}\n"
+        )
+        return context
+    except Exception as e:
+        return f"Asset: {asset} | Error: {str(e)}"
+
+def analyze_opportunity_with_ai(llm_client, asset, m1_df, m5_df):
+    """Analiza con IA usando lógica Top-Down (M5 para niveles, M1 para señal)"""
+    
+    # 1. Análisis Técnico Profesional (Soporte/Resistencia/Momentum)
+    try:
+        analysis = structure_analyzer.analyze_full_context(m1_df, m5_df)
+        
+        if not analysis:
+            print(f"   [!] Analisis vacio para {asset}")
+            return None
+            
+        technical_signal = analysis.get('entry_signal', {})
+        if not technical_signal:
+            print(f"   [!] Sin seal tecnica para {asset}")
+            return None
+    except Exception as e:
+        print(f"   [!] Error en analisis: {e}")
+        return None
+    
+    context = get_detailed_context(asset, analysis)
+    print(f"\n🔍 Analizando {asset}...")
+    display_context = context.replace('\n', ' | ')
+    print(f"📊 {display_context}")
+    
+    # CAPA 1: IA (Groq/Ollama) con Reglas de Trader Real
+    if llm_client.use_groq and llm_client.groq_client:
+        try:
+            print("   ⚡ Consultando IA con reglas de Soporte/Resistencia...")
+            prompt = f"""
+            Como TRADER PROFESIONAL de Opciones Binarias:
+            {context}
+            
+            REGLAS DE ORO:
+            1. NUNCA compres (CALL) si estamos tocando una RESISTENCIA.
+            2. NUNCA vendas (PUT) si estamos tocando un SOPORTE.
+            3. Entra en REVERSIÓN si el precio rechaza un nivel con fuerza.
+            
+            signal_dir = technical_signal.get('direction', 'HOLD')
+            signal_conf = technical_signal.get('confidence', 0)
+            
+            prompt = f"""
+            Como TRADER PROFESIONAL de Opciones Binarias:
+            {context}
+            
+            REGLAS DE ORO:
+            1. NUNCA compres (CALL) si estamos tocando una RESISTENCIA.
+            2. NUNCA vendas (PUT) si estamos tocando un SOPORTE.
+            3. Entra en REVERSIÓN si el precio rechaza un nivel con fuerza.
+            
+            Sugerencia Técnica: {signal_dir} (Confianza: {signal_conf}%)
+            
+            Responde SOLO JSON: {{"direction": "CALL/PUT/HOLD", "confidence": 0-1.0, "reason": "..."}}
+            """
+            
+            response = llm_client._safe_query(prompt)
+            try:
+                start, end = response.find('{'), response.rfind('}') + 1
+                if start >= 0:
+                    decision = json.loads(response[start:end])
+                    # REFINADO: Usar confianza minima del control (80%)
+                    if decision['direction'] != "HOLD" and decision['confidence'] >= control.min_confidence:
+                        print(f"🔥 IA DECIDE: {decision['direction']} ({decision['confidence']*100:.0f}%)")
+                        return {
+                            'asset': asset, 'direction': decision['direction'], 
+                            'confidence': decision['confidence'], 'reason': decision['reason'], 'ai_source': 'AI-Expert'
+                        }
+            except: pass
+        except Exception as e: print(f"⚠️ Error IA: {e}")
+
+    # CAPA 2: FALLBACK TÉCNICO (Solo si es muy seguro)
+    # REFINADO: Usar confianza minima del control
+    min_conf_pct = control.min_confidence * 100
+    if technical_signal.get('should_enter') and technical_signal.get('confidence', 0) >= min_conf_pct:
+        print(f"🎯 SEÑAL TÉCNICA PURA: {technical_signal['direction']} ({technical_signal['confidence']}%)")
+        return {
+            'asset': asset, 'direction': technical_signal['direction'],
+            'confidence': technical_signal['confidence'] / 100,
+            'reason': technical_signal['reasons'][0], 'ai_source': 'Technical'
+        }
+    
+    print(f"   ⏸️ Sin señales claras (min conf: {min_conf_pct}%)")
+    return None
+
+def execute_trade(market_data, decision):
+    """Trade execution 1-3 min"""
+    try:
+        asset, direction = decision['asset'], decision['direction']
+        amount = Config.CAPITAL_PER_TRADE
+        
+        print(f"\n[TRADE] {direction} {asset} ${amount}")
+        print(f"   Reason: {decision['reason']}")
+        
+        # 1-2 min is better for binaries after level rejection
+        duration = 1 if "Rechazo" in decision['reason'] else 2 
+        
+        success, order_id = market_data.buy(asset=asset, amount=amount, action=direction.lower(), duration=duration)
+        
+        if success:
+            print(f"[OPEN] ID: {order_id} Waiting {duration} min...")
+            time.sleep(duration * 60 + 5)
+            
+            profit = 0
+            try:
+                if market_data.broker_name == "exnova":
+                    _, profit = market_data.api.check_win_v4(order_id)
+                else:
+                    profit = market_data.api.check_win_v3(order_id)
+            except: pass
+                
+            control.update_result(profit)
+            return True
+        return False
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
+
+def main():
+    signal.signal(signal.SIGINT, signal_handler)
+    print("=" * 60)
+    print("BOT TRADING REFINADO - 1 OPERA, 3 MIN ESPERA, SIN MARTINGALA")
+    print("=" * 60)
+    
+    try:
+        llm_client = LLMClient()
+        market_data = MarketDataHandler(broker_name=Config.BROKER_NAME, account_type=Config.ACCOUNT_TYPE)
+        
+        if not market_data.connect(Config.EXNOVA_EMAIL, Config.EXNOVA_PASSWORD):
+            print("❌ Error de conexión")
+            return
+            
+        print(f"✅ Conectado. Balance inicial: ${market_data.get_balance():.2f}")
+        feature_engineer = FeatureEngineer()
+        otc_assets = ['EURUSD-OTC', 'GBPUSD-OTC', 'USDJPY-OTC', 'AUDUSD-OTC']
+        
+        while running:
+            if not control.can_trade(market_data.get_balance()):
+                time.sleep(30); continue
+            
+            print(f"\n🔍 Escaneando... ({datetime.now().strftime('%H:%M:%S')})")
+            
+            opportunity_found = False
+            
+            for asset in otc_assets:
+                try:
+                    # FETCH TOP-DOWN
+                    m1_df = market_data.get_candles(asset, 60, 60) # M1 para gatillo
+                    m5_df = market_data.get_candles(asset, 300, 100) # M5 para niveles S/R
+                    
+                    if m1_df.empty or m5_df.empty: continue
+                    
+                    m1_df = feature_engineer.add_technical_indicators(m1_df)
+                    decision = analyze_opportunity_with_ai(llm_client, asset, m1_df, m5_df)
+                    
+                    if decision:
+                        # Guardar decision para analisis post-operacion
+                        control.last_decision = decision
+                        
+                        if execute_trade(market_data, decision):
+                            opportunity_found = True
+                            # IMPORTANTE: 3 minutos de espera despues de operar
+                            print(f"   ⏳ Esperando 3 minutos para proximo analisis...")
+                            time.sleep(control.cooldown_seconds)
+                            break
+                except Exception as e:
+                    print(f"⚠️ Error en {asset}: {e}"); continue
+            
+            # Si no hay oportunidad, esperar 2 minutos antes de reintentar
+            if not opportunity_found:
+                print(f"   ⏸️ Sin oportunidades claras. Reintentando en 2 min...")
+                time.sleep(120)
+    except Exception as e: print(f"❌ Critico: {e}")
+    finally: print("🛑 Bot finalizado.")
+
+if __name__ == "__main__":
+    main()

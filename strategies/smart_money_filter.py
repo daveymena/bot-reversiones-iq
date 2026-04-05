@@ -3,8 +3,9 @@ Filtro de Smart Money Concepts
 Integra análisis de liquidez con las decisiones del bot
 """
 import pandas as pd
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 from .liquidity_zones import LiquidityAnalyzer, analyze_liquidity_for_trade
+from .fvg_analyzer import FVGAnalyzer
 
 class SmartMoneyFilter:
     """
@@ -33,6 +34,7 @@ class SmartMoneyFilter:
             min_zone_strength=min_zone_strength,
             max_test_count=max_test_count
         )
+        self.fvg_analyzer = FVGAnalyzer(min_gap_pct=0.005)
         
         self.last_analysis = None
     
@@ -53,10 +55,20 @@ class SmartMoneyFilter:
         
         # Analizar liquidez
         result = analyze_liquidity_for_trade(df, direction, verbose=verbose)
+        
+        # Analizar FVG (Fair Value Gap)
+        fvg_signal = self.fvg_analyzer.analyze_signal(df, direction)
+        result['fvg_analysis'] = fvg_signal
+        
         self.last_analysis = result
         
         should_trade = result['should_trade']
-        confidence = result['confidence']
+        
+        # Refinar con FVG: Si hay un FVG mitigándose, es una señal muy fuerte
+        if fvg_signal['should_trade']:
+            should_trade = True # Forzar entrada si la estrategia FVG lo dice
+            result['reasons'].append(f"FVG Confirmado: {fvg_signal['reason']}")
+            result['confidence'] = min(100, result['confidence'] + 20)
         
         # Verificaciones adicionales
         if should_trade:
@@ -65,15 +77,15 @@ class SmartMoneyFilter:
             if next_zone:
                 zone_type = next_zone['zone'].type.value
                 
-                # Si vamos a comprar (call) pero estamos cerca de resistencia, rechazar
+                # Si vamos a comprar (call) pero estamos cerca de resistencia, rechazar (a menos que haya FVG fuerte)
                 if direction == 'call' and 'resistance' in zone_type.lower():
-                    if next_zone['distance_pct'] < 0.2:
+                    if next_zone['distance_pct'] < 0.2 and not fvg_signal['should_trade']:
                         should_trade = False
                         result['reasons'].append("Demasiado cerca de resistencia para CALL")
                 
                 # Si vamos a vender (put) pero estamos cerca de soporte, rechazar
                 elif direction == 'put' and 'support' in zone_type.lower():
-                    if next_zone['distance_pct'] < 0.2:
+                    if next_zone['distance_pct'] < 0.2 and not fvg_signal['should_trade']:
                         should_trade = False
                         result['reasons'].append("Demasiado cerca de soporte para PUT")
         

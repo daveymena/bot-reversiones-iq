@@ -1,0 +1,2397 @@
+{
+  "lessons": [
+    {
+      "timestamp": "2026-04-04T12:34:12.579833",
+      "trade": {
+        "asset": "EURJPY-OTC",
+        "direction": "call",
+        "entry_price": 185.390705,
+        "exit_price": 185.281575,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.059% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 185.390705,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.11095162489689869,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.15% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.059% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T12:44:26.481375",
+      "trade": {
+        "asset": "EURJPY-OTC",
+        "direction": "call",
+        "entry_price": 185.292815,
+        "exit_price": 185.409785,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.063% como esperado",
+        "RSI estaba sobrevendido (<40) - se\u00f1al alcista correcta"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -2,
+        "reason": "Esperar 2 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "better_entry_price": 185.216425,
+        "additional_profit": 0.041243642403746596
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 25.255146360841664,
+          "success": "RSI bajo para CALL - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para CALL cuando < 40"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 2 vela(s) antes",
+          "impact": "+0.04% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para CALL cuando < 40",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar CALL cuando RSI < 40",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.063% como esperado",
+        "optimization": "Esperar 2 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T12:54:07.444448",
+      "trade": {
+        "asset": "EURJPY-OTC",
+        "direction": "put",
+        "entry_price": 185.542415,
+        "exit_price": 185.533045,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.005% como esperado",
+        "MACD negativo - momentum bajista confirmado",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -1,
+        "reason": "Esperar 1 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "better_entry_price": 185.565115,
+        "additional_profit": 0.012234399342051346
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": -0.004905537543010041,
+          "success": "MACD negativo para PUT - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para PUT cuando < 0"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 1 vela(s) antes",
+          "impact": "+0.01% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para PUT cuando < 0",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.005% como esperado",
+        "optimization": "Esperar 1 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:14:05.632930",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "entry_price": 1.146885,
+        "exit_price": 1.147295,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio subi\u00f3 0.036% en vez de bajar",
+        "MACD positivo - momentum alcista",
+        "Vendi\u00f3 por encima de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 1.146885,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": 0.001213017907644387,
+          "problem": "MACD positivo para PUT",
+          "recommendation": "Solo PUT si MACD < 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.19% sobre SMA20",
+          "problem": "Vendi\u00f3 contra tendencia",
+          "recommendation": "Solo PUT si precio < SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo PUT si MACD < 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo PUT si precio < SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "main_problem": "Precio subi\u00f3 0.036% en vez de bajar",
+        "solution": "Solo PUT si MACD < 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:24:02.079722",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "entry_price": 1.148295,
+        "exit_price": 1.146725,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.137% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -6,
+        "reason": "Esperar 6 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "better_entry_price": 1.148535,
+        "additional_profit": 0.020900552558359826
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 70.74385382996422,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 6 vela(s) antes",
+          "impact": "+0.02% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.137% como esperado",
+        "optimization": "Esperar 6 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:28:06.570086",
+      "trade": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "entry_price": 0.683075,
+        "exit_price": 0.683365,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.042% como esperado",
+        "RSI estaba sobrevendido (<40) - se\u00f1al alcista correcta"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -2,
+        "reason": "Esperar 2 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "better_entry_price": 0.682795,
+        "additional_profit": 0.04100791599234718
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 23.603634816902996,
+          "success": "RSI bajo para CALL - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para CALL cuando < 40"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 2 vela(s) antes",
+          "impact": "+0.04% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para CALL cuando < 40",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar CALL cuando RSI < 40",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.042% como esperado",
+        "optimization": "Esperar 2 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:32:20.055798",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "entry_price": 211.239765,
+        "exit_price": 211.240745,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 211.239765,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.08944532765082158,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.12% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "main_problem": "Compr\u00f3 por debajo de SMA20 - contra tendencia",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:48:04.289661",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "entry_price": 211.492785,
+        "exit_price": 211.472455,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.011% como esperado",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -3,
+        "reason": "Esperar 3 vela(s) antes hubiera dado +0.03% m\u00e1s ganancia",
+        "better_entry_price": 211.556995,
+        "additional_profit": 0.03036037375932364
+      },
+      "what_worked": [],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 3 vela(s) antes",
+          "impact": "+0.03% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.011% como esperado",
+        "optimization": "Esperar 3 vela(s) antes hubiera dado +0.03% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:52:13.816285",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "entry_price": 0.881385,
+        "exit_price": 0.881485,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.011% como esperado",
+        "Compr\u00f3 a favor de tendencia (precio > SMA20)"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -7,
+        "reason": "Esperar 7 vela(s) antes hubiera dado +0.13% m\u00e1s ganancia",
+        "better_entry_price": 0.880265,
+        "additional_profit": 0.12723441236445956
+      },
+      "what_worked": [
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.01% sobre SMA20",
+          "success": "Compr\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar CALL cuando precio > SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 7 vela(s) antes",
+          "impact": "+0.13% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar CALL cuando precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.011% como esperado",
+        "optimization": "Esperar 7 vela(s) antes hubiera dado +0.13% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T13:56:27.206806",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "entry_price": 158.17465,
+        "exit_price": 158.18885,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.009% como esperado"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -9,
+        "reason": "Esperar 9 vela(s) antes hubiera dado +0.08% m\u00e1s ganancia",
+        "better_entry_price": 158.05345,
+        "additional_profit": 0.07668291960726954
+      },
+      "what_worked": [],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 9 vela(s) antes",
+          "impact": "+0.08% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.009% como esperado",
+        "optimization": "Esperar 9 vela(s) antes hubiera dado +0.08% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:01:01.648063",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "entry_price": 0.881485,
+        "exit_price": 0.882025,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.061% como esperado",
+        "Compr\u00f3 a favor de tendencia (precio > SMA20)"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -9,
+        "reason": "Esperar 9 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "better_entry_price": 0.881055,
+        "additional_profit": 0.04880512567319071
+      },
+      "what_worked": [
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.03% sobre SMA20",
+          "success": "Compr\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar CALL cuando precio > SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 9 vela(s) antes",
+          "impact": "+0.05% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar CALL cuando precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.061% como esperado",
+        "optimization": "Esperar 9 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:11:07.599189",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "entry_price": 1.150395,
+        "exit_price": 1.149835,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.049% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta"
+      ],
+      "could_improve": {
+        "could_improve": false,
+        "wait_time": 0,
+        "reason": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "better_entry_price": 1.150395,
+        "additional_profit": 0
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 76.93262082899457,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_reinforcement",
+          "action": "Timing fue \u00f3ptimo - reforzar este patr\u00f3n",
+          "impact": "Mantener estrategia actual",
+          "priority": "LOW"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.049% como esperado",
+        "optimization": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:15:17.917284",
+      "trade": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "entry_price": 0.681805,
+        "exit_price": 0.681875,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.010% como esperado",
+        "RSI estaba sobrevendido (<40) - se\u00f1al alcista correcta"
+      ],
+      "could_improve": {
+        "could_improve": false,
+        "wait_time": 0,
+        "reason": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "better_entry_price": 0.681805,
+        "additional_profit": 0
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 26.598159420630736,
+          "success": "RSI bajo para CALL - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para CALL cuando < 40"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_reinforcement",
+          "action": "Timing fue \u00f3ptimo - reforzar este patr\u00f3n",
+          "impact": "Mantener estrategia actual",
+          "priority": "LOW"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para CALL cuando < 40",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar CALL cuando RSI < 40",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.010% como esperado",
+        "optimization": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:19:38.457045",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "entry_price": 1.150325,
+        "exit_price": 1.149355,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.087% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -2,
+        "reason": "Esperar 2 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "better_entry_price": 1.150935,
+        "additional_profit": 0.05302849194792771
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 70.94653291123849,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 2 vela(s) antes",
+          "impact": "+0.05% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.087% como esperado",
+        "optimization": "Esperar 2 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:39:31.878602",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "entry_price": 211.601755,
+        "exit_price": 211.644925,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.020% como esperado",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -4,
+        "reason": "Esperar 4 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "better_entry_price": 211.486865,
+        "additional_profit": 0.05432488679616231
+      },
+      "what_worked": [],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 4 vela(s) antes",
+          "impact": "+0.05% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.020% como esperado",
+        "optimization": "Esperar 4 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:49:06.134303",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "call",
+        "entry_price": 1.143075,
+        "exit_price": 1.144805,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.157% como esperado",
+        "RSI estaba sobrevendido (<40) - se\u00f1al alcista correcta"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -2,
+        "reason": "Esperar 2 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "better_entry_price": 1.142925,
+        "additional_profit": 0.013124220749401273
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 28.658825043142016,
+          "success": "RSI bajo para CALL - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para CALL cuando < 40"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 2 vela(s) antes",
+          "impact": "+0.01% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para CALL cuando < 40",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar CALL cuando RSI < 40",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.157% como esperado",
+        "optimization": "Esperar 2 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T14:53:19.000235",
+      "trade": {
+        "asset": "AUDJPY-OTC",
+        "direction": "call",
+        "entry_price": 111.221735,
+        "exit_price": 111.186595,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.032% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 111.221735,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.1320382974668206,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.26% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.032% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:00:27.860293",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "entry_price": 156.81815,
+        "exit_price": 156.73835,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.051% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 156.81815,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.06862901226503482,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.14% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.051% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:06:02.535209",
+      "trade": {
+        "asset": "AUDUSD-OTC",
+        "direction": "put",
+        "entry_price": 0.683975,
+        "exit_price": 0.683765,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.032% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -1,
+        "reason": "Esperar 1 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "better_entry_price": 0.684235,
+        "additional_profit": 0.03801308527359012
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 72.75884300420317,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 1 vela(s) antes",
+          "impact": "+0.04% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDUSD-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.032% como esperado",
+        "optimization": "Esperar 1 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:10:24.069687",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "entry_price": 211.317825,
+        "exit_price": 211.267965,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.024% como esperado",
+        "MACD negativo - momentum bajista confirmado",
+        "Vendi\u00f3 a favor de tendencia (precio < SMA20)",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -3,
+        "reason": "Esperar 3 vela(s) antes hubiera dado +0.08% m\u00e1s ganancia",
+        "better_entry_price": 211.478065,
+        "additional_profit": 0.07582890842265082
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": -0.01287872471991136,
+          "success": "MACD negativo para PUT - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para PUT cuando < 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.01% bajo SMA20",
+          "success": "Vendi\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar PUT cuando precio < SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 3 vela(s) antes",
+          "impact": "+0.08% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para PUT cuando < 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar PUT cuando precio < SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.024% como esperado",
+        "optimization": "Esperar 3 vela(s) antes hubiera dado +0.08% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:14:37.438321",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "entry_price": 0.884685,
+        "exit_price": 0.885745,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.122% como esperado",
+        "MACD positivo - momentum alcista confirmado"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -3,
+        "reason": "Esperar 3 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "better_entry_price": 0.884495,
+        "additional_profit": 0.021481184178545214
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": 0.0002643370881122431,
+          "success": "MACD positivo para CALL - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para CALL cuando > 0"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 3 vela(s) antes",
+          "impact": "+0.02% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para CALL cuando > 0",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.122% como esperado",
+        "optimization": "Esperar 3 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:19:02.220945",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "put",
+        "entry_price": 0.885905,
+        "exit_price": 0.885755,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.017% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta"
+      ],
+      "could_improve": {
+        "could_improve": false,
+        "wait_time": 0,
+        "reason": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "better_entry_price": 0.885905,
+        "additional_profit": 0
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 70.43271954160898,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_reinforcement",
+          "action": "Timing fue \u00f3ptimo - reforzar este patr\u00f3n",
+          "impact": "Mantener estrategia actual",
+          "priority": "LOW"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.017% como esperado",
+        "optimization": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:23:24.411001",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "entry_price": 1.135675,
+        "exit_price": 1.135665,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.002% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta"
+      ],
+      "could_improve": {
+        "could_improve": false,
+        "wait_time": 0,
+        "reason": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "better_entry_price": 1.135675,
+        "additional_profit": 0
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 76.69977404021756,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_reinforcement",
+          "action": "Timing fue \u00f3ptimo - reforzar este patr\u00f3n",
+          "impact": "Mantener estrategia actual",
+          "priority": "LOW"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.002% como esperado",
+        "optimization": "Timing de entrada fue \u00d3PTIMO - no pudo mejorar",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:33:02.481341",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "entry_price": 156.33485,
+        "exit_price": 156.30225,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.015% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 156.33485,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.10628308994029112,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.17% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.015% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:43:26.510219",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "put",
+        "entry_price": 156.61015,
+        "exit_price": 156.55245,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.037% como esperado",
+        "MACD negativo - momentum bajista confirmado"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -1,
+        "reason": "Esperar 1 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "better_entry_price": 156.64255,
+        "additional_profit": 0.020688314263153148
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": -0.03320814635765146,
+          "success": "MACD negativo para PUT - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para PUT cuando < 0"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 1 vela(s) antes",
+          "impact": "+0.02% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para PUT cuando < 0",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.037% como esperado",
+        "optimization": "Esperar 1 vela(s) antes hubiera dado +0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T18:48:02.505272",
+      "trade": {
+        "asset": "AUDJPY-OTC",
+        "direction": "call",
+        "entry_price": 110.776115,
+        "exit_price": 110.701135,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.061% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 110.776115,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.0999218075031365,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.26% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.061% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:14:02.059845",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "entry_price": 211.500785,
+        "exit_price": 211.644145,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.068% como esperado",
+        "MACD positivo - momentum alcista confirmado",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -4,
+        "reason": "Esperar 4 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "better_entry_price": 211.470525,
+        "additional_profit": 0.014309322776778655
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": 0.03722258128931344,
+          "success": "MACD positivo para CALL - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para CALL cuando > 0"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 4 vela(s) antes",
+          "impact": "+0.01% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para CALL cuando > 0",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.068% como esperado",
+        "optimization": "Esperar 4 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:18:17.772418",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "put",
+        "entry_price": 157.31625,
+        "exit_price": 157.21485,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.064% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -1,
+        "reason": "Esperar 1 vela(s) antes hubiera dado +0.06% m\u00e1s ganancia",
+        "better_entry_price": 157.41305,
+        "additional_profit": 0.06153210491605399
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 80.72656273485183,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 1 vela(s) antes",
+          "impact": "+0.06% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.064% como esperado",
+        "optimization": "Esperar 1 vela(s) antes hubiera dado +0.06% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:22:28.731617",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "put",
+        "entry_price": 0.885335,
+        "exit_price": 0.884855,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.054% como esperado",
+        "MACD negativo - momentum bajista confirmado",
+        "Vendi\u00f3 a favor de tendencia (precio < SMA20)"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -9,
+        "reason": "Esperar 9 vela(s) antes hubiera dado +0.10% m\u00e1s ganancia",
+        "better_entry_price": 0.886195,
+        "additional_profit": 0.09713837135095438
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": -2.9544493747368783e-05,
+          "success": "MACD negativo para PUT - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para PUT cuando < 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.07% bajo SMA20",
+          "success": "Vendi\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar PUT cuando precio < SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 9 vela(s) antes",
+          "impact": "+0.10% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para PUT cuando < 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar PUT cuando precio < SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.054% como esperado",
+        "optimization": "Esperar 9 vela(s) antes hubiera dado +0.10% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:26:36.350490",
+      "trade": {
+        "asset": "EURUSD-OTC",
+        "direction": "call",
+        "entry_price": 1.138895,
+        "exit_price": 1.139415,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.046% como esperado",
+        "MACD positivo - momentum alcista confirmado",
+        "Compr\u00f3 a favor de tendencia (precio > SMA20)",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -9,
+        "reason": "Esperar 9 vela(s) antes hubiera dado +0.12% m\u00e1s ganancia",
+        "better_entry_price": 1.137485,
+        "additional_profit": 0.12395767856278643
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": 0.0006399329230759587,
+          "success": "MACD positivo para CALL - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para CALL cuando > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.09% sobre SMA20",
+          "success": "Compr\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar CALL cuando precio > SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 9 vela(s) antes",
+          "impact": "+0.12% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para CALL cuando > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar CALL cuando precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURUSD-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.046% como esperado",
+        "optimization": "Esperar 9 vela(s) antes hubiera dado +0.12% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:50:34.089979",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "entry_price": 212.157695,
+        "exit_price": 212.257525,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.047% como esperado",
+        "MACD positivo - momentum alcista confirmado",
+        "Compr\u00f3 a favor de tendencia (precio > SMA20)"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -8,
+        "reason": "Esperar 8 vela(s) antes hubiera dado +0.13% m\u00e1s ganancia",
+        "better_entry_price": 211.872695,
+        "additional_profit": 0.1345147377296525
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": 0.1290150663756151,
+          "success": "MACD positivo para CALL - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para CALL cuando > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.13% sobre SMA20",
+          "success": "Compr\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar CALL cuando precio > SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 8 vela(s) antes",
+          "impact": "+0.13% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para CALL cuando > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar CALL cuando precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.047% como esperado",
+        "optimization": "Esperar 8 vela(s) antes hubiera dado +0.13% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:54:37.856515",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "entry_price": 212.192925,
+        "exit_price": 212.140205,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.025% como esperado",
+        "RSI estaba sobrecomprado (>60) - se\u00f1al bajista correcta"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -3,
+        "reason": "Esperar 3 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "better_entry_price": 212.305325,
+        "additional_profit": 0.05297066337155589
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 72.70205587954892,
+          "success": "RSI alto para PUT - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para PUT cuando > 60"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 3 vela(s) antes",
+          "impact": "+0.05% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para PUT cuando > 60",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar PUT cuando RSI > 60",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.025% como esperado",
+        "optimization": "Esperar 3 vela(s) antes hubiera dado +0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T19:59:02.060379",
+      "trade": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "entry_price": 0.884475,
+        "exit_price": 0.884595,
+        "amount": 1.0,
+        "profit": 0.8700000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.014% como esperado",
+        "Compr\u00f3 a favor de tendencia (precio > SMA20)",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -8,
+        "reason": "Esperar 8 vela(s) antes hubiera dado +0.12% m\u00e1s ganancia",
+        "better_entry_price": 0.883425,
+        "additional_profit": 0.1188555904575935
+      },
+      "what_worked": [
+        {
+          "variable": "Tendencia",
+          "value": "Precio 0.00% sobre SMA20",
+          "success": "Compr\u00f3 a favor de tendencia",
+          "recommendation": "Priorizar CALL cuando precio > SMA20"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 8 vela(s) antes",
+          "impact": "+0.12% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "Tendencia",
+          "action": "Priorizar CALL cuando precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar operaciones a favor de tendencia",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "EURGBP-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.014% como esperado",
+        "optimization": "Esperar 8 vela(s) antes hubiera dado +0.12% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:09:02.423441",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "entry_price": 212.146735,
+        "exit_price": 211.945075,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio baj\u00f3 0.095% como esperado",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -6,
+        "reason": "Esperar 6 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "better_entry_price": 212.227265,
+        "additional_profit": 0.03795957547967061
+      },
+      "what_worked": [],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 6 vela(s) antes",
+          "impact": "+0.04% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "put",
+        "main_success": "Precio baj\u00f3 0.095% como esperado",
+        "optimization": "Esperar 6 vela(s) antes hubiera dado +0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:18:27.571862",
+      "trade": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "entry_price": 156.00695,
+        "exit_price": 155.96325,
+        "amount": 1.0,
+        "profit": -1.0
+      },
+      "result": "loss",
+      "why_lost": [
+        "Precio baj\u00f3 0.028% en vez de subir",
+        "MACD negativo - momentum bajista",
+        "Compr\u00f3 por debajo de SMA20 - contra tendencia"
+      ],
+      "when_should_enter": {
+        "should_wait": false,
+        "wait_time": 0,
+        "reason": "",
+        "better_entry_price": 156.00695,
+        "improvement": 0,
+        "lesson": "El timing de entrada fue correcto"
+      },
+      "what_failed": [
+        {
+          "variable": "MACD",
+          "value": -0.15038856925835375,
+          "problem": "MACD negativo para CALL",
+          "recommendation": "Solo CALL si MACD > 0"
+        },
+        {
+          "variable": "Tendencia",
+          "value": "Precio -0.17% bajo SMA20",
+          "problem": "Compr\u00f3 contra tendencia",
+          "recommendation": "Solo CALL si precio > SMA20"
+        }
+      ],
+      "how_to_improve": [
+        {
+          "type": "variable_filter",
+          "variable": "MACD",
+          "action": "Solo CALL si MACD > 0",
+          "priority": "HIGH"
+        },
+        {
+          "type": "variable_filter",
+          "variable": "Tendencia",
+          "action": "Solo CALL si precio > SMA20",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition",
+          "action": "Verificar tendencia antes de entrar",
+          "priority": "CRITICAL"
+        }
+      ],
+      "lesson": {
+        "asset": "USDJPY-OTC",
+        "direction": "call",
+        "main_problem": "Precio baj\u00f3 0.028% en vez de subir",
+        "solution": "Solo CALL si MACD > 0",
+        "priority": "HIGH",
+        "applied": false
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:38:09.594101",
+      "trade": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "entry_price": 0.688925,
+        "exit_price": 0.689385,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.073% como esperado",
+        "MACD positivo - momentum alcista confirmado"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -4,
+        "reason": "Esperar 4 vela(s) antes hubiera dado +0.09% m\u00e1s ganancia",
+        "better_entry_price": 0.688315,
+        "additional_profit": 0.08862221511953094
+      },
+      "what_worked": [
+        {
+          "variable": "MACD",
+          "value": 5.00552461933923e-05,
+          "success": "MACD positivo para CALL - momentum correcto",
+          "recommendation": "Aumentar peso de MACD para CALL cuando > 0"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 4 vela(s) antes",
+          "impact": "+0.09% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "MACD",
+          "action": "Aumentar peso de MACD para CALL cuando > 0",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "AUDUSD-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.073% como esperado",
+        "optimization": "Esperar 4 vela(s) antes hubiera dado +0.09% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    },
+    {
+      "timestamp": "2026-04-04T20:47:31.910883",
+      "trade": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "entry_price": 211.590675,
+        "exit_price": 211.630725,
+        "amount": 1.0,
+        "profit": 0.8500000000000001
+      },
+      "result": "win",
+      "why_won": [
+        "Precio subi\u00f3 0.019% como esperado",
+        "RSI estaba sobrevendido (<40) - se\u00f1al alcista correcta",
+        "Volatilidad baja - mercado predecible"
+      ],
+      "could_improve": {
+        "could_improve": true,
+        "wait_time": -2,
+        "reason": "Esperar 2 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "better_entry_price": 211.577535,
+        "additional_profit": 0.006210489218523518
+      },
+      "what_worked": [
+        {
+          "variable": "RSI",
+          "value": 33.336177824734946,
+          "success": "RSI bajo para CALL - se\u00f1al correcta",
+          "recommendation": "Aumentar peso de RSI para CALL cuando < 40"
+        }
+      ],
+      "how_to_maximize": [
+        {
+          "type": "timing_optimization",
+          "action": "Buscar entrada 2 vela(s) antes",
+          "impact": "+0.01% m\u00e1s ganancia",
+          "priority": "MEDIUM"
+        },
+        {
+          "type": "variable_reinforcement",
+          "variable": "RSI",
+          "action": "Aumentar peso de RSI para CALL cuando < 40",
+          "priority": "HIGH"
+        },
+        {
+          "type": "condition_reinforcement",
+          "action": "Priorizar CALL cuando RSI < 40",
+          "priority": "HIGH"
+        }
+      ],
+      "lesson": {
+        "asset": "GBPJPY-OTC",
+        "direction": "call",
+        "main_success": "Precio subi\u00f3 0.019% como esperado",
+        "optimization": "Esperar 2 vela(s) antes hubiera dado +0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM",
+        "applied": false,
+        "type": "success_pattern"
+      }
+    }
+  ],
+  "improvements": {
+    "entry_timing": [
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 2 vela(s) antes",
+        "impact": "+0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 1 vela(s) antes",
+        "impact": "+0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 6 vela(s) antes",
+        "impact": "+0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 2 vela(s) antes",
+        "impact": "+0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 3 vela(s) antes",
+        "impact": "+0.03% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 7 vela(s) antes",
+        "impact": "+0.13% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 9 vela(s) antes",
+        "impact": "+0.08% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 9 vela(s) antes",
+        "impact": "+0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 2 vela(s) antes",
+        "impact": "+0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 4 vela(s) antes",
+        "impact": "+0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 2 vela(s) antes",
+        "impact": "+0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 1 vela(s) antes",
+        "impact": "+0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 3 vela(s) antes",
+        "impact": "+0.08% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 3 vela(s) antes",
+        "impact": "+0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 1 vela(s) antes",
+        "impact": "+0.02% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 4 vela(s) antes",
+        "impact": "+0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 1 vela(s) antes",
+        "impact": "+0.06% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 9 vela(s) antes",
+        "impact": "+0.10% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 9 vela(s) antes",
+        "impact": "+0.12% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 8 vela(s) antes",
+        "impact": "+0.13% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 3 vela(s) antes",
+        "impact": "+0.05% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 8 vela(s) antes",
+        "impact": "+0.12% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 6 vela(s) antes",
+        "impact": "+0.04% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 4 vela(s) antes",
+        "impact": "+0.09% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      },
+      {
+        "type": "timing_optimization",
+        "action": "Buscar entrada 2 vela(s) antes",
+        "impact": "+0.01% m\u00e1s ganancia",
+        "priority": "MEDIUM"
+      }
+    ],
+    "exit_timing": [],
+    "indicator_weights": {
+      "MACD": 1.0150191638707131,
+      "Tendencia": 0.838858813116292,
+      "RSI": 1.5
+    },
+    "failed_patterns": [
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar",
+      "Verificar tendencia antes de entrar"
+    ],
+    "successful_patterns": [
+      "Priorizar CALL cuando RSI < 40",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar CALL cuando RSI < 40",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar CALL cuando RSI < 40",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar CALL cuando RSI < 40",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar PUT cuando RSI > 60",
+      "Priorizar operaciones a favor de tendencia",
+      "Priorizar CALL cuando RSI < 40"
+    ],
+    "optimal_conditions": {}
+  }
+}

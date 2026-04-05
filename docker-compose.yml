@@ -2,27 +2,85 @@ version: '3.8'
 
 services:
   trading-bot:
-    build: .
-    container_name: trading-bot-deep-learning
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading-bot-pro
     restart: unless-stopped
+    
     environment:
-      - EXNOVA_EMAIL=${EXNOVA_EMAIL}
-      - EXNOVA_PASSWORD=${EXNOVA_PASSWORD}
-      - BROKER_NAME=exnova
-      - ACCOUNT_TYPE=PRACTICE
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - USE_LLM=True
-      - USE_GROQ=True
-      - HEADLESS_MODE=True
+      # Broker Configuration
+      BROKER_NAME: ${BROKER_NAME:-exnova}
+      ACCOUNT_TYPE: ${ACCOUNT_TYPE:-PRACTICE}
+      EXNOVA_EMAIL: ${EXNOVA_EMAIL}
+      EXNOVA_PASSWORD: ${EXNOVA_PASSWORD}
+      
+      # Trading Parameters
+      CAPITAL_PER_TRADE: ${CAPITAL_PER_TRADE:-1}
+      MAX_MARTINGALE: ${MAX_MARTINGALE:-0}
+      
+      # AI/LLM Configuration
+      USE_LLM: ${USE_LLM:-True}
+      USE_GROQ: ${USE_GROQ:-False}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      
+      # Ollama Configuration
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      USE_OLLAMA: ${USE_OLLAMA:-true}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-120000}
+      
+      # System
+      HEADLESS_MODE: "True"
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    
     volumes:
+      # Persistencia de datos
       - ./data:/app/data
       - ./models:/app/models
       - ./logs:/app/logs
-    env_file:
-      - .env
+      
+      # Configuración
+      - ./.env:/app/.env:ro
+    
+    # Limites de recursos (opcional)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 1G
+    
+    # Logs
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('data/bot_running.flag') else 1)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
+  # Ollama service (opcional - descomentar si se usa Ollama local)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama-server
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   ports:
+  #     - "11434:11434"
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0:11434
+
+# volumes:
+#   ollama_data:
