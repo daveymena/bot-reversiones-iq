@@ -149,18 +149,18 @@ class DecisionValidator:
         combined_confidence = advanced_confidence * (p_score / 100)
         
         # SI PASA FILTROS Y TIENE CONFIANZA ACEPTABLE, APROBAR
-        if combined_confidence >= 0.40:  # MODO BERSERKER: 40% es suficiente
+        if combined_confidence >= 0.65:  # Mínimo 65% de confianza (mejorado)
             result['valid'] = True
-            result['confidence'] = max(combined_confidence, 0.45)
+            result['confidence'] = max(combined_confidence, 0.65)
             result['recommendation'] = 'CALL' if action_num == 1 else 'PUT'
             result['reasons'].append(f"⭐ APROBADA (Confianza: {result['confidence']*100:.0f}%)")
             return result
         else:
-            # FALLBACK DE SEGURIDAD MÁXIMA - SIEMPRE APROBAR EN BERSERKER
-            result['valid'] = True # Forzar True
-            result['confidence'] = 0.45
-            result['recommendation'] = 'CALL' if action_num == 1 else 'PUT'
-            result['reasons'].append("⚠️ FORZANDO OPERACIÓN (Modo Berserker - Confianza Baja)")
+            # RECHAZAR si no hay suficiente confianza
+            result['valid'] = False
+            result['confidence'] = combined_confidence
+            result['recommendation'] = 'HOLD'
+            result['reasons'].append(f"❌ RECHAZADA (Confianza baja: {combined_confidence*100:.0f}% < 65%)")
             return result
         
         # 3. VALIDAR INDICADORES CALCULADOS
@@ -185,7 +185,7 @@ class DecisionValidator:
         # 4. ANÁLISIS DE INDICADORES TÉCNICOS CON LECCIONES APRENDIDAS
         last_row = df.iloc[-1]
         
-        # RSI con validación estricta
+        # RSI con validación estricta (MEJORADO)
         rsi = last_row['rsi']
         rsi_signal = None
         
@@ -195,20 +195,73 @@ class DecisionValidator:
             result['recommendation'] = 'HOLD'
             return result
         
-        if rsi < 30:
+        # MEJORADO: Validación más estricta
+        if rsi < 25:  # Sobreventa REAL (antes era 30)
             rsi_signal = 'CALL'
-            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Sobreventa → CALL)")
-        elif rsi > 70:
+            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Sobreventa real → CALL)")
+        elif rsi > 75:  # Sobrecompra REAL (antes era 70)
             rsi_signal = 'PUT'
-            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Sobrecompra → PUT)")
+            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Sobrecompra real → PUT)")
         else:
             rsi_signal = 'NEUTRAL'
-            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Neutral)")
+            result['reasons'].append(f"📊 RSI: {rsi:.1f} (Neutral - RECHAZAR)")
+            result['warnings'].append(f"❌ RSI neutral ({rsi:.1f}) - No operar")
+            result['valid'] = False
+            return result
         
-        # MACD
+        # MACD con validación de divergencia clara (MEJORADO)
         macd = last_row['macd']
-        macd_signal = 'CALL' if macd > 0 else 'PUT'
-        result['reasons'].append(f"📊 MACD: {macd:.5f} ({'Alcista' if macd > 0 else 'Bajista'} → {macd_signal})")
+        macd_threshold = 0.0001  # Divergencia mínima requerida
+        
+        if abs(macd) < macd_threshold:
+            result['warnings'].append(f"❌ MACD muy débil ({macd:.6f}) - No operar")
+            result['valid'] = False
+            return result
+        
+        if macd > macd_threshold:
+            macd_signal = 'CALL'
+            result['reasons'].append(f"📊 MACD: {macd:.6f} (Alcista claro → CALL)")
+        elif macd < -macd_threshold:
+            macd_signal = 'PUT'
+            result['reasons'].append(f"📊 MACD: {macd:.6f} (Bajista claro → PUT)")
+        else:
+            result['warnings'].append(f"❌ MACD neutral ({macd:.6f}) - No operar")
+            result['valid'] = False
+            return result
+        
+        # ✅ NUEVO: Validar que el pullback sea real (MEJORADO)
+        if 'ssl_down' in df.columns and 'ssl_up' in df.columns:
+            ssl_down = last_row['ssl_down']
+            ssl_up = last_row['ssl_up']
+            price = last_row['close']
+            
+            # Para CALL: Precio debe estar entre SSL y 0.5% arriba
+            if action == 1:  # CALL
+                distance_to_ssl = ((price - ssl_down) / ssl_down) * 100
+                if distance_to_ssl < 0.05:  # Menos de 0.05%
+                    result['warnings'].append(f"❌ Pullback muy débil ({distance_to_ssl:.3f}%) - No operar")
+                    result['valid'] = False
+                    return result
+                elif distance_to_ssl > 0.5:  # Más de 0.5%
+                    result['warnings'].append(f"❌ Pullback muy fuerte ({distance_to_ssl:.3f}%) - Punto de entrada pasado")
+                    result['valid'] = False
+                    return result
+                else:
+                    result['reasons'].append(f"✅ Pullback real ({distance_to_ssl:.3f}%)")
+            
+            # Para PUT: Precio debe estar entre SSL y 0.5% abajo
+            elif action == 2:  # PUT
+                distance_to_ssl = ((ssl_up - price) / ssl_up) * 100
+                if distance_to_ssl < 0.05:  # Menos de 0.05%
+                    result['warnings'].append(f"❌ Pullback muy débil ({distance_to_ssl:.3f}%) - No operar")
+                    result['valid'] = False
+                    return result
+                elif distance_to_ssl > 0.5:  # Más de 0.5%
+                    result['warnings'].append(f"❌ Pullback muy fuerte ({distance_to_ssl:.3f}%) - Punto de entrada pasado")
+                    result['valid'] = False
+                    return result
+                else:
+                    result['reasons'].append(f"✅ Pullback real ({distance_to_ssl:.3f}%)")
         
         # 🧠 VALIDAR BOLLINGER BANDS
         if 'bb_low' in df.columns and 'bb_high' in df.columns:

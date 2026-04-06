@@ -276,8 +276,8 @@ def run_bot():
     print(f'  Reglas:')
     print(f'  1. Sweep suave (mecha >= 1.0x cuerpo)')
     print(f'  2. Pullback a liquidez + RSI + MACD')
-    print(f'  3. Umbral minimo: 45 puntos')
-    print(f'  4. Cooldown: 60s entre operaciones')
+    print(f'  3. Umbral minimo: 65 puntos (mejorado)')
+    print(f'  4. Cooldown: 180s entre operaciones (mejorado)')
     print(f'  Objetivo: Generar datos para aprender')
     print(f'  Presiona Ctrl+C para detener')
     print(f'{"="*78}{X}\n')
@@ -313,15 +313,15 @@ def run_bot():
                 if not signal_data:
                     signal_data = detect_pullback_to_liquidity(df, bsl_levels, ssl_levels)
                 
-                if signal_data and signal_data['confidence'] >= 45:
+                if signal_data and signal_data['confidence'] >= 65:  # Aumentado de 45 a 65
                     sig = signal_data['signal']
                     conf = signal_data['confidence']
                     entry_type = signal_data['entry_type']
                     
-                    # Cooldown reducido a 60s
-                    if now - last_trade_time < 60:
+                    # Cooldown aumentado a 180s (3 minutos)
+                    if now - last_trade_time < 180:
                         if cycle % 6 == 0:
-                            print(f'  {Y}Cooldown activo ({int(60 - (now - last_trade_time))}s){X}')
+                            print(f'  {Y}Cooldown activo ({int(180 - (now - last_trade_time))}s){X}')
                         continue
                     
                     amount = 1
