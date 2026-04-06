@@ -96,6 +96,122 @@ class MasterBot:
         self.current_asset_idx = (self.current_asset_idx + 1) % len(self.assets)
         return asset
     
+    def _find_liquidity_levels(self, df, lookback=100):
+        """Encuentra pools de liquidez"""
+        if len(df) < 20:
+            return [], []
+        
+        highs = df['high'].tail(lookback).values
+        lows = df['low'].tail(lookback).values
+        
+        buy_side = []
+        sell_side = []
+        
+        for i in range(2, len(highs) - 2):
+            is_high = all(highs[i] >= highs[j] for j in range(i-2, i+3) if j != i)
+            if is_high:
+                buy_side.append(highs[i])
+            
+            is_low = all(lows[i] <= lows[j] for j in range(i-2, i+3) if j != i)
+            if is_low:
+                sell_side.append(lows[i])
+        
+        unique_bsl = []
+        for h in sorted(buy_side, reverse=True):
+            if not any(abs(h - u) / h < 0.0003 for u in unique_bsl):
+                unique_bsl.append(h)
+        
+        unique_ssl = []
+        for l in sorted(sell_side):
+            if not any(abs(l - u) / l < 0.0003 for u in unique_ssl):
+                unique_ssl.append(l)
+        
+        return unique_bsl[:10], unique_ssl[:10]
+    
+    def _detect_sweep(self, df, bsl_levels, ssl_levels):
+        """Detecta sweep de liquidez"""
+        if len(df) < 3:
+            return None
+        
+        current = df.iloc[-1]
+        price = current['close']
+        high = current['high']
+        low = current['low']
+        
+        body = abs(current['close'] - current['open'])
+        upper_wick = current['high'] - max(current['open'], current['close'])
+        lower_wick = min(current['open'], current['close']) - current['low']
+        
+        for bsl in bsl_levels:
+            if high >= bsl * 0.9995 and price < bsl:
+                if body > 0 and upper_wick >= body * 1.0:
+                    wick_ratio = upper_wick / body
+                    confidence = min(80, 50 + int(wick_ratio * 10))
+                    return {
+                        'signal': 'PUT',
+                        'confidence': confidence,
+                        'reason': f'Sweep BSL - mecha {wick_ratio:.1f}x'
+                    }
+        
+        for ssl in ssl_levels:
+            if low <= ssl * 1.0005 and price > ssl:
+                if body > 0 and lower_wick >= body * 1.0:
+                    wick_ratio = lower_wick / body
+                    confidence = min(80, 50 + int(wick_ratio * 10))
+                    return {
+                        'signal': 'CALL',
+                        'confidence': confidence,
+                        'reason': f'Sweep SSL - mecha {wick_ratio:.1f}x'
+                    }
+        
+        return None
+    
+    def _detect_pullback(self, df, bsl_levels, ssl_levels):
+        """Detecta pullback a liquidez"""
+        if len(df) < 10:
+            return None
+        
+        price = df.iloc[-1]['close']
+        rsi = df.iloc[-1].get('rsi', 50)
+        
+        # Buscar SSL más cercano
+        nearest_ssl = None
+        min_dist_ssl = 999
+        for ssl in ssl_levels:
+            dist = (price - ssl) / ssl * 100
+            if 0 < dist < min_dist_ssl:
+                min_dist_ssl = dist
+                nearest_ssl = ssl
+        
+        # CALL: Precio cerca de SSL + RSI bajo
+        if nearest_ssl and min_dist_ssl < 0.05 and rsi < 50:
+            confidence = 60 + int((50 - rsi) / 5)
+            return {
+                'signal': 'CALL',
+                'confidence': min(75, confidence),
+                'reason': f'Pullback SSL + RSI {rsi:.1f}'
+            }
+        
+        # Buscar BSL más cercano
+        nearest_bsl = None
+        min_dist_bsl = 999
+        for bsl in bsl_levels:
+            dist = (bsl - price) / price * 100
+            if 0 < dist < min_dist_bsl:
+                min_dist_bsl = dist
+                nearest_bsl = bsl
+        
+        # PUT: Precio cerca de BSL + RSI alto
+        if nearest_bsl and min_dist_bsl < 0.05 and rsi > 50:
+            confidence = 60 + int((rsi - 50) / 5)
+            return {
+                'signal': 'PUT',
+                'confidence': min(75, confidence),
+                'reason': f'Pullback BSL + RSI {rsi:.1f}'
+            }
+        
+        return None
+    
     def _analyze_and_trade(self):
         """Analizar y ejecutar operación"""
         
@@ -126,36 +242,24 @@ class MasterBot:
             df['macd'] = macd.macd()
             df['macd_signal'] = macd.macd_signal()
             
-            # Lógica de señal
+            # Encontrar liquidez
+            bsl, ssl = self._find_liquidity_levels(df)
+            
+            # Detectar sweep
+            signal_data = self._detect_sweep(df, bsl, ssl)
+            if not signal_data:
+                signal_data = self._detect_pullback(df, bsl, ssl)
+            
+            if not signal_data or signal_data['confidence'] < self.min_confidence:
+                return None
+            
+            signal = signal_data['signal']
+            confidence = signal_data['confidence']
+            reason = signal_data['reason']
+            
             last = df.iloc[-1]
             rsi = last.get('rsi', 50)
             macd_val = last.get('macd', 0)
-            macd_sig = last.get('macd_signal', 0)
-            
-            signal = None
-            confidence = 0
-            reason = ""
-            
-            # RSI extremo
-            if rsi < 25:
-                signal = "CALL"
-                confidence = 70
-                reason = f"RSI muy bajo ({rsi:.1f})"
-            elif rsi > 75:
-                signal = "PUT"
-                confidence = 70
-                reason = f"RSI muy alto ({rsi:.1f})"
-            elif macd_val > macd_sig and macd_val > 0.00005:
-                signal = "CALL"
-                confidence = 65
-                reason = f"MACD alcista"
-            elif macd_val < macd_sig and macd_val < -0.00005:
-                signal = "PUT"
-                confidence = 65
-                reason = f"MACD bajista"
-            
-            if not signal or confidence < self.min_confidence:
-                return None
             
             # Ejecutar
             color = G if signal == "CALL" else R
