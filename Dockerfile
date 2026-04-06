@@ -13,11 +13,11 @@ RUN apt-get update && apt-get install -y \
 # Actualizar pip primero
 RUN pip install --upgrade pip setuptools wheel
 
-# Copiar requirements de la nube (sin GUI)
-COPY requirements_cloud.txt .
+# Copiar requirements ligero para EasyPanel (sin PyTorch/CUDA)
+COPY requirements_easypanel_lite.txt .
 
 # Instalar dependencias
-RUN pip install --no-cache-dir --timeout=300 --retries=5 -r requirements_cloud.txt
+RUN pip install --no-cache-dir --timeout=300 --retries=5 -r requirements_easypanel_lite.txt
 
 # Copiar código completo
 COPY . .
