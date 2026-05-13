@@ -1,45 +1,68 @@
-# [Project name]
+# Exnova Ultra-Smart Bot v3.0
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Bot de trading automático para Exnova/IQ Option con dashboard en consola, estrategias mejoradas y gestión de riesgo avanzada.
 
-## Run & Operate
+## Correr el bot
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Workflow `Bot Exnova: Trading` — arranca el bot en modo práctica (consola)
+- Para correrlo manualmente: `cd bot && python3 main.py`
 
-## Stack
+## Credenciales requeridas (ya configuradas en Secrets)
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- `EXNOVA_EMAIL` — email de la cuenta Exnova
+- `EXNOVA_PASSWORD` — contraseña de la cuenta Exnova
 
-## Where things live
+## Donde vive el código
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+```
+bot/
+  main.py                    — punto de entrada, dashboard Rich en consola
+  config.py                  — configuración centralizada
+  engine/
+    signal_engine.py         — motor principal de señales v3.0
+  core/
+    advanced_risk_manager.py — Kelly Criterion + drawdown protection
+    unified_scoring_engine.py — scoring 0-100 ponderado
+  strategies/
+    technical.py             — indicadores técnicos (RSI, MACD, BB, EMA)
+    smart_reversal.py        — estrategia de reversión en S/R
+    multi_timeframe.py       — análisis multi-timeframe (H1/M30/M15/M5/M1)
+  data/
+    market_data.py           — conexión y datos de Exnova
+  exnovaapi/                 — API wrapper de Exnova (copiado del repo original)
+```
 
-## Architecture decisions
+## Mejoras aplicadas vs el repo original
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Motor de señales unificado con 11 filtros en cascada
+- Análisis de patrones de velas (Hammer, Engulfing, Pin Bar, Morning/Evening Star, Shooting Star)
+- Filtro de volatilidad ATR (evita mercados erráticos o muertos)
+- Confirmación multi-timeframe estricta (M1+M5+M15 deben alinearse)
+- Kelly Criterion con Quarter-Kelly para position sizing conservador
+- Cooldown automático tras pérdidas consecutivas
+- Dashboard Rich en consola: balance, PnL, win rate, historial, señales, riesgo
+- Expiración adaptativa según alineación MTF (1-3 minutos)
 
-## Product
+## Activos configurados (OTC — disponibles 24/7)
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+EURUSD-OTC, GBPUSD-OTC, AUDUSD-OTC, EURJPY-OTC
+
+## Parámetros de riesgo
+
+- Confianza mínima para operar: 68%
+- Max drawdown diario: 10%
+- Max pérdidas consecutivas antes de parar: 4
+- Max operaciones/hora: 6
+- Cooldown tras pérdida: 2 minutos
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Dashboard en consola, sin web UI
+- Modo práctica de Exnova (demo, sin dinero real)
+- Estrategias conservadoras con alta selectividad
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Siempre correr en `bot/` directory: `cd bot && python3 main.py`
+- Si hay error de conexión, verificar credenciales en Secrets
+- Los activos OTC tienen payout ligeramente menor pero están disponibles 24/7 incluyendo fines de semana

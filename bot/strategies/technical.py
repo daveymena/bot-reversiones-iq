@@ -1,6 +1,15 @@
+"""
+Feature Engineer - Indicadores técnicos para el bot v3.0
+"""
 import pandas as pd
 import numpy as np
-import ta
+
+try:
+    import ta
+    TA_AVAILABLE = True
+except ImportError:
+    TA_AVAILABLE = False
+
 
 class FeatureEngineer:
     def __init__(self):
