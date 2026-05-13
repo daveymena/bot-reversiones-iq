@@ -125,14 +125,12 @@ def make_signal_panel() -> Panel:
     table.add_column("Activo", width=12)
     table.add_column("Señal", width=7, justify="center")
     table.add_column("Acción", width=8, justify="center")
-    table.add_column("Score", width=6, justify="center")
-    table.add_column("Conf.", width=6, justify="center")
+    table.add_column("Score", width=7, justify="center")
+    table.add_column("IA", width=11, justify="center")
     table.add_column("Zona", width=10, justify="center")
-    table.add_column("Z.Str", width=6, justify="center")
-    table.add_column("Patrón", width=13)
-    table.add_column("Exp.", width=12, justify="center")
-    table.add_column("Complejidad", width=13, justify="center")
-    table.add_column("Razón", ratio=1)
+    table.add_column("Patrón", width=14)
+    table.add_column("Exp.", width=10, justify="center")
+    table.add_column("Análisis IA", ratio=1)
 
     if sig:
         s_dir  = sig.get("signal", "NEUTRAL")
@@ -140,43 +138,45 @@ def make_signal_panel() -> Panel:
         act    = sig.get("action", "WAIT")
         a_col  = "bold green" if act == "TRADE" else "dim"
         score  = sig.get("score", 0)
-        sc_col = "green" if score >= 75 else "yellow" if score >= 55 else "red"
+        sc_col = "green" if score >= 65 else "yellow" if score >= 45 else "red"
         zone_str = f"{sig.get('zone', 0):.5f}" if sig.get("zone") else "---"
-        zs     = sig.get("zone_strength", 0)
-        zs_col = "green" if zs >= 0.7 else "yellow" if zs >= 0.5 else "red"
-        pattern = sig.get("pattern", "---") or "---"
-        reason  = (sig.get("reason", "") or "")[:55]
+        pattern  = sig.get("pattern", "---") or "---"
 
-        # Expiración y complejidad
+        # IA info
+        ai_label = sig.get("ai_label", "")
+        ai_score = sig.get("ai_score", 0)
+        ai_colors = {
+            "EXCELENTE": "bold green", "BUENO": "green",
+            "MODERADO": "yellow", "DÉBIL": "orange1",
+            "SKIP": "red", "NORMAL": "dim",
+        }
+        ai_col = ai_colors.get(ai_label, "dim")
+        ai_str = f"[{ai_col}]{ai_label}[/{ai_col}] [dim]{ai_score:.0f}[/dim]" if ai_label else "[dim]---[/dim]"
+
+        # Narrativa IA (truncada para caber)
+        narrative = (sig.get("ai_narrative", "") or sig.get("reason", "") or "")[:70]
+
+        # Expiración
         exp_min   = sig.get("expiration_minutes", 0)
         exp_label = sig.get("expiration_label", "")
         exp_color = sig.get("expiration_color", "dim")
-        cplx      = sig.get("complexity_score", 0)
-
-        if exp_min > 0:
-            exp_str  = f"[{exp_color}]{exp_min} min[/{exp_color}]"
-            cplx_str = f"[{exp_color}]{exp_label}[/{exp_color}]"
-        else:
-            exp_str  = "[dim]---[/dim]"
-            cplx_str = "[dim]---[/dim]"
+        exp_str   = f"[{exp_color}]{exp_min}m {exp_label}[/{exp_color}]" if exp_min > 0 else "[dim]---[/dim]"
 
         table.add_row(
             sig.get("asset", ""),
             f"[{s_col}]{s_dir}[/{s_col}]",
             f"[{a_col}]{act}[/{a_col}]",
             f"[{sc_col}]{score:.0f}[/{sc_col}]",
-            f"{sig.get('confidence', 0)*100:.0f}%",
+            ai_str,
             zone_str,
-            f"[{zs_col}]{zs:.2f}[/{zs_col}]",
             f"[cyan]{pattern}[/cyan]",
             exp_str,
-            cplx_str,
-            f"[dim]{reason}[/dim]",
+            f"[dim]{narrative}[/dim]",
         )
     else:
-        table.add_row("[dim]---[/dim]", "", "", "", "", "", "", "", "", "", "[dim]Escaneando...[/dim]")
+        table.add_row("[dim]---[/dim]", "", "", "", "", "", "", "", "[dim]Escaneando...[/dim]")
 
-    return Panel(table, title="[bold]Última Señal Analizada[/bold]", border_style="magenta", padding=(0,1))
+    return Panel(table, title="[bold]Última Señal  ·  Motor IA Activo[/bold]", border_style="magenta", padding=(0,1))
 
 
 def make_zones_panel() -> Panel:
@@ -265,27 +265,35 @@ def make_learning_panel() -> Panel:
     grid.add_row("[dim]Trades aprendidos[/dim]", f"[white]{learner.total_trades}[/white]")
     grid.add_row("[dim]WR aprendido[/dim]", f"[{'green' if wr>=0.55 else 'yellow'}]{wr:.1%}[/]")
 
+    # IA del último análisis
+    sig = state.get("last_signal", {})
+    ai_label   = sig.get("ai_label", "")
+    ai_score   = sig.get("ai_score", 0)
+    ai_colors  = {"EXCELENTE":"green","BUENO":"green","MODERADO":"yellow",
+                  "DÉBIL":"orange1","SKIP":"red","NORMAL":"dim"}
+    if ai_label:
+        ai_col = ai_colors.get(ai_label, "dim")
+        grid.add_row("[dim]IA último análisis[/dim]",
+                     f"[{ai_col}]{ai_label} {ai_score:.0f}[/{ai_col}]")
+
     top = learner.get_top_conditions(3)
     for c in top:
         name = c["condition"].replace("_", " ")[:18]
-        cwr = c["win_rate"]
+        cwr  = c["win_rate"]
         grid.add_row(f"[dim]↑ {name}[/dim]",
                      f"[{'green' if cwr>=0.6 else 'yellow'}]{cwr:.0%}[/]")
 
-    # Thresholds actuales
     grid.add_row("", "")
-    grid.add_row("[dim]Umbral zona[/dim]", f"[cyan]{learner.get_threshold('min_zone_strength'):.2f}[/cyan]")
-    grid.add_row("[dim]Umbral RSI dist[/dim]", f"[cyan]{learner.get_threshold('min_rsi_distance'):.1f}[/cyan]")
-    grid.add_row("[dim]Min. score[/dim]", f"[cyan]{learner.get_min_score():.2f}[/cyan]")
+    grid.add_row("[dim]Umbral zona[/dim]",     f"[cyan]{learner.get_threshold('min_zone_strength'):.2f}[/cyan]")
+    grid.add_row("[dim]Min. score[/dim]",      f"[cyan]{learner.get_min_score():.2f}[/cyan]")
 
-    # Último diagnóstico
     if state.get("last_diagnosis"):
         grid.add_row("", "")
         for line in state["last_diagnosis"][:3]:
             text = Text.from_markup(line)
             grid.add_row(text, "")
 
-    return Panel(grid, title="[bold]Aprendizaje Adaptativo[/bold]", border_style="magenta", padding=(0,1))
+    return Panel(grid, title="[bold]IA + Aprendizaje[/bold]", border_style="magenta", padding=(0,1))
 
 
 def make_log_panel() -> Panel:
