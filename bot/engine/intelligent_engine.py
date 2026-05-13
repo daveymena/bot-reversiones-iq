@@ -1,11 +1,7 @@
 """
-Intelligent Engine v4.0 — El cerebro del bot
-No busca señales en cualquier momento.
-Primero detecta zonas vivas del gráfico completo,
-espera a que el precio llegue a ellas,
-analiza el contexto completo,
-espera confirmación de vela exacta,
-y solo entonces decide si entrar.
+Intelligent Engine v4.1 — Motor con timing de entrada preciso
+El error previo: detectaba patrones en velas ABIERTAS (aún formándose).
+Fix: solo opera sobre velas CERRADAS + valida que la vela actual confirme el movimiento.
 """
 import time
 import numpy as np
@@ -18,71 +14,175 @@ from brain.context_analyzer import ContextAnalyzer
 from brain.adaptive_learner import get_adaptive_learner
 
 
+# ─── Diagnóstico de entrada prematura ────────────────────────────────────────
+
+class PrematureEntryDiagnostic:
+    """
+    Analiza si una pérdida fue por entrada prematura:
+    el precio eventualmente llegó al objetivo pero después de que la operación expiró.
+    """
+    @staticmethod
+    def was_premature(entry_price: float, direction: str,
+                       candles_after: pd.DataFrame, expiration_minutes: int) -> Dict:
+        if candles_after is None or len(candles_after) < 2:
+            return {"premature": False, "reason": "sin datos post-trade"}
+
+        target_reached_at = None
+        candles_checked = min(len(candles_after), expiration_minutes * 3)
+
+        for i, (_, row) in enumerate(candles_after.head(candles_checked).iterrows()):
+            if direction == "CALL":
+                if float(row["high"]) > entry_price * 1.0003:
+                    target_reached_at = i + 1
+                    break
+            else:
+                if float(row["low"]) < entry_price * 0.9997:
+                    target_reached_at = i + 1
+                    break
+
+        # Buscar cuánto tardó el precio en llegar al objetivo
+        target_reached_late = None
+        for i, (_, row) in enumerate(candles_after.iterrows()):
+            if direction == "CALL":
+                if float(row["high"]) > entry_price * 1.0003:
+                    target_reached_late = i + 1
+                    break
+            else:
+                if float(row["low"]) < entry_price * 0.9997:
+                    target_reached_late = i + 1
+                    break
+
+        was_premature = (target_reached_at is None and target_reached_late is not None and
+                          target_reached_late > expiration_minutes)
+
+        return {
+            "premature": was_premature,
+            "target_reached_candle": target_reached_late,
+            "expiration_candles": expiration_minutes,
+            "diagnosis": (
+                f"Entrada prematura: precio llegó al objetivo en vela {target_reached_late} "
+                f"pero la operación expiró en {expiration_minutes} velas"
+                if was_premature else
+                "No fue entrada prematura"
+            ),
+        }
+
+
+# ─── Detector de patrones en velas CERRADAS ──────────────────────────────────
+
 class CandlePatternDetector:
-    """Detecta patrones de velas de alta precisión."""
+    """
+    Detecta patrones SOLO en velas completamente cerradas.
+
+    Regla fundamental:
+    - La vela de señal siempre es df.iloc[-2] (última CERRADA)
+    - La vela actual df.iloc[-1] (en formación) solo se usa para confirmar
+      que el movimiento ya inició
+    - Nunca se entra basándose en la vela actual abierta
+    """
 
     def detect(self, df: pd.DataFrame, expected_direction: str) -> Dict:
-        if len(df) < 4:
-            return {"pattern": "none", "confirmed": False, "strength": 0.0}
+        if len(df) < 5:
+            return self._no_pattern("Datos insuficientes")
 
-        c1 = df.iloc[-4]
-        c2 = df.iloc[-3]
-        c3 = df.iloc[-2]
-        last = df.iloc[-1]
+        # ── Velas de referencia (todas CERRADAS) ──────────────────────────────
+        anchor = df.iloc[-5]   # vela -5 (contexto)
+        c3     = df.iloc[-4]   # vela -4
+        c2     = df.iloc[-3]   # vela -3
+        signal = df.iloc[-2]   # VELA DE SEÑAL (última cerrada) ← aquí se detecta el patrón
+        current = df.iloc[-1]  # vela actual (solo para confirmar dirección inicial)
 
-        o, h, l, c = float(last["open"]), float(last["high"]), float(last["low"]), float(last["close"])
-        o3, h3, l3, c3v = float(c3["open"]), float(c3["high"]), float(c3["low"]), float(c3["close"])
-        o2, c2v = float(c2["open"]), float(c2["close"])
+        # Datos de la vela de señal (cerrada)
+        o  = float(signal["open"])
+        h  = float(signal["high"])
+        l  = float(signal["low"])
+        c  = float(signal["close"])
 
-        body = abs(c - o)
-        full_range = h - l if h > l else 0.00001
+        body       = abs(c - o)
+        full_range = h - l if h > l else 1e-8
         upper_wick = h - max(o, c)
         lower_wick = min(o, c) - l
-        is_bull = c > o
-        is_bear = c < o
+        is_bull    = c > o
+        is_bear    = c < o
+
+        # Datos velas anteriores
+        o2, c2v = float(c2["open"]), float(c2["close"])
+        o3, c3v = float(c3["open"]), float(c3["close"])
+        oa, ca  = float(anchor["open"]), float(anchor["close"])
+
+        # Vela actual (en formación) — solo para confirmar
+        cur_o   = float(current["open"])
+        cur_c   = float(current["close"])
+        cur_moving_up   = cur_c > cur_o
+        cur_moving_down = cur_c < cur_o
 
         patterns = []
 
-        # ── Pin Bar (rechazo fuerte) ──
+        # ── Pin Bar (mecha dominante = rechazo fuerte) ───────────────────────
         if full_range > 0:
+            # Pin bar alcista: mecha inferior ≥60% del rango, cuerpo ≤30%
             if lower_wick / full_range >= 0.60 and body / full_range <= 0.30:
-                patterns.append(("pin_bar_bullish", 0.85))
+                # La mecha debe ser al menos 2x el cuerpo
+                if lower_wick >= body * 1.8 or body < full_range * 0.15:
+                    strength = 0.82 + min(lower_wick / full_range - 0.60, 0.15)
+                    patterns.append(("pin_bar_bullish", round(strength, 2)))
+
+            # Pin bar bajista: mecha superior ≥60% del rango, cuerpo ≤30%
             if upper_wick / full_range >= 0.60 and body / full_range <= 0.30:
-                patterns.append(("pin_bar_bearish", 0.85))
+                if upper_wick >= body * 1.8 or body < full_range * 0.15:
+                    strength = 0.82 + min(upper_wick / full_range - 0.60, 0.15)
+                    patterns.append(("pin_bar_bearish", round(strength, 2)))
 
-        # ── Hammer / Shooting Star ──
-        if lower_wick >= body * 2.0 and upper_wick <= body * 0.5 and body > 0:
-            patterns.append(("hammer", 0.75))
-        if upper_wick >= body * 2.0 and lower_wick <= body * 0.5 and body > 0:
-            patterns.append(("shooting_star", 0.75))
+        # ── Hammer / Shooting Star ───────────────────────────────────────────
+        if body > 0:
+            if lower_wick >= body * 2.2 and upper_wick <= body * 0.4:
+                patterns.append(("hammer", 0.78))
+            if upper_wick >= body * 2.2 and lower_wick <= body * 0.4:
+                patterns.append(("shooting_star", 0.78))
 
-        # ── Engulfing ──
-        if is_bull and o2 > c2v:  # prev bearish
-            if c > o2 and o < c2v:
-                patterns.append(("bullish_engulfing", 0.80))
-        if is_bear and o2 < c2v:  # prev bullish
-            if c < o2 and o > c2v:
-                patterns.append(("bearish_engulfing", 0.80))
+        # ── Engulfing fuerte ─────────────────────────────────────────────────
+        # Alcista: vela signal es bull Y envuelve completamente a c2 (bearish)
+        if is_bull and c2v < o2:  # c2 fue bajista
+            if c > o2 and o <= c2v:  # envuelve completamente
+                body_ratio = body / max(abs(c2v - o2), 1e-8)
+                if body_ratio >= 1.1:
+                    patterns.append(("bullish_engulfing", 0.83 + min(body_ratio - 1.1, 0.10)))
+        # Bajista: vela signal es bear Y envuelve completamente a c2 (bullish)
+        if is_bear and c2v > o2:  # c2 fue alcista
+            if c < o2 and o >= c2v:
+                body_ratio = body / max(abs(c2v - o2), 1e-8)
+                if body_ratio >= 1.1:
+                    patterns.append(("bearish_engulfing", 0.83 + min(body_ratio - 1.1, 0.10)))
 
-        # ── Doji de reversión ──
-        if full_range > 0 and body / full_range <= 0.12:
-            if expected_direction == "CALL" and lower_wick > upper_wick:
-                patterns.append(("doji_reversal_bull", 0.65))
-            elif expected_direction == "PUT" and upper_wick > lower_wick:
-                patterns.append(("doji_reversal_bear", 0.65))
+        # ── Morning Star / Evening Star (3 velas cerradas) ───────────────────
+        # Morning Star: c3 bearish grande → c2 pequeña → signal bullish
+        c3_bear  = c3v < o3 and abs(c3v - o3) > full_range * 0.5
+        c2_small = abs(c2v - o2) < abs(c3v - o3) * 0.35
+        sig_bull = is_bull and c > (o3 + c3v) / 2
+        if c3_bear and c2_small and sig_bull:
+            patterns.append(("morning_star", 0.92))
 
-        # ── Morning Star / Evening Star (3 velas) ──
-        o1v, c1v = float(c1["open"]), float(c1["close"])
-        if c1v < o1v and abs(c2v - o2) < abs(c1v - o1v) * 0.4 and is_bull and c > (o1v + c1v) / 2:
-            patterns.append(("morning_star", 0.90))
-        if c1v > o1v and abs(c2v - o2) < abs(c1v - o1v) * 0.4 and is_bear and c < (o1v + c1v) / 2:
-            patterns.append(("evening_star", 0.90))
+        # Evening Star: c3 bullish grande → c2 pequeña → signal bearish
+        c3_bull  = c3v > o3 and abs(c3v - o3) > full_range * 0.5
+        sig_bear = is_bear and c < (o3 + c3v) / 2
+        if c3_bull and c2_small and sig_bear:
+            patterns.append(("evening_star", 0.92))
+
+        # ── Doji de reversión (señal ambigua, solo si muy extremo) ───────────
+        if full_range > 0 and body / full_range <= 0.10:
+            if expected_direction == "CALL" and lower_wick / full_range >= 0.40:
+                patterns.append(("doji_reversal_bull", 0.62))
+            elif expected_direction == "PUT" and upper_wick / full_range >= 0.40:
+                patterns.append(("doji_reversal_bear", 0.62))
 
         if not patterns:
-            return {"pattern": "none", "confirmed": False, "strength": 0.0,
-                    "conditions": {}}
+            return self._no_pattern("Sin patrón en vela cerrada", signal_candle_info={
+                "body_pct": body / full_range if full_range > 0 else 0,
+                "lower_wick_pct": lower_wick / full_range if full_range > 0 else 0,
+                "upper_wick_pct": upper_wick / full_range if full_range > 0 else 0,
+            })
 
-        # Filtrar por dirección esperada
+        # ── Filtrar por dirección esperada ────────────────────────────────────
         bullish_patterns = {"pin_bar_bullish", "hammer", "bullish_engulfing",
                             "doji_reversal_bull", "morning_star"}
         bearish_patterns = {"pin_bar_bearish", "shooting_star", "bearish_engulfing",
@@ -96,200 +196,351 @@ class CandlePatternDetector:
             valid = patterns
 
         if not valid:
-            return {"pattern": "none", "confirmed": False, "strength": 0.0,
-                    "all_patterns": [p for p, _ in patterns], "conditions": {}}
+            return self._no_pattern(
+                f"Patrón detectado ({[p for p,_ in patterns]}) no coincide con dirección {expected_direction}",
+                all_detected=[p for p, _ in patterns]
+            )
 
         best_pattern, best_strength = max(valid, key=lambda x: x[1])
+
+        # ── Confirmación por la vela actual ───────────────────────────────────
+        # La vela actual (abierta) debe estar comenzando a moverse en la dirección correcta
+        # Si va en contra, el patrón aún no está confirmado por el mercado
+        candle_confirming = (
+            (expected_direction == "CALL" and (cur_c >= cur_o or cur_c > c)) or
+            (expected_direction == "PUT"  and (cur_c <= cur_o or cur_c < c))
+        )
+
+        # Para patrones fuertes, la confirmación de vela actual es opcional
+        # Para patrones débiles (doji), es obligatoria
+        requires_current_confirmation = best_strength < 0.75
+        if requires_current_confirmation and not candle_confirming:
+            return self._no_pattern(
+                f"Patrón {best_pattern} detectado en vela cerrada pero vela actual no confirma — esperando",
+                all_detected=[p for p, _ in patterns],
+                waiting_confirmation=True,
+            )
+
         conditions = {
             f"pattern_{best_pattern.split('_')[0]}": True,
-            "pattern_strong": best_strength >= 0.75,
+            "pattern_strong": best_strength >= 0.80,
         }
 
         return {
             "pattern": best_pattern,
             "confirmed": True,
-            "strength": best_strength,
+            "strength": min(best_strength, 0.97),
             "all_detected": [p for p, _ in patterns],
             "conditions": conditions,
+            "candle_confirmed": candle_confirming,
+            "used_closed_candle": True,   # garantía de que no es prematura
+        }
+
+    @staticmethod
+    def _no_pattern(reason: str, all_detected: list = None,
+                    signal_candle_info: dict = None,
+                    waiting_confirmation: bool = False) -> Dict:
+        return {
+            "pattern": "none",
+            "confirmed": False,
+            "strength": 0.0,
+            "conditions": {},
+            "reason": reason,
+            "all_detected": all_detected or [],
+            "waiting_confirmation": waiting_confirmation,
+            "signal_candle_info": signal_candle_info or {},
         }
 
 
+# ─── Validador de timing de entrada ──────────────────────────────────────────
+
+class EntryTimingValidator:
+    """
+    Valida que el momento de entrada sea preciso:
+    - El precio debe estar DENTRO de la zona (no aproximándose)
+    - El rechazo debe ser evidente en el histórico de velas
+    - No debe haber ya comenzado el movimiento (entrada tardía)
+    """
+
+    def validate(self, df_m1: pd.DataFrame, zone_level: float,
+                  zone_type: str, direction: str) -> Dict:
+        if len(df_m1) < 6:
+            return {"valid": True, "reason": "datos insuficientes para validar"}
+
+        # ── 1. Verificar que la vela de señal tocó la zona ───────────────────
+        signal_candle = df_m1.iloc[-2]  # última cerrada
+        s_low  = float(signal_candle["low"])
+        s_high = float(signal_candle["high"])
+        s_close = float(signal_candle["close"])
+        tol = zone_level * 0.0008  # 0.08% de tolerancia exacta
+
+        zone_was_touched = (
+            (zone_type == "support"    and s_low   <= zone_level + tol) or
+            (zone_type == "resistance" and s_high  >= zone_level - tol) or
+            abs(s_close - zone_level) <= tol * 2
+        )
+
+        if not zone_was_touched:
+            return {
+                "valid": False,
+                "reason": f"La vela de señal no tocó la zona {zone_level:.5f} (low={s_low:.5f}, high={s_high:.5f})",
+                "issue": "zone_not_touched",
+            }
+
+        # ── 2. Verificar que no empezó ya el movimiento ───────────────────────
+        # Si el precio ya se alejó >0.15% de la zona, la entrada es tardía
+        current_close = float(df_m1.iloc[-1]["close"])
+        distance_from_zone = abs(current_close - zone_level) / zone_level
+
+        if distance_from_zone > 0.0020:
+            return {
+                "valid": False,
+                "reason": f"El movimiento ya comenzó — precio alejado {distance_from_zone*100:.2f}% de la zona (entrada tardía)",
+                "issue": "late_entry",
+            }
+
+        # ── 3. Verificar rechazo real en la zona (no solo rozó) ──────────────
+        # La mecha de rechazo debe ser visible
+        body     = abs(float(signal_candle["close"]) - float(signal_candle["open"]))
+        rng      = float(signal_candle["high"]) - float(signal_candle["low"])
+        wick_pct = 0.0
+        if rng > 0:
+            if zone_type == "support":
+                lower_wick = float(signal_candle["low"])
+                lower_wick = min(float(signal_candle["open"]), float(signal_candle["close"])) - lower_wick
+                wick_pct = lower_wick / rng
+            else:
+                upper_wick = float(signal_candle["high"])
+                upper_wick -= max(float(signal_candle["open"]), float(signal_candle["close"]))
+                wick_pct = upper_wick / rng
+
+        if wick_pct < 0.20:
+            return {
+                "valid": False,
+                "reason": f"Sin rechazo visible en la zona (mecha={wick_pct:.1%}, necesita ≥20%)",
+                "issue": "no_rejection_wick",
+            }
+
+        return {
+            "valid": True,
+            "reason": "Timing válido — vela cerrada tocó zona con rechazo visible",
+            "zone_touched": zone_was_touched,
+            "rejection_wick_pct": wick_pct,
+            "distance_from_zone": distance_from_zone,
+        }
+
+
+# ─── Motor principal ──────────────────────────────────────────────────────────
+
 class IntelligentEngine:
     """
-    Motor de inteligencia principal.
-    Flujo:
+    Motor de inteligencia v4.1 — Timing de entrada preciso.
+
+    Flujo corregido:
     1. Descargar gráfico completo (H1 + M15 + M5 + M1)
-    2. Detectar zonas vivas en todo el histórico
-    3. Actualizar memoria del mercado
-    4. Verificar si el precio actual está EN una zona fuerte
-    5. Si no está en zona → WAIT
-    6. Si está en zona → analizar contexto completo
-    7. Esperar confirmación de vela exacta en la zona
-    8. Puntuar con pesos adaptativos
-    9. Decidir si entrar o no
+    2. Detectar zonas desde histórico
+    3. Verificar que precio está EN zona fuerte (tolerancia ≤0.1%)
+    4. Detectar patrón SOLO en vela cerrada (df.iloc[-2])
+    5. Validar timing: zona realmente tocada + rechazo visible + no entrada tardía
+    6. Analizar contexto completo
+    7. Puntuar con pesos adaptativos
+    8. Decidir — si pasa todos los filtros, entrar
     """
 
     def __init__(self):
-        self.memory = get_market_memory()
-        self.zone_detector = ZoneDetector()
+        self.memory          = get_market_memory()
+        self.zone_detector   = ZoneDetector()
         self.context_analyzer = ContextAnalyzer()
-        self.learner = get_adaptive_learner()
+        self.learner         = get_adaptive_learner()
         self.pattern_detector = CandlePatternDetector()
+        self.timing_validator = EntryTimingValidator()
         self._last_zone_scan: Dict[str, float] = {}
-        self._zone_scan_interval = 300  # re-escanear zonas cada 5 minutos
+        self._zone_scan_interval = 300
 
     def analyze(self, asset: str, market_data, fe=None) -> Optional[Dict]:
-        """
-        Análisis completo del mercado para un activo.
-        Devuelve señal estructurada o None si hay error.
-        """
         try:
-            # ── 1. Descargar datos multi-timeframe ──────────────────────────
+            # ── 1. Datos multi-timeframe ─────────────────────────────────────
             df_m1 = market_data.get_candles(asset, 60, 200)
             if df_m1 is None or len(df_m1) < 30:
                 return self._wait("Datos M1 insuficientes", asset)
 
-            df_m5 = market_data.get_candles(asset, 300, 120)
+            df_m5  = market_data.get_candles(asset, 300, 120)
             df_m15 = market_data.get_candles(asset, 900, 60)
-            df_h1 = market_data.get_candles(asset, 3600, 30)
+            df_h1  = market_data.get_candles(asset, 3600, 30)
 
             if df_m5 is None or len(df_m5) < 20:
                 return self._wait("Datos M5 insuficientes", asset)
 
-            current_price = float(df_m1["close"].iloc[-1])
+            # Precio de referencia = cierre de la última vela CERRADA
+            current_price = float(df_m1.iloc[-2]["close"])
             if current_price <= 0:
                 return self._wait("Precio inválido", asset)
 
-            # ── 2. Escanear/actualizar zonas cada N segundos ─────────────────
+            # ── 2. Escanear zonas ────────────────────────────────────────────
             last_scan = self._last_zone_scan.get(asset, 0)
             if time.time() - last_scan > self._zone_scan_interval:
                 self._rescan_zones(asset, df_m5, df_m15, df_h1)
                 self._last_zone_scan[asset] = time.time()
 
-            # ── 3. ¿Está el precio en una zona fuerte? ───────────────────────
-            min_zone_strength = self.learner.get_threshold("min_zone_strength", 0.40)
+            # ── 3. ¿Está el precio EN una zona fuerte? ───────────────────────
+            # Tolerancia reducida a 0.12% — el precio debe estar exactamente ahí
+            min_zone_strength = self.learner.get_threshold("min_zone_strength", 0.42)
             nearest_zone = self.memory.get_nearest_strong_zone(
-                asset, current_price, tolerance_pct=0.002
+                asset, current_price, tolerance_pct=0.0012
             )
             zone_context_summary = self.memory.get_zone_context(asset, current_price)
 
             if nearest_zone is None or nearest_zone.strength < min_zone_strength:
-                # No estamos en ninguna zona fuerte — esperar
-                reason = f"Precio lejos de zona fuerte (nearest: {nearest_zone.strength:.2f if nearest_zone else 'N/A'})"
+                # Buscar la zona más cercana para informar al usuario
+                any_zone = self.memory.get_nearest_strong_zone(asset, current_price, tolerance_pct=0.01)
+                dist_str = ""
+                if any_zone:
+                    dist_pct = abs(any_zone.level - current_price) / current_price * 100
+                    dist_str = f" | Zona más cercana: {any_zone.level:.5f} a {dist_pct:.2f}%"
                 return {
                     "asset": asset,
                     "action": "WAIT",
                     "signal": "NEUTRAL",
                     "score": 0.0,
                     "confidence": 0.0,
-                    "reason": reason,
+                    "reason": f"Precio lejos de zona{dist_str}",
                     "phase": "buscando_zona",
                     "zone_count": len(self.memory.get_all_zones(asset)),
                     "zone_context": zone_context_summary,
                 }
 
-            # ── 4. Analizar contexto completo ────────────────────────────────
-            context = self.context_analyzer.analyze(
+            # ── 4. Detectar patrón en vela CERRADA ──────────────────────────
+            # Context analyzer primero para saber la dirección esperada
+            context_preview = self.context_analyzer.analyze(
                 df_m1, df_m5,
                 df_m15 if df_m15 is not None and len(df_m15) >= 10 else df_m5,
                 df_h1 if df_h1 is not None and len(df_h1) >= 5 else None,
                 zone=nearest_zone,
                 current_price=current_price,
             )
+            expected_dir = context_preview.get("expected_direction", "NEUTRAL")
+            phase = context_preview.get("market_phase", "unknown")
 
-            expected_dir = context.get("expected_direction", "NEUTRAL")
             if expected_dir == "NEUTRAL":
-                return self._wait("Dirección no clara (señales contradictorias)", asset,
-                                   context=context, zone=nearest_zone)
+                return self._wait("Dirección no clara", asset, context=context_preview, zone=nearest_zone)
 
-            # ── 5. Verificar fase del mercado ────────────────────────────────
-            phase = context.get("market_phase", "unknown")
             if phase == "dead":
-                return self._wait("Mercado muerto (sin volatilidad)", asset, context=context)
+                return self._wait("Mercado muerto — sin volatilidad", asset, context=context_preview)
 
-            # ── 6. Detectar patrón de vela en la zona ───────────────────────
+            # Detectar patrón (en vela cerrada df.iloc[-2])
             pattern = self.pattern_detector.detect(df_m1, expected_dir)
+
             if not pattern["confirmed"]:
-                # El precio está en zona pero la vela aún no confirma
-                # Esto es MUY importante: evita entrar a destiempo
-                detected = pattern.get("all_detected", [])
-                reason = f"En zona {nearest_zone.strength:.2f} — esperando vela de confirmación"
-                if detected:
-                    reason += f" (detectados: {', '.join(detected)})"
+                reason = f"En zona {nearest_zone.level:.5f} (str={nearest_zone.strength:.2f}) — esperando vela cerrada"
+                if pattern.get("waiting_confirmation"):
+                    reason = f"Patrón detectado — esperando que vela actual confirme dirección"
+                all_d = pattern.get("all_detected", [])
+                if all_d:
+                    reason += f" [vistos: {', '.join(all_d)}]"
                 return {
                     "asset": asset,
                     "action": "WAIT",
                     "signal": expected_dir,
-                    "score": 35.0,
-                    "confidence": context.get("direction_confidence", 0),
+                    "score": 30.0,
+                    "confidence": context_preview.get("direction_confidence", 0),
                     "reason": reason,
                     "phase": phase,
                     "zone": nearest_zone.level,
                     "zone_strength": nearest_zone.strength,
                     "waiting_for_pattern": True,
-                    "context": context,
+                    "context": context_preview,
                 }
 
-            # ── 7. Construir condiciones para el AdaptiveLearner ─────────────
-            zone_ctx = context.get("zone_context", {})
-            momentum = context.get("momentum", {})
-            rsi = momentum.get("rsi_m1", 50)
-            rsi_distance = abs(rsi - 50)
+            # ── 5. Validar timing (zona tocada + rechazo real + no tardía) ───
+            timing = self.timing_validator.validate(
+                df_m1, nearest_zone.level, nearest_zone.zone_type, expected_dir
+            )
+            if not timing["valid"]:
+                issue = timing.get("issue", "timing")
+                return {
+                    "asset": asset,
+                    "action": "WAIT",
+                    "signal": expected_dir,
+                    "score": 25.0,
+                    "confidence": 0.0,
+                    "reason": f"[{issue}] {timing['reason']}",
+                    "phase": phase,
+                    "zone": nearest_zone.level,
+                    "zone_strength": nearest_zone.strength,
+                    "pattern": pattern.get("pattern", ""),
+                    "timing_issue": issue,
+                    "context": context_preview,
+                }
+
+            # ── 6. Contexto completo ya calculado ────────────────────────────
+            context = context_preview
+
+            # ── 7. Condiciones para AdaptiveLearner ──────────────────────────
+            zone_ctx  = context.get("zone_context", {})
+            momentum  = context.get("momentum", {})
+            rsi       = momentum.get("rsi_m1", 50)
+            rsi_dist  = abs(rsi - 50)
 
             conditions = {
                 # Zona
-                "zone_strength_high": nearest_zone.strength >= 0.70,
+                "zone_strength_high":   nearest_zone.strength >= 0.70,
                 "zone_strength_medium": 0.50 <= nearest_zone.strength < 0.70,
-                "zone_multi_tf": getattr(nearest_zone, "notes", []) and "multi_tf" in str(nearest_zone.notes),
-                "zone_touch_3plus": nearest_zone.touches >= 3,
-                "zone_hold_rate_high": nearest_zone.hold_rate >= 0.70,
+                "zone_multi_tf":        nearest_zone.touches >= 4,
+                "zone_touch_3plus":     nearest_zone.touches >= 3,
+                "zone_hold_rate_high":  nearest_zone.hold_rate >= 0.70,
                 # Tendencia
-                "trend_aligned": zone_ctx.get("trend_aligned", False),
-                "trend_strong": context.get("dominant_trend") in ("uptrend", "downtrend"),
-                "counter_trend": not zone_ctx.get("trend_aligned", True),
+                "trend_aligned":   zone_ctx.get("trend_aligned", False),
+                "trend_strong":    context.get("dominant_trend") in ("uptrend", "downtrend"),
+                "counter_trend":   not zone_ctx.get("trend_aligned", True),
                 # RSI
-                "rsi_extreme": rsi < 25 or rsi > 75,
+                "rsi_extreme":       rsi < 25 or rsi > 75,
                 "rsi_oversold_sold": rsi < 35 and expected_dir == "CALL",
-                "rsi_overbought": rsi > 65 and expected_dir == "PUT",
-                "rsi_divergence": momentum.get("bullish_divergence", False) or momentum.get("bearish_divergence", False),
-                # Patrones
-                "pattern_pin_bar": "pin_bar" in pattern.get("pattern", ""),
-                "pattern_engulfing": "engulfing" in pattern.get("pattern", ""),
-                "pattern_hammer": pattern.get("pattern", "") in ("hammer", "shooting_star"),
-                "pattern_doji_reversal": "doji" in pattern.get("pattern", ""),
-                "pattern_morning_star": "star" in pattern.get("pattern", ""),
-                "pattern_strong": pattern.get("strength", 0) >= 0.75,
+                "rsi_overbought":    rsi > 65 and expected_dir == "PUT",
+                "rsi_divergence":    (momentum.get("bullish_divergence") or
+                                      momentum.get("bearish_divergence", False)),
+                # Patrones (detectados en vela CERRADA)
+                "pattern_pin_bar":      "pin_bar"   in pattern.get("pattern", ""),
+                "pattern_engulfing":    "engulfing"  in pattern.get("pattern", ""),
+                "pattern_hammer":       pattern.get("pattern", "") in ("hammer", "shooting_star"),
+                "pattern_doji_reversal":"doji"       in pattern.get("pattern", ""),
+                "pattern_morning_star": "star"       in pattern.get("pattern", ""),
+                "pattern_strong":       pattern.get("strength", 0) >= 0.80,
                 # MACD
-                "macd_cross": abs(momentum.get("macd_hist", 0)) > 0.00001,
-                "macd_hist_turning": momentum.get("macd_turning", False),
-                # Contexto
-                "approach_clean": context.get("before_context", {}).get("approach", "") in
-                                   ("falling_to_support", "rising_to_resistance"),
-                "mtf_aligned": self._check_mtf_alignment(context, expected_dir),
-                "market_phase_ranging": phase == "ranging",
+                "macd_cross":       abs(momentum.get("macd_hist", 0)) > 1e-5,
+                "macd_hist_turning":momentum.get("macd_turning", False),
+                # Timing y contexto
+                "approach_clean":   context.get("before_context", {}).get("approach", "") in
+                                    ("falling_to_support", "rising_to_resistance"),
+                "mtf_aligned":      self._check_mtf_alignment(context, expected_dir),
+                "market_phase_ranging":  phase == "ranging",
                 "market_phase_trending": phase in ("trending_up", "trending_down"),
-                "setup_quality_high": context.get("setup_quality", 0) >= 0.65,
+                "setup_quality_high":    context.get("setup_quality", 0) >= 0.65,
+                # Timing preciso (nuevo)
+                "rejection_visible":     timing.get("rejection_wick_pct", 0) >= 0.30,
+                "candle_confirming":     pattern.get("candle_confirmed", False),
             }
 
-            # ── 8. Puntuar con pesos adaptativos ─────────────────────────────
+            # ── 8. Puntuación adaptativa ──────────────────────────────────────
             adaptive_score, breakdown = self.learner.score_conditions(conditions)
             min_score = self.learner.get_min_score()
 
-            # Penalización dura por condiciones críticas ausentes
             hard_penalties = 0.0
             if not zone_ctx.get("trend_aligned", True):
                 hard_penalties += 0.10
-            if rsi_distance < self.learner.get_threshold("min_rsi_distance", 10.0):
+            if rsi_dist < self.learner.get_threshold("min_rsi_distance", 10.0):
                 hard_penalties += 0.05
             if nearest_zone.hold_rate < self.learner.get_threshold("min_zone_hold_rate", 0.55):
                 hard_penalties += 0.08
+            # Nueva penalización: si la vela actual no confirma
+            if not pattern.get("candle_confirmed"):
+                hard_penalties += 0.05
 
             final_score = max(0.0, adaptive_score - hard_penalties)
 
-            # ── 9. Decisión final ────────────────────────────────────────────
+            # ── 9. Decisión final ─────────────────────────────────────────────
             if final_score >= min_score:
                 confidence = self._calculate_confidence(
-                    final_score, nearest_zone, context, pattern
+                    final_score, nearest_zone, context, pattern, timing
                 )
                 exp_info = self._adaptive_expiration(
                     context, pattern, zone=nearest_zone, conditions=conditions
@@ -307,7 +558,7 @@ class IntelligentEngine:
                     "expiration_color": exp_info["color"],
                     "complexity_score": exp_info["complexity_score"],
                     "expiration_reasons": exp_info["reasons"],
-                    "reason": self._build_reason(nearest_zone, context, pattern, conditions, exp_info),
+                    "reason": self._build_reason(nearest_zone, context, pattern, conditions, exp_info, timing),
                     "phase": phase,
                     "zone": nearest_zone.level,
                     "zone_strength": nearest_zone.strength,
@@ -318,20 +569,22 @@ class IntelligentEngine:
                     "dominant_trend": context.get("dominant_trend"),
                     "rsi": rsi,
                     "setup_quality": context.get("setup_quality", 0),
+                    "rejection_wick": timing.get("rejection_wick_pct", 0),
                     "conditions": conditions,
                     "context": context,
                     "zone_object": nearest_zone,
                     "adaptive_breakdown": breakdown,
+                    "timing": timing,
                 }
             else:
-                top_missing = self._top_missing_conditions(conditions, self.learner.weights)
+                top_missing = self._top_missing(conditions, self.learner.weights)
                 return {
                     "asset": asset,
                     "action": "WAIT",
                     "signal": expected_dir,
                     "score": final_score * 100,
                     "confidence": final_score,
-                    "reason": f"Score {final_score*100:.0f} < {min_score*100:.0f} (faltan: {top_missing})",
+                    "reason": f"Score {final_score*100:.0f} < {min_score*100:.0f} | faltan: {top_missing}",
                     "phase": phase,
                     "zone": nearest_zone.level,
                     "zone_strength": nearest_zone.strength,
@@ -346,7 +599,6 @@ class IntelligentEngine:
 
     def _rescan_zones(self, asset: str, df_m5: pd.DataFrame,
                        df_m15: Optional[pd.DataFrame], df_h1: Optional[pd.DataFrame]):
-        """Re-detecta zonas desde el histórico completo y actualiza la memoria."""
         try:
             detected = self.zone_detector.detect_multi_tf(
                 df_m5=df_m5,
@@ -363,153 +615,129 @@ class IntelligentEngine:
     # ── Utilidades ────────────────────────────────────────────────────────────
 
     def _check_mtf_alignment(self, context: Dict, direction: str) -> bool:
-        """Verifica que M1, M5 y M15 apunten en la misma dirección."""
         expected = "uptrend" if direction == "CALL" else "downtrend"
-        s1 = context.get("structure_m1", {}).get("trend", "neutral")
-        s5 = context.get("structure_m5", {}).get("trend", "neutral")
+        s1  = context.get("structure_m1", {}).get("trend", "neutral")
+        s5  = context.get("structure_m5", {}).get("trend", "neutral")
         s15 = context.get("structure_m15", {}).get("trend", "neutral")
+        opposite = "downtrend" if direction == "CALL" else "uptrend"
+        aligned  = sum(1 for s in [s1, s5, s15] if s == expected)
+        no_opp   = sum(1 for s in [s1, s5, s15] if s != opposite)
+        return aligned >= 2 or no_opp >= 2
 
-        aligned_count = sum(1 for s in [s1, s5, s15] if s == expected)
-        partial = sum(1 for s in [s1, s5, s15] if s != ("downtrend" if direction == "CALL" else "uptrend"))
-        return aligned_count >= 2 or partial >= 2
-
-    def _calculate_confidence(self, score: float, zone, context: Dict, pattern: Dict) -> float:
-        """Combina múltiples factores en un confidence final 0-1."""
-        base = score
-        zone_boost = zone.strength * 0.15
+    def _calculate_confidence(self, score: float, zone, context: Dict,
+                               pattern: Dict, timing: Dict = None) -> float:
+        base         = score
+        zone_boost   = zone.strength   * 0.12
         pattern_boost = pattern.get("strength", 0.5) * 0.10
-        quality_boost = context.get("setup_quality", 0.5) * 0.10
-        dir_boost = context.get("direction_confidence", 0.5) * 0.10
-
-        raw = base * 0.55 + zone_boost + pattern_boost + quality_boost + dir_boost
-        return min(0.96, max(0.50, raw))
+        quality_boost = context.get("setup_quality", 0.5) * 0.08
+        dir_boost     = context.get("direction_confidence", 0.5) * 0.08
+        timing_boost  = 0.05 if timing and timing.get("rejection_wick_pct", 0) >= 0.40 else 0.0
+        raw = base * 0.57 + zone_boost + pattern_boost + quality_boost + dir_boost + timing_boost
+        return min(0.95, max(0.50, raw))
 
     def _adaptive_expiration(self, context: Dict, pattern: Dict,
                               zone=None, conditions: Dict = None) -> Dict:
         """
-        Expiración adaptativa 1-5 minutos según la complejidad real del trade.
-
-        SIMPLE   (1 min)  → Todo alineado: zona fuerte ≥0.75, patrón potente,
-                            RSI extremo (<25/>75), MTF alineado, tendencia a favor.
-        MODERADO (2 min)  → Buena zona, patrón confirmado, MTF mayormente alineado.
-        NORMAL   (3 min)  → Señales mixtas pero coherentes. Zona sólida ≥0.55.
-        COMPLEJO (4 min)  → Zona parcial, RSI borderline, patrones moderados,
-                            contra-tendencia parcial.
-        MUY COMP (5 min)  → Zona débil, sin MTF, patrón moderado, mercado rango
-                            lento. El precio necesita más tiempo para moverse.
-
-        Devuelve dict con: seconds, minutes, label, complexity_score, reasons
+        Expiración adaptativa 1-5 minutos según complejidad real del trade.
+        Simple (todo alineado) → 1 min. Complejo (señales mixtas) → 5 min.
         """
-        conditions = conditions or {}
-        momentum   = context.get("momentum", {})
-        zone_ctx   = context.get("zone_context", {})
-        phase      = context.get("market_phase", "ranging")
+        conditions  = conditions or {}
+        momentum    = context.get("momentum", {})
+        zone_ctx    = context.get("zone_context", {})
+        phase       = context.get("market_phase", "ranging")
+        zone_str    = zone.strength if zone else zone_ctx.get("zone_strength", 0.5)
+        pattern_str = pattern.get("strength", 0.5)
+        pattern_name = pattern.get("pattern", "")
+        rsi          = momentum.get("rsi_m1", 50)
+        rsi_dist     = abs(rsi - 50)
+        trend_aligned = zone_ctx.get("trend_aligned", False)
+        mtf_aligned   = conditions.get("mtf_aligned", False)
+        dominant_trend = context.get("dominant_trend", "neutral")
 
-        zone_strength   = zone.strength if zone else zone_ctx.get("zone_strength", 0.5)
-        pattern_str     = pattern.get("strength", 0.5)
-        pattern_name    = pattern.get("pattern", "")
-        rsi             = momentum.get("rsi_m1", 50)
-        rsi_distance    = abs(rsi - 50)
-        trend_aligned   = zone_ctx.get("trend_aligned", False)
-        mtf_aligned     = conditions.get("mtf_aligned", False)
-        setup_quality   = context.get("setup_quality", 0.5)
-        dominant_trend  = context.get("dominant_trend", "neutral")
-
-        # ── Calcular puntuación de SIMPLICIDAD (0-100, mayor = más simple = menos tiempo) ──
         simplicity = 0.0
         reasons    = []
 
         # Zona (0-25 pts)
-        if zone_strength >= 0.80:
+        if zone_str >= 0.80:
             simplicity += 25; reasons.append("zona muy fuerte")
-        elif zone_strength >= 0.65:
+        elif zone_str >= 0.65:
             simplicity += 18; reasons.append("zona fuerte")
-        elif zone_strength >= 0.50:
+        elif zone_str >= 0.50:
             simplicity += 10; reasons.append("zona moderada")
         else:
             simplicity += 3;  reasons.append("zona débil")
 
-        # Patrón de vela (0-20 pts)
+        # Patrón (0-22 pts) — bonus por ser de vela cerrada siempre
         if pattern_name in ("morning_star", "evening_star"):
-            simplicity += 14; reasons.append("patrón 3 velas (star)")
-        elif pattern_name in ("bullish_engulfing", "bearish_engulfing"):
-            simplicity += 18; reasons.append("engulfing fuerte")
-        elif pattern_name in ("pin_bar_bullish", "pin_bar_bearish"):
-            if pattern_str >= 0.80:
-                simplicity += 20; reasons.append("pin bar potente")
-            else:
-                simplicity += 14; reasons.append("pin bar moderado")
+            simplicity += 15; reasons.append("star pattern (3 velas)")
+        elif "engulfing" in pattern_name:
+            simplicity += 19; reasons.append("engulfing fuerte")
+        elif "pin_bar" in pattern_name:
+            pts = 22 if pattern_str >= 0.85 else 16
+            simplicity += pts; reasons.append(f"pin bar {'potente' if pts==22 else 'moderado'}")
         elif pattern_name in ("hammer", "shooting_star"):
-            simplicity += 16; reasons.append("hammer/shooting star")
+            simplicity += 17; reasons.append("hammer/shooting star")
         elif "doji" in pattern_name:
-            simplicity += 8;  reasons.append("doji (ambiguo)")
+            simplicity += 8;  reasons.append("doji (ambiguo → +tiempo)")
         else:
             simplicity += 5
 
         # RSI (0-20 pts)
-        if rsi_distance >= 30:
+        if rsi_dist >= 30:
             simplicity += 20; reasons.append(f"RSI muy extremo ({rsi:.0f})")
-        elif rsi_distance >= 20:
+        elif rsi_dist >= 20:
             simplicity += 15; reasons.append(f"RSI extremo ({rsi:.0f})")
-        elif rsi_distance >= 12:
-            simplicity += 9;  reasons.append(f"RSI moderado ({rsi:.0f})")
+        elif rsi_dist >= 12:
+            simplicity += 9
         else:
-            simplicity += 3;  reasons.append(f"RSI neutro ({rsi:.0f})")
+            simplicity += 3;  reasons.append(f"RSI neutro ({rsi:.0f}) → +tiempo")
 
         # MTF alignment (0-18 pts)
         if mtf_aligned:
-            simplicity += 18; reasons.append("MTF alineado")
+            simplicity += 18; reasons.append("MTF alineados")
         else:
-            simplicity += 4
+            simplicity += 3
 
         # Tendencia (0-12 pts)
         if trend_aligned and dominant_trend in ("uptrend", "downtrend"):
-            simplicity += 12; reasons.append("con tendencia dominante")
+            simplicity += 12; reasons.append("con tendencia")
         elif trend_aligned:
-            simplicity += 7
+            simplicity += 6
         else:
-            simplicity += 0;  reasons.append("⚠ contra tendencia (+tiempo)")
+            reasons.append("contra tendencia → +tiempo")
 
-        # Fase del mercado (0-5 pts bono/malus)
+        # Fase (bono/malus)
         if phase in ("trending_up", "trending_down"):
             simplicity += 5;  reasons.append("mercado en tendencia")
         elif phase == "ranging":
-            simplicity -= 5;  reasons.append("mercado en rango (lento)")
+            simplicity -= 5
         elif phase == "dead":
-            simplicity -= 10; reasons.append("mercado muerto (muy lento)")
+            simplicity -= 12; reasons.append("mercado lento → +tiempo")
+
+        # Rechazo visible en timing (+5 bono)
+        if conditions.get("rejection_visible"):
+            simplicity += 5; reasons.append("rechazo visible en zona")
 
         simplicity = max(0.0, min(100.0, simplicity))
 
-        # ── Mapear simplicidad → minutos ──────────────────────────────────────
-        # Patrones de 3 velas necesitan al menos 2 min independientemente
+        # Star patterns necesitan mínimo 2 min
         min_floor = 2 if pattern_name.endswith("star") else 1
 
-        if simplicity >= 80:
-            minutes = 1
-            label   = "SIMPLE"
-            color   = "green"
-        elif simplicity >= 62:
-            minutes = 2
-            label   = "MODERADO"
-            color   = "cyan"
-        elif simplicity >= 44:
-            minutes = 3
-            label   = "NORMAL"
-            color   = "yellow"
-        elif simplicity >= 26:
-            minutes = 4
-            label   = "COMPLEJO"
-            color   = "dark_orange"
+        if simplicity >= 82:
+            minutes, label, color = 1, "SIMPLE",       "green"
+        elif simplicity >= 64:
+            minutes, label, color = 2, "MODERADO",     "cyan"
+        elif simplicity >= 46:
+            minutes, label, color = 3, "NORMAL",        "yellow"
+        elif simplicity >= 28:
+            minutes, label, color = 4, "COMPLEJO",      "dark_orange"
         else:
-            minutes = 5
-            label   = "MUY COMPLEJO"
-            color   = "red"
+            minutes, label, color = 5, "MUY COMPLEJO", "red"
 
         minutes = max(min_floor, minutes)
-        seconds = minutes * 60
 
         return {
-            "seconds":          seconds,
+            "seconds":          minutes * 60,
             "minutes":          minutes,
             "label":            label,
             "color":            color,
@@ -519,25 +747,28 @@ class IntelligentEngine:
         }
 
     def _build_reason(self, zone, context: Dict, pattern: Dict,
-                       conditions: Dict, exp_info: Dict = None) -> str:
-        parts = []
-        parts.append(f"Zona {zone.zone_type} {zone.level:.5f} (str={zone.strength:.2f}, {zone.touches}x)")
-        parts.append(f"Patrón: {pattern.get('pattern', '?')}")
-        trend = context.get("dominant_trend", "neutral")
-        parts.append(f"Tendencia: {trend}")
-        rsi = context.get("momentum", {}).get("rsi_m1", 50)
-        parts.append(f"RSI={rsi:.1f}")
+                       conditions: Dict, exp_info: Dict = None,
+                       timing: Dict = None) -> str:
+        parts = [
+            f"Zona {zone.zone_type} {zone.level:.5f} (str={zone.strength:.2f}, {zone.touches}x)",
+            f"Patrón: {pattern.get('pattern','?')} [vela cerrada]",
+            f"Tendencia: {context.get('dominant_trend','?')}",
+            f"RSI={context.get('momentum',{}).get('rsi_m1',50):.1f}",
+        ]
+        if timing:
+            parts.append(f"Rechazo={timing.get('rejection_wick_pct',0):.0%}")
         if exp_info:
-            parts.append(f"Exp: {exp_info['minutes']}min ({exp_info['label']})")
+            parts.append(f"Exp: {exp_info['minutes']}min [{exp_info['label']}]")
         return " | ".join(parts)
 
-    def _top_missing_conditions(self, conditions: Dict, weights: Dict, n: int = 3) -> str:
+    def _top_missing(self, conditions: Dict, weights: Dict, n: int = 3) -> str:
         missing = [(k, weights.get(k, 1.0)) for k, v in conditions.items()
                    if not v and weights.get(k, 1.0) > 0.8]
         missing.sort(key=lambda x: -x[1])
-        return ", ".join([k for k, _ in missing[:n]]) or "score_bajo"
+        return ", ".join(k for k, _ in missing[:n]) or "score_bajo"
 
-    def _wait(self, reason: str, asset: str, context: Dict = None, zone=None) -> Dict:
+    def _wait(self, reason: str, asset: str,
+               context: Dict = None, zone=None) -> Dict:
         return {
             "asset": asset,
             "action": "WAIT",

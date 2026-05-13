@@ -530,12 +530,22 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
             rm.update_balance(state["balance"], {"profit": pnl})
 
             # ── Auto-evaluación y aprendizaje ──
+            # Capturar velas DESPUÉS del trade para detectar entrada prematura
+            df_after = None
+            try:
+                df_after = market_data.get_candles(asset, 60, 20)
+            except Exception:
+                pass
+
             trade_record = {
                 "asset": asset, "direction": direction, "amount": amount,
                 "confidence": confidence, "result": result, "pnl": pnl,
                 "pattern": pattern, "order_id": str(order_id),
+                "entry_price": signal.get("zone", 0.0) or amount,
+                "expiration_minutes": signal.get("expiration_minutes", duration),
             }
-            diagnosis = evaluator.evaluate(trade_record, context, conditions)
+            diagnosis = evaluator.evaluate(trade_record, context, conditions,
+                                           df_m1_after=df_after)
             learner.learn_from_trade(conditions, result, diagnosis)
             state["last_diagnosis"] = evaluator.format_for_display(diagnosis)
 
