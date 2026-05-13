@@ -291,7 +291,9 @@ class IntelligentEngine:
                 confidence = self._calculate_confidence(
                     final_score, nearest_zone, context, pattern
                 )
-                expiration = self._adaptive_expiration(context, pattern)
+                exp_info = self._adaptive_expiration(
+                    context, pattern, zone=nearest_zone, conditions=conditions
+                )
 
                 return {
                     "asset": asset,
@@ -299,8 +301,13 @@ class IntelligentEngine:
                     "signal": expected_dir,
                     "score": final_score * 100,
                     "confidence": confidence,
-                    "expiration": expiration,
-                    "reason": self._build_reason(nearest_zone, context, pattern, conditions),
+                    "expiration": exp_info["seconds"],
+                    "expiration_minutes": exp_info["minutes"],
+                    "expiration_label": exp_info["label"],
+                    "expiration_color": exp_info["color"],
+                    "complexity_score": exp_info["complexity_score"],
+                    "expiration_reasons": exp_info["reasons"],
+                    "reason": self._build_reason(nearest_zone, context, pattern, conditions, exp_info),
                     "phase": phase,
                     "zone": nearest_zone.level,
                     "zone_strength": nearest_zone.strength,
@@ -377,27 +384,151 @@ class IntelligentEngine:
         raw = base * 0.55 + zone_boost + pattern_boost + quality_boost + dir_boost
         return min(0.96, max(0.50, raw))
 
-    def _adaptive_expiration(self, context: Dict, pattern: Dict) -> int:
-        """Expiración en segundos adaptada al contexto."""
-        base = 60
-        mtf_aligned = self._check_mtf_alignment(context, context.get("expected_direction", "CALL"))
-        if mtf_aligned:
-            base = 120  # más confirmación → más tiempo
-        if pattern.get("pattern", "").endswith("star"):
-            base = max(base, 120)  # patterns de 3 velas → expiración más larga
-        phase = context.get("market_phase", "ranging")
-        if phase in ("trending_up", "trending_down"):
-            base = 60   # en tendencia, reversiones son rápidas
-        return base
+    def _adaptive_expiration(self, context: Dict, pattern: Dict,
+                              zone=None, conditions: Dict = None) -> Dict:
+        """
+        Expiración adaptativa 1-5 minutos según la complejidad real del trade.
 
-    def _build_reason(self, zone, context: Dict, pattern: Dict, conditions: Dict) -> str:
+        SIMPLE   (1 min)  → Todo alineado: zona fuerte ≥0.75, patrón potente,
+                            RSI extremo (<25/>75), MTF alineado, tendencia a favor.
+        MODERADO (2 min)  → Buena zona, patrón confirmado, MTF mayormente alineado.
+        NORMAL   (3 min)  → Señales mixtas pero coherentes. Zona sólida ≥0.55.
+        COMPLEJO (4 min)  → Zona parcial, RSI borderline, patrones moderados,
+                            contra-tendencia parcial.
+        MUY COMP (5 min)  → Zona débil, sin MTF, patrón moderado, mercado rango
+                            lento. El precio necesita más tiempo para moverse.
+
+        Devuelve dict con: seconds, minutes, label, complexity_score, reasons
+        """
+        conditions = conditions or {}
+        momentum   = context.get("momentum", {})
+        zone_ctx   = context.get("zone_context", {})
+        phase      = context.get("market_phase", "ranging")
+
+        zone_strength   = zone.strength if zone else zone_ctx.get("zone_strength", 0.5)
+        pattern_str     = pattern.get("strength", 0.5)
+        pattern_name    = pattern.get("pattern", "")
+        rsi             = momentum.get("rsi_m1", 50)
+        rsi_distance    = abs(rsi - 50)
+        trend_aligned   = zone_ctx.get("trend_aligned", False)
+        mtf_aligned     = conditions.get("mtf_aligned", False)
+        setup_quality   = context.get("setup_quality", 0.5)
+        dominant_trend  = context.get("dominant_trend", "neutral")
+
+        # ── Calcular puntuación de SIMPLICIDAD (0-100, mayor = más simple = menos tiempo) ──
+        simplicity = 0.0
+        reasons    = []
+
+        # Zona (0-25 pts)
+        if zone_strength >= 0.80:
+            simplicity += 25; reasons.append("zona muy fuerte")
+        elif zone_strength >= 0.65:
+            simplicity += 18; reasons.append("zona fuerte")
+        elif zone_strength >= 0.50:
+            simplicity += 10; reasons.append("zona moderada")
+        else:
+            simplicity += 3;  reasons.append("zona débil")
+
+        # Patrón de vela (0-20 pts)
+        if pattern_name in ("morning_star", "evening_star"):
+            simplicity += 14; reasons.append("patrón 3 velas (star)")
+        elif pattern_name in ("bullish_engulfing", "bearish_engulfing"):
+            simplicity += 18; reasons.append("engulfing fuerte")
+        elif pattern_name in ("pin_bar_bullish", "pin_bar_bearish"):
+            if pattern_str >= 0.80:
+                simplicity += 20; reasons.append("pin bar potente")
+            else:
+                simplicity += 14; reasons.append("pin bar moderado")
+        elif pattern_name in ("hammer", "shooting_star"):
+            simplicity += 16; reasons.append("hammer/shooting star")
+        elif "doji" in pattern_name:
+            simplicity += 8;  reasons.append("doji (ambiguo)")
+        else:
+            simplicity += 5
+
+        # RSI (0-20 pts)
+        if rsi_distance >= 30:
+            simplicity += 20; reasons.append(f"RSI muy extremo ({rsi:.0f})")
+        elif rsi_distance >= 20:
+            simplicity += 15; reasons.append(f"RSI extremo ({rsi:.0f})")
+        elif rsi_distance >= 12:
+            simplicity += 9;  reasons.append(f"RSI moderado ({rsi:.0f})")
+        else:
+            simplicity += 3;  reasons.append(f"RSI neutro ({rsi:.0f})")
+
+        # MTF alignment (0-18 pts)
+        if mtf_aligned:
+            simplicity += 18; reasons.append("MTF alineado")
+        else:
+            simplicity += 4
+
+        # Tendencia (0-12 pts)
+        if trend_aligned and dominant_trend in ("uptrend", "downtrend"):
+            simplicity += 12; reasons.append("con tendencia dominante")
+        elif trend_aligned:
+            simplicity += 7
+        else:
+            simplicity += 0;  reasons.append("⚠ contra tendencia (+tiempo)")
+
+        # Fase del mercado (0-5 pts bono/malus)
+        if phase in ("trending_up", "trending_down"):
+            simplicity += 5;  reasons.append("mercado en tendencia")
+        elif phase == "ranging":
+            simplicity -= 5;  reasons.append("mercado en rango (lento)")
+        elif phase == "dead":
+            simplicity -= 10; reasons.append("mercado muerto (muy lento)")
+
+        simplicity = max(0.0, min(100.0, simplicity))
+
+        # ── Mapear simplicidad → minutos ──────────────────────────────────────
+        # Patrones de 3 velas necesitan al menos 2 min independientemente
+        min_floor = 2 if pattern_name.endswith("star") else 1
+
+        if simplicity >= 80:
+            minutes = 1
+            label   = "SIMPLE"
+            color   = "green"
+        elif simplicity >= 62:
+            minutes = 2
+            label   = "MODERADO"
+            color   = "cyan"
+        elif simplicity >= 44:
+            minutes = 3
+            label   = "NORMAL"
+            color   = "yellow"
+        elif simplicity >= 26:
+            minutes = 4
+            label   = "COMPLEJO"
+            color   = "dark_orange"
+        else:
+            minutes = 5
+            label   = "MUY COMPLEJO"
+            color   = "red"
+
+        minutes = max(min_floor, minutes)
+        seconds = minutes * 60
+
+        return {
+            "seconds":          seconds,
+            "minutes":          minutes,
+            "label":            label,
+            "color":            color,
+            "complexity_score": round(100 - simplicity, 1),
+            "simplicity_score": round(simplicity, 1),
+            "reasons":          reasons,
+        }
+
+    def _build_reason(self, zone, context: Dict, pattern: Dict,
+                       conditions: Dict, exp_info: Dict = None) -> str:
         parts = []
-        parts.append(f"Zona {zone.zone_type} {zone.level:.5f} (strength={zone.strength:.2f}, {zone.touches}x)")
-        parts.append(f"Patrón: {pattern.get('pattern', 'desconocido')}")
+        parts.append(f"Zona {zone.zone_type} {zone.level:.5f} (str={zone.strength:.2f}, {zone.touches}x)")
+        parts.append(f"Patrón: {pattern.get('pattern', '?')}")
         trend = context.get("dominant_trend", "neutral")
         parts.append(f"Tendencia: {trend}")
         rsi = context.get("momentum", {}).get("rsi_m1", 50)
         parts.append(f"RSI={rsi:.1f}")
+        if exp_info:
+            parts.append(f"Exp: {exp_info['minutes']}min ({exp_info['label']})")
         return " | ".join(parts)
 
     def _top_missing_conditions(self, conditions: Dict, weights: Dict, n: int = 3) -> str:

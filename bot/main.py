@@ -122,32 +122,46 @@ def make_signal_panel() -> Panel:
     sig = state.get("last_signal", {})
     table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold dim",
                   expand=True, padding=(0,1))
-    table.add_column("Activo", width=13)
-    table.add_column("Señal", width=8, justify="center")
-    table.add_column("Acción", width=9, justify="center")
-    table.add_column("Score", width=7, justify="center")
-    table.add_column("Conf.", width=7, justify="center")
+    table.add_column("Activo", width=12)
+    table.add_column("Señal", width=7, justify="center")
+    table.add_column("Acción", width=8, justify="center")
+    table.add_column("Score", width=6, justify="center")
+    table.add_column("Conf.", width=6, justify="center")
     table.add_column("Zona", width=10, justify="center")
-    table.add_column("Z.Str", width=7, justify="center")
-    table.add_column("Patrón", width=14)
-    table.add_column("Fase", width=12)
+    table.add_column("Z.Str", width=6, justify="center")
+    table.add_column("Patrón", width=13)
+    table.add_column("Exp.", width=12, justify="center")
+    table.add_column("Complejidad", width=13, justify="center")
     table.add_column("Razón", ratio=1)
 
     if sig:
-        s_dir = sig.get("signal", "NEUTRAL")
-        s_col = "green" if s_dir == "CALL" else "red" if s_dir == "PUT" else "dim"
-        act = sig.get("action", "WAIT")
-        a_col = "bold green" if act == "TRADE" else "dim"
-        score = sig.get("score", 0)
+        s_dir  = sig.get("signal", "NEUTRAL")
+        s_col  = "green" if s_dir == "CALL" else "red" if s_dir == "PUT" else "dim"
+        act    = sig.get("action", "WAIT")
+        a_col  = "bold green" if act == "TRADE" else "dim"
+        score  = sig.get("score", 0)
         sc_col = "green" if score >= 75 else "yellow" if score >= 55 else "red"
         zone_str = f"{sig.get('zone', 0):.5f}" if sig.get("zone") else "---"
-        zs = sig.get("zone_strength", 0)
+        zs     = sig.get("zone_strength", 0)
         zs_col = "green" if zs >= 0.7 else "yellow" if zs >= 0.5 else "red"
         pattern = sig.get("pattern", "---") or "---"
-        reason = (sig.get("reason", "") or "")[:60]
+        reason  = (sig.get("reason", "") or "")[:55]
+
+        # Expiración y complejidad
+        exp_min   = sig.get("expiration_minutes", 0)
+        exp_label = sig.get("expiration_label", "")
+        exp_color = sig.get("expiration_color", "dim")
+        cplx      = sig.get("complexity_score", 0)
+
+        if exp_min > 0:
+            exp_str  = f"[{exp_color}]{exp_min} min[/{exp_color}]"
+            cplx_str = f"[{exp_color}]{exp_label}[/{exp_color}]"
+        else:
+            exp_str  = "[dim]---[/dim]"
+            cplx_str = "[dim]---[/dim]"
 
         table.add_row(
-            sig.get("asset", ""), 
+            sig.get("asset", ""),
             f"[{s_col}]{s_dir}[/{s_col}]",
             f"[{a_col}]{act}[/{a_col}]",
             f"[{sc_col}]{score:.0f}[/{sc_col}]",
@@ -155,11 +169,12 @@ def make_signal_panel() -> Panel:
             zone_str,
             f"[{zs_col}]{zs:.2f}[/{zs_col}]",
             f"[cyan]{pattern}[/cyan]",
-            sig.get("phase", ""),
+            exp_str,
+            cplx_str,
             f"[dim]{reason}[/dim]",
         )
     else:
-        table.add_row("[dim]---[/dim]", "", "", "", "", "", "", "", "[dim]Escaneando...[/dim]", "")
+        table.add_row("[dim]---[/dim]", "", "", "", "", "", "", "", "", "", "[dim]Escaneando...[/dim]")
 
     return Panel(table, title="[bold]Última Señal Analizada[/bold]", border_style="magenta", padding=(0,1))
 
@@ -472,9 +487,12 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
     zone_obj   = signal.get("zone_object")
 
     action_str = "call" if direction == "CALL" else "put"
-    duration   = max(1, expiration // 60)
+    duration   = max(1, min(5, expiration // 60))
 
-    log(f"ENTRANDO: {asset} {direction} ${amount:.2f} | {pattern} | zona={zone_str:.2f} | conf={confidence*100:.0f}%", "SIGNAL")
+    exp_min   = signal.get("expiration_minutes", expiration // 60)
+    exp_label = signal.get("expiration_label", "NORMAL")
+    cplx      = signal.get("complexity_score", 50)
+    log(f"ENTRANDO: {asset} {direction} ${amount:.2f} | {pattern} | zona={zone_str:.2f} | conf={confidence*100:.0f}% | {exp_min}min [{exp_label}] cplx={cplx:.0f}", "SIGNAL")
     state["status"] = "OPERANDO"
     state["last_trade_time"] = time.time()
 
