@@ -385,10 +385,10 @@ class IntelligentEngine:
                 self._last_zone_scan[asset] = time.time()
 
             # ── 3. ¿Está el precio EN una zona fuerte? ───────────────────────
-            # Tolerancia 0.20% — lo suficientemente preciso sin ser demasiado estricto
+            # Tolerancia 0.50% — OPTIMIZADO: era 0.20% (demasiado estricto)
             min_zone_strength = self.learner.get_threshold("min_zone_strength", 0.35)
             nearest_zone = self.memory.get_nearest_strong_zone(
-                asset, current_price, tolerance_pct=0.0020
+                asset, current_price, tolerance_pct=0.0050  # OPTIMIZADO: era 0.0020
             )
             zone_context_summary = self.memory.get_zone_context(asset, current_price)
 
@@ -539,37 +539,37 @@ class IntelligentEngine:
             # Penalizaciones suaves (no duras) — solo reducen puntaje
             soft_penalties = 0.0
             if not zone_ctx.get("trend_aligned", True):
-                soft_penalties += 0.07   # Reducido: contra-tendencia penaliza menos
+                soft_penalties += 0.05   # Optimizado: era 0.07 (menos penalización)
             if rsi_dist < self.learner.get_threshold("min_rsi_distance", 8.0):
-                soft_penalties += 0.04
+                soft_penalties += 0.03   # Optimizado: era 0.04
             if nearest_zone.hold_rate < self.learner.get_threshold("min_zone_hold_rate", 0.45):
-                soft_penalties += 0.05
+                soft_penalties += 0.03   # Optimizado: era 0.05
             if not timing["valid"]:
-                soft_penalties += 0.06   # Timing imperfecto penaliza pero no bloquea
+                soft_penalties += 0.04   # Optimizado: era 0.06 (timing menos crítico)
 
             adaptive_adjusted = max(0.0, adaptive_score - soft_penalties)
 
-            # Combinación: 50% AdaptiveLearner + 50% MarketAI
+            # Combinación: 40% AdaptiveLearner + 60% MarketAI (más peso a IA)
             ai_normalized = ai_score / 100.0
-            final_score = adaptive_adjusted * 0.50 + ai_normalized * 0.50
+            final_score = adaptive_adjusted * 0.40 + ai_normalized * 0.60
 
             # ── 10. Decisión final ────────────────────────────────────────────
-            # Umbral dinámico: si la IA dice EXCELENTE o BUENO, bajar el mínimo
-            effective_min = min_score
+            # Umbral dinámico: más permisivo en general
+            effective_min = min_score * 0.85  # Optimizado: reducir threshold 15%
             if ai_label in ("EXCELENTE", "BUENO"):
-                effective_min = max(0.35, min_score - 0.08)
+                effective_min = max(0.30, min_score - 0.12)  # Optimizado: era 0.35 y -0.08
             elif ai_label == "MODERADO":
-                effective_min = min_score
+                effective_min = min_score * 0.90  # Optimizado: reducir 10%
             elif ai_label in ("DÉBIL",):
-                effective_min = min(min_score + 0.05, 0.75)
+                effective_min = min(min_score + 0.03, 0.70)  # Optimizado: era +0.05 y 0.75
 
             # Si la IA dice "debe operar" y el score combinado es razonable, proceder
-            if final_score >= effective_min or (ai_should and final_score >= 0.38):
+            if final_score >= effective_min or (ai_should and final_score >= 0.35):  # Optimizado: era 0.38
                 confidence = self._calculate_confidence(
                     final_score, nearest_zone, context, pattern, timing
                 )
-                # Mezclar confianza con la de la IA
-                confidence = confidence * 0.6 + ai_conf * 0.4
+                # Mezclar confianza con la de la IA (más peso a IA)
+                confidence = confidence * 0.50 + ai_conf * 0.50  # Optimizado: era 0.6 y 0.4
 
                 exp_info = self._adaptive_expiration(
                     context, pattern, zone=nearest_zone, conditions=conditions

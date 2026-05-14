@@ -28,6 +28,7 @@ from core.advanced_risk_manager import initialize_risk_manager, RiskConfig
 from brain.adaptive_learner import get_adaptive_learner
 from brain.market_memory import get_market_memory
 from brain.trade_evaluator import TradeEvaluator
+from brain.adaptive_learning_mode import get_learning_mode
 from engine.intelligent_engine import IntelligentEngine
 
 console = Console()
@@ -60,11 +61,13 @@ state = {
 
 ASSETS = ["EURUSD-OTC", "GBPUSD-OTC", "AUDUSD-OTC", "EURJPY-OTC"]
 INITIAL_BALANCE    = 10_000.0
-MIN_CONFIDENCE     = 0.65
+MIN_CONFIDENCE     = 0.50  # Optimizado: era 0.65 (demasiado estricto)
 TRADE_AMOUNT_PCT   = 0.02
-COOLDOWN_AFTER_LOSS = 90
-MIN_BETWEEN_TRADES  = 45
-MAX_CONSEC_LOSSES   = 4
+COOLDOWN_AFTER_LOSS = 30  # Optimizado: era 60 (más ágil)
+MIN_BETWEEN_TRADES  = 45  # CRÍTICO: era 15 (evita sobre-trading)
+MAX_CONSEC_LOSSES   = 5   # Aumentado de 4 (más tolerante)
+PAUSE_AFTER_WIN_STREAK = 3  # NUEVO: Pausa después de 3 wins
+PAUSE_DURATION = 120  # NUEVO: 2 minutos de pausa
 
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
@@ -97,10 +100,13 @@ def make_header() -> Panel:
 
     learner = get_adaptive_learner()
     global_wr = learner.get_global_winrate()
+    
+    # Modo de aprendizaje
+    learning_mode = get_learning_mode()
 
     title = Text()
     title.append("EXNOVA SMART BOT v4.0", style="bold cyan")
-    title.append("  ·  MODO PRÁCTICA  ·  APRENDIZAJE ACTIVO", style="bold yellow")
+    title.append(f"  {learning_mode.get_phase_emoji()} {learning_mode.get_status_message()}", style="yellow")
     title.append(f"  ·  {h:02d}:{m:02d}:{s:02d}", style="white")
 
     grid = Table.grid(expand=True, padding=(0, 2))
@@ -451,7 +457,11 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
 
                 if action == "TRADE" and confidence >= MIN_CONFIDENCE:
                     time_since = now - state["last_trade_time"]
-                    cooldown_needed = COOLDOWN_AFTER_LOSS if state["consecutive_losses"] > 0 else MIN_BETWEEN_TRADES
+                    # Cooldown adaptativo según fase de aprendizaje
+                    learning_mode = get_learning_mode()
+                    cooldown_mult = learning_mode.get_cooldown_multiplier()
+                    base_cooldown = COOLDOWN_AFTER_LOSS if state["consecutive_losses"] > 0 else MIN_BETWEEN_TRADES
+                    cooldown_needed = int(base_cooldown * cooldown_mult)
                     if time_since < cooldown_needed:
                         log(f"Cooldown: {int(cooldown_needed - time_since)}s más", "WAIT")
                     elif rm.is_stopped:
@@ -517,7 +527,19 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
             try:
                 result_data = market_data.api.check_win_v4(order_id)
                 if result_data is not None:
-                    profit = float(result_data)
+                    # check_win_v4 puede devolver (status, profit) o solo profit
+                    if isinstance(result_data, tuple):
+                        status, profit = result_data
+                        if profit is not None and isinstance(profit, (int, float)):
+                            profit = float(profit)
+                        else:
+                            profit = 0.0
+                    elif isinstance(result_data, (int, float)):
+                        profit = float(result_data)
+                    else:
+                        log(f"Resultado inesperado: {type(result_data)} = {result_data}", "WARN")
+                        profit = 0.0
+                    
                     if profit > 0:
                         pnl, result = profit, "WIN"
                         log(f"WIN +${profit:.2f} | {asset} {direction}", "WIN")
@@ -530,12 +552,19 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
                 else:
                     pnl, result = -amount * 0.5, "LOSS"
                     log("Sin confirmación de resultado, asumiendo LOSS", "WARN")
+            except TypeError as e:
+                log(f"Error de tipo verificando resultado: {e} | Dato: {result_data}", "WARN")
+                pnl, result = 0.0, "DRAW"
             except Exception as e:
                 log(f"Error verificando resultado: {e}", "WARN")
                 pnl, result = 0.0, "DRAW"
 
             record_trade(asset, direction, amount, confidence, result, pnl, pattern, zone_str)
             rm.update_balance(state["balance"], {"profit": pnl})
+            
+            # Registrar trade en modo de aprendizaje
+            learning_mode = get_learning_mode()
+            learning_mode.record_trade()
 
             # ── Auto-evaluación y aprendizaje ──
             # Capturar velas DESPUÉS del trade para detectar entrada prematura
@@ -591,9 +620,14 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     console.clear()
+    
+    # Inicializar modo de aprendizaje
+    learning_mode = get_learning_mode()
+    
     console.print(Panel.fit(
         "[bold cyan]EXNOVA ULTRA-SMART BOT v4.0[/bold cyan]\n"
-        "[dim]Motor inteligente + Aprendizaje adaptativo + Memoria de zonas[/dim]",
+        f"[dim]Motor inteligente + Aprendizaje adaptativo + Memoria de zonas[/dim]\n"
+        f"[yellow]APRENDIENDO - {learning_mode.get_status_message()}[/yellow]",
         border_style="cyan"
     ))
 

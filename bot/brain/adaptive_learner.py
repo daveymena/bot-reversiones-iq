@@ -53,11 +53,11 @@ class AdaptiveLearner:
     }
 
     DEFAULT_THRESHOLDS = {
-        "min_zone_strength": 0.40,
-        "min_rsi_distance": 15.0,       # cuánto debe alejarse el RSI de 50
-        "min_zone_hold_rate": 0.55,
-        "min_setup_quality": 0.50,
-        "min_score_to_trade": 0.62,
+        "min_zone_strength": 0.35,      # Optimizado: era 0.40
+        "min_rsi_distance": 10.0,       # Optimizado: era 15.0 (más permisivo)
+        "min_zone_hold_rate": 0.50,     # Optimizado: era 0.55
+        "min_setup_quality": 0.40,      # Optimizado: era 0.50
+        "min_score_to_trade": 0.50,     # Optimizado: era 0.62 (crítico)
     }
 
     def __init__(self, persist_path: str = "brain/learning_state.json"):
