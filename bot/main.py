@@ -605,7 +605,16 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
                         rejection = f"Risk Manager: {rm.stop_reason}"
                         log(rejection, "WARN")
                     else:
-                        amount = rm.calculate_position_size(confidence=confidence)
+                        base_amount = rm.calculate_position_size(confidence=confidence)
+                        user_amount = os.environ.get("TRADE_AMOUNT")
+                        if user_amount:
+                            try:
+                                amount = float(user_amount)
+                            except ValueError:
+                                amount = base_amount
+                        else:
+                            amount = base_amount
+                            
                         if amount > 0:
                             executed = execute_trade(market_data, rm, signal, amount, learner, memory, evaluator, agent)
                             if executed:
@@ -655,6 +664,13 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator, a
 
     action_str = "call" if direction == "CALL" else "put"
     duration   = max(1, min(5, expiration // 60))
+    user_exp   = os.environ.get("EXPIRATION_MINUTES")
+    if user_exp:
+        try:
+            duration = int(user_exp)
+            expiration = duration * 60
+        except ValueError:
+            pass
 
     exp_min   = signal.get("expiration_minutes", expiration // 60)
     exp_label = signal.get("expiration_label", "NORMAL")
@@ -818,10 +834,27 @@ def signal_handler(sig, frame):
     state["running"] = False
 
 
+def interactive_setup():
+    """Wrapper que llama al menú interactivo profesional del módulo setup_menu."""
+    global ASSETS
+    try:
+        from setup_menu import run_setup
+        config = run_setup(current_assets=ASSETS)
+        if config.get("assets"):
+            ASSETS = config["assets"]
+    except ImportError:
+        # Si questionary o setup_menu no están disponibles, continuar sin menú
+        pass
+    except Exception as e:
+        console.print(f"[yellow]! Error en setup interactivo: {e}[/yellow]")
+
+
 def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    interactive_setup()
+    
     console.clear()
     
     # Inicializar modo de aprendizaje
