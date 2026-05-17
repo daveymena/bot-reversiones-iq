@@ -162,9 +162,9 @@ class MarketMemory:
         return [z for _, z in nearby]
 
     def get_nearest_strong_zone(self, asset: str, price: float,
-                                 tolerance_pct: float = 0.003) -> Optional[Zone]:
-        """La zona más cercana y fuerte al precio actual."""
-        candidates = self.get_zones_near_price(asset, price, tolerance_pct, min_strength=0.4)
+                                 tolerance_pct: float = 0.005) -> Optional[Zone]:
+        """La zona mas cercana y fuerte al precio actual."""
+        candidates = self.get_zones_near_price(asset, price, tolerance_pct, min_strength=0.3)
         if not candidates:
             return None
         return max(candidates, key=lambda z: z.strength)

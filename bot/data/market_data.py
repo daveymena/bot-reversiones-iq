@@ -39,10 +39,23 @@ class MarketDataHandler:
                 self.api = Exnova(email, password, active_account_type=self.account_type)
                 check, reason = self.api.connect()
                 if check and self.api.check_connect():
+                    # Actualizar activos con timeout (opcional, no crítico)
                     try:
-                        self.api.update_ACTIVES_OPCODE()
-                    except Exception:
-                        pass
+                        import threading
+                        def update_actives():
+                            try:
+                                self.api.update_ACTIVES_OPCODE()
+                            except:
+                                pass
+                        
+                        thread = threading.Thread(target=update_actives, daemon=True)
+                        thread.start()
+                        thread.join(timeout=5)  # Timeout de 5 segundos
+                        if thread.is_alive():
+                            print("  [WARN] Timeout actualizando activos (continuando de todos modos)")
+                    except Exception as e:
+                        print(f"  [WARN] Error actualizando activos: {e}")
+                    
                     self.connected = True
                     print(f"  [OK] Conectado a EXNOVA ({self.account_type})")
                 else:

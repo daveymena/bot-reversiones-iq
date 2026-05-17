@@ -57,31 +57,42 @@ state = {
     "zones_by_asset": {},
     "learning_summary": "Acumulando datos...",
     "last_zone_info": "",
+    "last_trade_by_asset": {},
+    "rejection_stats": {},
+    "trades_today": 0,
+    "trades_this_hour": 0,
 }
 
 ASSETS = ["EURUSD-OTC", "GBPUSD-OTC", "AUDUSD-OTC", "EURJPY-OTC"]
 INITIAL_BALANCE    = 10_000.0
-MIN_CONFIDENCE     = 0.50  # Optimizado: era 0.65 (demasiado estricto)
+MIN_CONFIDENCE     = 0.50
 TRADE_AMOUNT_PCT   = 0.02
-COOLDOWN_AFTER_LOSS = 30  # Optimizado: era 60 (más ágil)
-MIN_BETWEEN_TRADES  = 45  # CRÍTICO: era 15 (evita sobre-trading)
-MAX_CONSEC_LOSSES   = 5   # Aumentado de 4 (más tolerante)
-PAUSE_AFTER_WIN_STREAK = 3  # NUEVO: Pausa después de 3 wins
-PAUSE_DURATION = 120  # NUEVO: 2 minutos de pausa
+COOLDOWN_AFTER_LOSS = 30
+MIN_BETWEEN_TRADES  = 45
+MIN_BETWEEN_SAME_ASSET = 180  # 3 min entre trades del mismo activo
+MAX_CONSEC_LOSSES   = 5
+PAUSE_AFTER_WIN_STREAK = 3
+PAUSE_DURATION = 120
 
 
-# ─── Logging ─────────────────────────────────────────────────────────────────
+# ─── Logging (ASCII-safe, sin emojis para Windows) ───────────────────────────
 
 def log(msg: str, level: str = "INFO"):
     now = datetime.now().strftime("%H:%M:%S")
-    icons  = {"INFO":"●","WIN":"✔","LOSS":"✘","WARN":"⚠","ERROR":"✖",
-              "SIGNAL":"▶","WAIT":"◌","LEARN":"◈","ZONE":"◆"}
+    icons  = {"INFO":"*","WIN":"+","LOSS":"-","WARN":"!","ERROR":"X",
+              "SIGNAL":">","WAIT":".","LEARN":"@","ZONE":"#"}
     colors = {"INFO":"white","WIN":"green","LOSS":"red","WARN":"yellow",
               "ERROR":"bright_red","SIGNAL":"cyan","WAIT":"dim",
               "LEARN":"magenta","ZONE":"blue"}
-    icon  = icons.get(level, "●")
+    icon  = icons.get(level, "*")
     color = colors.get(level, "white")
     state["log"].append(f"[{now}] [{color}]{icon} {msg}[/{color}]")
+    # Also print to stdout for non-Rich log capture
+    plain = f"[{now}] [{level}] {msg}"
+    try:
+        print(plain)
+    except:
+        pass
 
 
 # ─── Paneles del dashboard ────────────────────────────────────────────────────
@@ -330,6 +341,12 @@ def make_risk_panel() -> Panel:
     grid.add_row("[dim]Pérd. seguidas[/dim]",
                  f"[{'red' if state['consecutive_losses']>=3 else 'white'}]{state['consecutive_losses']}[/]")
     grid.add_row("[dim]Ciclo[/dim]", str(state["cycle"]))
+    grid.add_row("", "")
+    # Top rejection reasons
+    rej = state.get("rejection_stats", {})
+    sorted_rej = sorted(rej.items(), key=lambda x: -x[1])[:3]
+    for cause, count in sorted_rej:
+        grid.add_row(f"[dim]R: {cause}[/dim]", f"[yellow]{count}[/yellow]")
     return Panel(grid, title="[bold]Riesgo[/bold]", border_style="yellow", padding=(0,1))
 
 
@@ -420,11 +437,23 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
 
     asset_idx = 0
     last_reconnect = time.time()
+    last_day_check = time.time()
+    day_trades = 0
+    hour_trades = deque(maxlen=360)  # trades en última hora
 
     while state["running"]:
         try:
             state["cycle"] += 1
             now = time.time()
+
+            # Reset contador diario
+            if now - last_day_check > 86400:
+                day_trades = 0
+                last_day_check = now
+
+            # Limpiar trades de la última hora
+            while hour_trades and now - hour_trades[0] > 3600:
+                hour_trades.popleft()
 
             # Reconexión periódica
             if now - last_reconnect > 240:
@@ -436,9 +465,24 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
             # Cooldown por pérdidas consecutivas
             if state["consecutive_losses"] >= MAX_CONSEC_LOSSES:
                 state["status"] = "PAUSA_RIESGO"
-                log(f"PAUSA: {state['consecutive_losses']} pérdidas seguidas. Esperando 5 min.", "WARN")
+                log(f"PAUSA: {state['consecutive_losses']} perdidas seguidas. Esperando 5 min.", "WARN")
                 time.sleep(300)
                 state["consecutive_losses"] = 0
+                continue
+
+            # Pausa después de racha ganadora
+            if state["current_streak"] >= PAUSE_AFTER_WIN_STREAK:
+                state["status"] = "PAUSA_WIN_STREAK"
+                log(f"Pausa post-racha: {state['current_streak']} wins seguidos. Esperando {PAUSE_DURATION}s.", "INFO")
+                time.sleep(PAUSE_DURATION)
+                state["current_streak"] = 0
+                continue
+
+            # Límite diario de trades
+            if day_trades >= 40:
+                state["status"] = "PAUSA_DIARIA"
+                log("Limite diario de 40 trades alcanzado. Esperando al siguiente dia.", "WARN")
+                time.sleep(3600)
                 continue
 
             asset = ASSETS[asset_idx % len(ASSETS)]
@@ -456,20 +500,46 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
                 score      = signal.get("score", 0)
 
                 if action == "TRADE" and confidence >= MIN_CONFIDENCE:
-                    time_since = now - state["last_trade_time"]
-                    # Cooldown adaptativo según fase de aprendizaje
+                    time_since_last = now - state["last_trade_time"]
                     learning_mode = get_learning_mode()
                     cooldown_mult = learning_mode.get_cooldown_multiplier()
                     base_cooldown = COOLDOWN_AFTER_LOSS if state["consecutive_losses"] > 0 else MIN_BETWEEN_TRADES
                     cooldown_needed = int(base_cooldown * cooldown_mult)
-                    if time_since < cooldown_needed:
-                        log(f"Cooldown: {int(cooldown_needed - time_since)}s más", "WAIT")
+
+                    # Per-asset cooldown
+                    last_asset_trade = state["last_trade_by_asset"].get(asset, 0)
+                    time_since_asset = now - last_asset_trade
+
+                    rejection = None
+                    if time_since_last < cooldown_needed:
+                        rejection = f"Cooldown global: {int(cooldown_needed - time_since_last)}s restantes"
+                        log(rejection, "WAIT")
+                    elif time_since_asset < MIN_BETWEEN_SAME_ASSET:
+                        rejection = f"Cooldown activo {asset}: {int(MIN_BETWEEN_SAME_ASSET - time_since_asset)}s restantes"
+                        log(rejection, "WAIT")
                     elif rm.is_stopped:
-                        log(f"Risk Manager activo: {rm.stop_reason}", "WARN")
+                        rejection = f"Risk Manager activo: {rm.stop_reason}"
+                        log(rejection, "WARN")
+                    elif len(hour_trades) >= 6:
+                        rejection = f"Limite horario: 6 trades/hora alcanzado"
+                        log(rejection, "WAIT")
                     else:
                         amount = rm.calculate_position_size(confidence=confidence)
                         if amount > 0:
-                            execute_trade(market_data, rm, signal, amount, learner, memory, evaluator)
+                            executed = execute_trade(market_data, rm, signal, amount, learner, memory, evaluator)
+                            if executed:
+                                day_trades += 1
+                                hour_trades.append(time.time())
+                                state["last_trade_by_asset"][asset] = time.time()
+                        else:
+                            rejection = f"Risk Manager: amount=0 (conf={confidence:.2f}, kelly={rm.calculate_kelly():.3f})"
+                            log(rejection, "WARN")
+
+                    # Track rejection stats
+                    if rejection:
+                        cause = rejection.split(":")[0][:40]
+                        state["rejection_stats"][cause] = state["rejection_stats"].get(cause, 0) + 1
+
                 elif action == "WAIT":
                     reason = signal.get("reason", "")
                     if reason and "zona" in reason.lower():
@@ -493,7 +563,7 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
     memory.save()
 
 
-def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
+def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator) -> bool:
     asset      = signal["asset"]
     direction  = signal["signal"]
     confidence = signal["confidence"]
@@ -527,7 +597,6 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
             try:
                 result_data = market_data.api.check_win_v4(order_id)
                 if result_data is not None:
-                    # check_win_v4 puede devolver (status, profit) o solo profit
                     if isinstance(result_data, tuple):
                         status, profit = result_data
                         if profit is not None and isinstance(profit, (int, float)):
@@ -539,19 +608,19 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
                     else:
                         log(f"Resultado inesperado: {type(result_data)} = {result_data}", "WARN")
                         profit = 0.0
-                    
+
                     if profit > 0:
                         pnl, result = profit, "WIN"
-                        log(f"WIN +${profit:.2f} | {asset} {direction}", "WIN")
+                        log(f"WIN +${profit:.2f} | {asset} {direction} | patron={pattern} zona={zone_str:.2f}", "WIN")
                     elif profit < 0:
                         pnl, result = -amount, "LOSS"
-                        log(f"LOSS -${amount:.2f} | {asset} {direction}", "LOSS")
+                        log(f"LOSS -${amount:.2f} | {asset} {direction} | patron={pattern} zona={zone_str:.2f}", "LOSS")
                     else:
                         pnl, result = 0.0, "DRAW"
                         log(f"EMPATE | {asset} {direction}", "WARN")
                 else:
                     pnl, result = -amount * 0.5, "LOSS"
-                    log("Sin confirmación de resultado, asumiendo LOSS", "WARN")
+                    log("Sin confirmacion de resultado, asumiendo LOSS", "WARN")
             except TypeError as e:
                 log(f"Error de tipo verificando resultado: {e} | Dato: {result_data}", "WARN")
                 pnl, result = 0.0, "DRAW"
@@ -561,13 +630,11 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
 
             record_trade(asset, direction, amount, confidence, result, pnl, pattern, zone_str)
             rm.update_balance(state["balance"], {"profit": pnl})
-            
-            # Registrar trade en modo de aprendizaje
+
             learning_mode = get_learning_mode()
             learning_mode.record_trade()
 
-            # ── Auto-evaluación y aprendizaje ──
-            # Capturar velas DESPUÉS del trade para detectar entrada prematura
+            # Auto-evaluacion y aprendizaje
             df_after = None
             try:
                 df_after = market_data.get_candles(asset, 60, 20)
@@ -586,6 +653,14 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
             learner.learn_from_trade(conditions, result, diagnosis)
             state["last_diagnosis"] = evaluator.format_for_display(diagnosis)
 
+            # Log de diagnostico post-trade
+            if result == "LOSS":
+                cause = diagnosis.get("primary_cause", "unknown")
+                log(f"Diagnostico LOSS: causa={cause} | leccion={diagnosis.get('lessons', ['-'])[0]}", "LEARN")
+            elif result == "WIN":
+                good = diagnosis.get("what_worked", ["-"])[0]
+                log(f"Diagnostico WIN: {good}", "LEARN")
+
             # Actualizar memoria de zona
             if zone_obj:
                 reacted = (result == "WIN" and direction == "CALL" and zone_obj.zone_type == "support") or \
@@ -593,20 +668,21 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator):
                 memory.add_or_update_zone(asset, zone_obj.level, zone_obj.zone_type, reacted)
                 memory.save()
 
-            # Log de aprendizaje
-            if result == "LOSS" and diagnosis.get("lessons"):
-                log(f"Aprendizaje: {diagnosis['lessons'][0]}", "LEARN")
-            elif result == "WIN" and diagnosis.get("what_worked"):
-                log(f"Confirmado: {diagnosis['what_worked'][0]}", "LEARN")
+            state["status"] = "ANALIZANDO"
+            state["active_order"] = None
+            return True
 
         else:
             log(f"Orden rechazada: {order_id}", "ERROR")
+            state["status"] = "ANALIZANDO"
+            state["active_order"] = None
+            return False
 
     except Exception as e:
         log(f"Error ejecutando trade: {e}", "ERROR")
-
-    state["status"] = "ANALIZANDO"
-    state["active_order"] = None
+        state["status"] = "ANALIZANDO"
+        state["active_order"] = None
+        return False
 
 
 # ─── Entry point ─────────────────────────────────────────────────────────────
@@ -650,12 +726,32 @@ def main():
     bot_thread.start()
 
     layout = build_layout()
-    with Live(layout, console=console, refresh_per_second=2, screen=True):
-        while state["running"] or state["status"] not in ("DETENIDO", "ERROR"):
+
+    # Fallback: si Rich Live falla, mostramos resumen periodico en texto
+    try:
+        with Live(layout, console=console, refresh_per_second=2, screen=True):
+            while state["running"] or state["status"] not in ("DETENIDO", "ERROR"):
+                update_layout(layout)
+                time.sleep(0.5)
             update_layout(layout)
-            time.sleep(0.5)
-        update_layout(layout)
-        time.sleep(2)
+            time.sleep(2)
+    except Exception as e:
+        log(f"Dashboard Rich no disponible: {e}. Usando modo texto.", "WARN")
+        while state["running"] or state["status"] not in ("DETENIDO", "ERROR"):
+            if state["cycle"] % 20 == 0:
+                total = state["wins"] + state["losses"]
+                wr = (state["wins"] / total * 100) if total > 0 else 0
+                sig = state.get("last_signal", {})
+                elapsed = int(time.time() - state["start_time"])
+                print(f"[{elapsed}s] Ciclo {state['cycle']} | {state['current_asset']} | "
+                      f"W/L: {state['wins']}/{state['losses']} | WR: {wr:.1f}% | "
+                      f"PnL: ${state['total_pnl']:.2f} | Balance: ${state['balance']:.2f} | "
+                      f"Status: {state['status']}")
+                if sig:
+                    print(f"  Senal: {sig.get('action','?')} {sig.get('signal','?')} "
+                          f"Score={sig.get('score',0):.0f} Conf={sig.get('confidence',0):.2f} "
+                          f"Patron={sig.get('pattern','?')} IA={sig.get('ai_label','?')}")
+            time.sleep(1)
 
     total = state["wins"] + state["losses"]
     wr = (state["wins"] / total * 100) if total > 0 else 0

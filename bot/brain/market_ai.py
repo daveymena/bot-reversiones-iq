@@ -497,25 +497,28 @@ class MarketAI:
         )
 
         # Threshold dinámico para operar
-        # La IA es menos exigente cuando hay múltiples evidencias convergentes
-        trade_threshold = 0.38 if len(ev_for) >= 4 else 0.45
+        # Mas permisivo: con 3+ evidencias a favor, umbral baja
+        trade_threshold = 0.35 if len(ev_for) >= 3 else 0.42
 
         should_trade = net_score >= trade_threshold and direction != "NEUTRAL"
 
-        # Label de setup
-        if score_100 >= 75:
+        # Label de setup (umbrales mas bajos para generar mas senales)
+        if score_100 >= 70:
             label = "EXCELENTE"
-        elif score_100 >= 60:
+        elif score_100 >= 55:
             label = "BUENO"
-        elif score_100 >= 45:
+        elif score_100 >= 40:
             label = "MODERADO"
-        elif score_100 >= 30:
-            label = "DÉBIL"
+        elif score_100 >= 25:
+            label = "DEBIL"
         else:
             label = "SKIP"
 
         if label == "SKIP":
             should_trade = False
+        # DEBIL no bloquea automaticamente
+        if label == "DEBIL" and net_score >= 0.35 and direction != "NEUTRAL":
+            should_trade = True
 
         evidence_for_text  = [e.description for e in ev_for]
         evidence_against_text = [e.description for e in ev_against]
