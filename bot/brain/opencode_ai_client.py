@@ -18,7 +18,7 @@ OPENCODE_BASE_URL   = os.environ.get(
 )
 OPENCODE_API_KEY    = os.environ.get(
     "OPENCODE_API_KEY",
-    "sk_y8Fg5Ccoox-lVH0O8s1qzHaD6b6zrNNVExAxx_pcNZE"
+    "sk_EjCSW_s4lvmcjRFXediJjWprQ8M9eDGs7i28X7g0ELU"
 )
 OPENCODE_MODEL_FAST = os.environ.get(
     "OPENCODE_MODEL_FAST",
