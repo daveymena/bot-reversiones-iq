@@ -29,6 +29,8 @@ from brain.adaptive_learner import get_adaptive_learner
 from brain.market_memory import get_market_memory
 from brain.trade_evaluator import TradeEvaluator
 from brain.adaptive_learning_mode import get_learning_mode
+from brain.market_session import get_market_session
+from brain.zone_reaction_history import get_zone_history
 from engine.intelligent_engine import IntelligentEngine
 
 console = Console()
@@ -112,13 +114,15 @@ def make_header() -> Panel:
     learner = get_adaptive_learner()
     global_wr = learner.get_global_winrate()
     
-    # Modo de aprendizaje
+    # Modo de aprendizaje y sesión
     learning_mode = get_learning_mode()
+    session_obj   = get_market_session()
 
     title = Text()
-    title.append("EXNOVA SMART BOT v4.0", style="bold cyan")
+    title.append("EXNOVA SMART BOT v4.1", style="bold cyan")
     title.append(f"  {learning_mode.get_phase_emoji()} {learning_mode.get_status_message()}", style="yellow")
     title.append(f"  ·  {h:02d}:{m:02d}:{s:02d}", style="white")
+    title.append(f"  ·  {session_obj.get_status_display()}", style="dim cyan")
 
     grid = Table.grid(expand=True, padding=(0, 2))
     for _ in range(7): grid.add_column(justify="center")
@@ -667,6 +671,45 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator) -
                           (result == "WIN" and direction == "PUT" and zone_obj.zone_type == "resistance")
                 memory.add_or_update_zone(asset, zone_obj.level, zone_obj.zone_type, reacted)
                 memory.save()
+
+            # Registrar historial detallado de reacción en la zona
+            try:
+                zone_history = get_zone_history()
+                session_obj  = get_market_session()
+                session_name, _ = session_obj.get_current_session()
+                # Calcular pips movidos
+                entry_px = signal.get("zone", 0.0) or 0.0
+                pips_moved = 0.0
+                if df_after is not None and len(df_after) >= 2 and entry_px > 0:
+                    if direction == "CALL":
+                        pips_moved = (float(df_after["high"].max()) - entry_px) * 10000
+                    else:
+                        pips_moved = (entry_px - float(df_after["low"].min())) * 10000
+                    pips_moved = max(0.0, pips_moved)
+                candles_to_move = 1
+                if df_after is not None and len(df_after) >= 2 and entry_px > 0:
+                    for i, (_, row) in enumerate(df_after.iterrows()):
+                        if direction == "CALL" and float(row.get("high", 0)) > entry_px * 1.0003:
+                            candles_to_move = i + 1; break
+                        if direction == "PUT" and float(row.get("low", 9999)) < entry_px * 0.9997:
+                            candles_to_move = i + 1; break
+                touch_result = "HOLD" if result == "WIN" else "BREAK" if result == "LOSS" else "UNKNOWN"
+                zone_history.record_touch(
+                    asset=asset,
+                    level=zone_obj.level,
+                    zone_type=zone_obj.zone_type,
+                    result=touch_result,
+                    pips_moved=pips_moved,
+                    candles_to_move=candles_to_move,
+                    had_pattern=bool(pattern),
+                    pattern_name=pattern or "",
+                    session=session_name,
+                    rsi=context.get("momentum", {}).get("rsi_m1", 50),
+                    trend_aligned=context.get("zone_context", {}).get("trend_aligned", False),
+                    price_at_touch=entry_px,
+                )
+            except Exception as zh_err:
+                log(f"Error registrando historial zona: {zh_err}", "WARN")
 
             state["status"] = "ANALIZANDO"
             state["active_order"] = None

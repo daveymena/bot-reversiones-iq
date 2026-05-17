@@ -13,6 +13,8 @@ from brain.zone_detector import ZoneDetector
 from brain.context_analyzer import ContextAnalyzer
 from brain.adaptive_learner import get_adaptive_learner
 from brain.market_ai import MarketAI
+from brain.market_session import get_market_session
+from brain.zone_reaction_history import get_zone_history
 
 
 # ─── Diagnóstico de entrada prematura ────────────────────────────────────────
@@ -356,6 +358,8 @@ class IntelligentEngine:
         self.pattern_detector = CandlePatternDetector()
         self.timing_validator = EntryTimingValidator()
         self.market_ai        = MarketAI()
+        self.session          = get_market_session()
+        self.zone_history     = get_zone_history()
         self._last_zone_scan: Dict[str, float] = {}
         self._zone_scan_interval = 300
 
@@ -384,31 +388,37 @@ class IntelligentEngine:
                 self._rescan_zones(asset, df_m5, df_m15, df_h1)
                 self._last_zone_scan[asset] = time.time()
 
-            # ── 3. ¿Está el precio EN una zona fuerte? ───────────────────────
-            # Tolerancia 0.50% — OPTIMIZADO: era 0.20% (demasiado estricto)
-            min_zone_strength = self.learner.get_threshold("min_zone_strength", 0.35)
+            # ── 3. Sesión de mercado — adaptar parámetros al horario actual ──
+            session_name, session_params = self.session.get_current_session()
+            # ATR para detectar volatilidad real
+            atr_pct = self._calc_atr_pct(df_m1)
+            session_name, session_params = self.session.get_adaptive_params(0.50, atr_pct)
+            zone_tolerance = session_params.get("zone_tolerance", 0.0010)
+            min_zone_strength = max(
+                self.learner.get_threshold("min_zone_strength", 0.35),
+                session_params.get("min_zone_strength", 0.35)
+            )
+
+            # ── 4. ¿Está el precio EN una zona fuerte? ───────────────────────
             nearest_zone = self.memory.get_nearest_strong_zone(
-                asset, current_price, tolerance_pct=0.0050  # OPTIMIZADO: era 0.0020
+                asset, current_price, tolerance_pct=zone_tolerance
             )
             zone_context_summary = self.memory.get_zone_context(asset, current_price)
 
             if nearest_zone is None or nearest_zone.strength < min_zone_strength:
-                # Buscar la zona más cercana para informar al usuario
                 any_zone = self.memory.get_nearest_strong_zone(asset, current_price, tolerance_pct=0.01)
                 dist_str = ""
                 if any_zone:
                     dist_pct = abs(any_zone.level - current_price) / current_price * 100
                     dist_str = f" | Zona más cercana: {any_zone.level:.5f} a {dist_pct:.2f}%"
                 return {
-                    "asset": asset,
-                    "action": "WAIT",
-                    "signal": "NEUTRAL",
-                    "score": 0.0,
-                    "confidence": 0.0,
-                    "reason": f"Precio lejos de zona{dist_str}",
+                    "asset": asset, "action": "WAIT", "signal": "NEUTRAL",
+                    "score": 0.0, "confidence": 0.0,
+                    "reason": f"[{session_name}] Precio lejos de zona{dist_str}",
                     "phase": "buscando_zona",
                     "zone_count": len(self.memory.get_all_zones(asset)),
                     "zone_context": zone_context_summary,
+                    "session": session_name,
                 }
 
             # ── 4. Analizar contexto completo ────────────────────────────────
@@ -423,9 +433,21 @@ class IntelligentEngine:
             phase = context.get("market_phase", "unknown")
 
             if phase == "dead":
-                return self._wait("Mercado muerto — sin volatilidad", asset, context=context)
+                return self._wait(f"[{session_name}] Mercado muerto — sin volatilidad", asset, context=context)
 
-            # Si dirección no está clara la IA puede resolverlo — no bloqueamos aquí
+            # ── REGLA IRROMPIBLE: La zona manda la dirección ─────────────────
+            # Soporte → solo CALL. Resistencia → solo PUT. Sin excepciones.
+            zone_mandated_dir = "CALL" if nearest_zone.zone_type == "support" else "PUT"
+            # Si el contexto dice lo contrario, advertir pero respetar la zona
+            if expected_dir != "NEUTRAL" and expected_dir != zone_mandated_dir:
+                # Contexto contradice la zona — solo operar si la zona es muy fuerte
+                if nearest_zone.strength < 0.75:
+                    return self._wait(
+                        f"Zona {nearest_zone.zone_type} dice {zone_mandated_dir} "
+                        f"pero contexto dice {expected_dir} — zona no suficientemente fuerte para contra-señal",
+                        asset, context=context
+                    )
+            expected_dir = zone_mandated_dir
 
             # ── 5. Detectar patrón en vela CERRADA (df.iloc[-2]) ────────────
             pattern = self.pattern_detector.detect(df_m1, expected_dir)
@@ -489,8 +511,23 @@ class IntelligentEngine:
                 "candle_confirming":     pattern.get("candle_confirmed", False),
             }
 
-            # ── 8. MarketAI — análisis inteligente holístico ──────────────────
-            # La IA razona sobre el setup completo como un trader experto
+            # ── 8. Historial de zona + análisis de primera visita ────────────
+            zone_history_analysis = self.zone_history.get_zone_analysis(
+                asset, nearest_zone.level, nearest_zone.zone_type, session_name
+            )
+            is_first_visit = self.zone_history.is_first_visit(
+                asset, nearest_zone.level, nearest_zone.zone_type
+            )
+            # Si la zona rompió la última vez, ser más cauteloso
+            if zone_history_analysis.get("last_broke", False):
+                if nearest_zone.strength < 0.80:
+                    return self._wait(
+                        f"Zona rompió en último toque — esperando confirmación de recuperación",
+                        asset, context=context
+                    )
+
+            # ── 8b. MarketAI — análisis inteligente holístico ─────────────────
+            # IMPORTANTE: La IA ya NO puede cambiar la dirección mandada por la zona
             try:
                 ai_verdict = self.market_ai.analyze(
                     df_m1=df_m1, df_m5=df_m5, df_m15=df_m15, df_h1=df_h1,
@@ -503,28 +540,31 @@ class IntelligentEngine:
                     pattern_strength=pattern.get("strength", 0.5),
                     context=context,
                 )
-                ai_score    = ai_verdict.score        # 0–100
-                ai_conf     = ai_verdict.confidence   # 0–1
-                ai_dir      = ai_verdict.direction    # CALL / PUT / NEUTRAL
-                ai_label    = ai_verdict.setup_label  # EXCELENTE/BUENO/MODERADO/DÉBIL/SKIP
+                ai_score     = ai_verdict.score
+                ai_conf      = ai_verdict.confidence
+                ai_dir       = ai_verdict.direction
+                ai_label     = ai_verdict.setup_label
                 ai_narrative = ai_verdict.narrative
                 ai_should    = ai_verdict.should_trade
 
-                # Si la IA dice que la dirección es diferente a la esperada,
-                # confiar en la IA (tiene más contexto)
-                if ai_dir != "NEUTRAL" and ai_dir != expected_dir and ai_score >= 55:
-                    expected_dir = ai_dir
+                # La IA NO puede cambiar la dirección de la zona — solo puede bloquear
+                # Si la IA dice dirección contraria a la zona con score alto → SKIP
+                if ai_dir != "NEUTRAL" and ai_dir != expected_dir and ai_score >= 65:
+                    return self._wait(
+                        f"IA contradice zona ({ai_dir} vs {expected_dir}) con score {ai_score:.0f} — skip",
+                        asset, context=context
+                    )
 
-                # Solo SKIP bloquea; DEBIL se permite con confianza baja
                 if ai_label == "SKIP" or (not ai_should and ai_score < 25):
                     return {
-                        "asset": asset, "action": "WAIT", "signal": ai_dir,
+                        "asset": asset, "action": "WAIT", "signal": expected_dir,
                         "score": ai_score, "confidence": ai_conf,
                         "reason": f"IA: {ai_label} — {ai_narrative[:60]}",
                         "phase": phase, "zone": nearest_zone.level,
                         "zone_strength": nearest_zone.strength,
                         "pattern": pattern_name, "context": context,
                         "ai_narrative": ai_narrative, "ai_label": ai_label,
+                        "session": session_name,
                     }
 
             except Exception as ai_err:
@@ -532,11 +572,130 @@ class IntelligentEngine:
                 ai_label = "NORMAL"; ai_narrative = f"IA no disponible: {ai_err}"
                 ai_should = True
 
-            # ── 9. Puntuación combinada (AdaptiveLearner + IA) ────────────────
+            # ── 9. Puntuación combinada ───────────────────────────────────────
             adaptive_score, breakdown = self.learner.score_conditions(conditions)
             min_score = self.learner.get_min_score()
 
-            # Penalizaciones suaves minimas — solo reducen puntaje ligeramente
+            # Bonus por primera visita a la zona (señal más limpia)
+            first_visit_bonus = 0.05 if is_first_visit else 0.0
+            # Bonus por historial positivo de la zona en esta sesión
+            zone_hist_hr = zone_history_analysis.get("session_hold_rate", 0.5)
+            zone_hist_bonus = max(0.0, (zone_hist_hr - 0.5) * 0.10)
+
+            soft_penalties = 0.0
+            if not zone_ctx.get("trend_aligned", True):
+                soft_penalties += 0.03
+            if rsi_dist < self.learner.get_threshold("min_rsi_distance", 8.0):
+                soft_penalties += 0.02
+            if nearest_zone.hold_rate < self.learner.get_threshold("min_zone_hold_rate", 0.45):
+                soft_penalties += 0.02
+            if not timing["valid"]:
+                soft_penalties += 0.03
+
+            adaptive_adjusted = max(0.0, adaptive_score - soft_penalties + first_visit_bonus + zone_hist_bonus)
+
+            # 30% AdaptiveLearner + 70% MarketAI
+            ai_normalized = ai_score / 100.0
+            final_score = adaptive_adjusted * 0.30 + ai_normalized * 0.70
+
+            # ── 10. Umbral mínimo adaptado a la sesión ────────────────────────
+            session_min_conf = session_params.get("min_confidence", 0.50)
+            effective_min = max(self.learner.get_min_score() * 0.80, session_min_conf - 0.10)
+            if ai_label in ("EXCELENTE", "BUENO"):
+                effective_min = max(0.25, effective_min - 0.10)
+            elif ai_label == "MODERADO":
+                effective_min = effective_min * 0.90
+            elif ai_label in ("DEBIL",):
+                effective_min = min(effective_min + 0.05, 0.60)
+
+            if final_score >= effective_min or (ai_should and final_score >= 0.30):
+                confidence = self._calculate_confidence(
+                    final_score, nearest_zone, context, pattern, timing
+                )
+                confidence = confidence * 0.40 + ai_conf * 0.60
+                # Ajuste de confianza por sesión
+                session_quality = self.session.get_session_quality()
+                confidence = confidence * (0.85 + session_quality * 0.15)
+
+                # Expiración basada en historial de la zona + sesión
+                pips_per_min = atr_pct * current_price * 10000 / 1.0  # pips por minuto aprox
+                hist_exp = self.zone_history.get_optimal_expiration(
+                    asset, nearest_zone.level, nearest_zone.zone_type, pips_per_min
+                )
+                exp_info = self._adaptive_expiration(
+                    context, pattern, zone=nearest_zone, conditions=conditions
+                )
+                # Usar el mayor entre el histórico y el calculado (más conservador)
+                best_exp_seconds = max(exp_info["seconds"], hist_exp)
+                best_exp_seconds = self.session.should_adjust_expiration(best_exp_seconds)
+                exp_info["seconds"] = best_exp_seconds
+                exp_info["minutes"] = best_exp_seconds // 60
+
+                narrative = (
+                    f"[{session_name}] {nearest_zone.zone_type.upper()} {nearest_zone.level:.5f} "
+                    f"{'(1ra visita)' if is_first_visit else '(revisita)'} | "
+                    f"{ai_narrative or ''}"
+                )
+
+                return {
+                    "asset": asset,
+                    "action": "TRADE",
+                    "signal": expected_dir,
+                    "score": final_score * 100,
+                    "confidence": min(0.95, confidence),
+                    "expiration": exp_info["seconds"],
+                    "expiration_minutes": exp_info["minutes"],
+                    "expiration_label": exp_info["label"],
+                    "expiration_color": exp_info["color"],
+                    "complexity_score": exp_info["complexity_score"],
+                    "expiration_reasons": exp_info["reasons"],
+                    "reason": narrative,
+                    "phase": phase,
+                    "zone": nearest_zone.level,
+                    "zone_strength": nearest_zone.strength,
+                    "zone_touches": nearest_zone.touches,
+                    "zone_hold_rate": nearest_zone.hold_rate,
+                    "pattern": pattern_name,
+                    "pattern_strength": pattern.get("strength", 0),
+                    "dominant_trend": context.get("dominant_trend"),
+                    "rsi": rsi,
+                    "setup_quality": context.get("setup_quality", 0),
+                    "rejection_wick": timing.get("rejection_wick_pct", 0),
+                    "conditions": conditions,
+                    "context": context,
+                    "zone_object": nearest_zone,
+                    "adaptive_breakdown": breakdown,
+                    "timing": timing,
+                    "ai_score": ai_score,
+                    "ai_label": ai_label,
+                    "ai_narrative": ai_narrative,
+                    "ai_evidence_for": ai_verdict.evidence_for if 'ai_verdict' in dir() else [],
+                    "session": session_name,
+                    "is_first_visit": is_first_visit,
+                    "zone_history": zone_history_analysis,
+                }
+            else:
+                top_missing = self._top_missing(conditions, self.learner.weights)
+                return {
+                    "asset": asset,
+                    "action": "WAIT",
+                    "signal": expected_dir,
+                    "score": final_score * 100,
+                    "confidence": final_score,
+                    "reason": f"[{session_name}] IA:{ai_label} score={final_score*100:.0f} | {top_missing}",
+                    "phase": phase,
+                    "zone": nearest_zone.level,
+                    "zone_strength": nearest_zone.strength,
+                    "pattern": pattern_name,
+                    "context": context,
+                    "ai_score": ai_score,
+                    "ai_label": ai_label,
+                    "ai_narrative": ai_narrative,
+                    "session": session_name,
+                }
+
+        except Exception as e:
+            return self._wait(f"Error en análisis: {e}", asset)            # Penalizaciones suaves minimas — solo reducen puntaje ligeramente
             soft_penalties = 0.0
             if not zone_ctx.get("trend_aligned", True):
                 soft_penalties += 0.03
@@ -649,13 +808,36 @@ class IntelligentEngine:
 
     def _check_mtf_alignment(self, context: Dict, direction: str) -> bool:
         expected = "uptrend" if direction == "CALL" else "downtrend"
-        s1  = context.get("structure_m1", {}).get("trend", "neutral")
-        s5  = context.get("structure_m5", {}).get("trend", "neutral")
+        s1  = context.get("structure_m1",  {}).get("trend", "neutral")
+        s5  = context.get("structure_m5",  {}).get("trend", "neutral")
         s15 = context.get("structure_m15", {}).get("trend", "neutral")
+        sh1 = context.get("structure_h1",  {}).get("trend", "neutral")
         opposite = "downtrend" if direction == "CALL" else "uptrend"
-        aligned  = sum(1 for s in [s1, s5, s15] if s == expected)
-        no_opp   = sum(1 for s in [s1, s5, s15] if s != opposite)
-        return aligned >= 2 or no_opp >= 2
+        # H1 tiene doble peso — si H1 está en contra, es señal débil
+        all_tfs = [s1, s5, s15, sh1, sh1]  # sh1 cuenta doble
+        aligned = sum(1 for s in all_tfs if s == expected)
+        against = sum(1 for s in all_tfs if s == opposite)
+        return aligned >= 3 or (aligned >= 2 and against == 0)
+
+    def _calc_atr_pct(self, df_m1) -> float:
+        """Calcula ATR como porcentaje del precio para medir volatilidad actual"""
+        try:
+            if df_m1 is None or len(df_m1) < 15:
+                return 0.001
+            highs  = df_m1["high"].values[-15:]
+            lows   = df_m1["low"].values[-15:]
+            closes = df_m1["close"].values[-15:]
+            trs = []
+            for i in range(1, len(highs)):
+                tr = max(highs[i] - lows[i],
+                         abs(highs[i] - closes[i-1]),
+                         abs(lows[i]  - closes[i-1]))
+                trs.append(tr)
+            atr = float(sum(trs) / len(trs)) if trs else 0.001
+            price = float(closes[-1]) if closes[-1] > 0 else 1.0
+            return atr / price
+        except Exception:
+            return 0.001
 
     def _calculate_confidence(self, score: float, zone, context: Dict,
                                pattern: Dict, timing: Dict = None) -> float:
