@@ -76,6 +76,9 @@ class AdaptiveLearner:
         self.total_trades = 0
         self.total_wins = 0
         self._load()
+        
+        # Cargar historial de trades previos desde TradePersistence
+        self._load_trade_history()
 
     # ── Puntuación adaptativa ─────────────────────────────────────────────────
 
@@ -245,6 +248,26 @@ class AdaptiveLearner:
             self.total_wins = data.get("total_wins", 0)
         except Exception:
             pass
+
+    def _load_trade_history(self):
+        """Carga el historial de trades previos desde TradePersistence"""
+        try:
+            from brain.trade_persistence import get_trade_persistence
+            persistence = get_trade_persistence()
+            
+            # Sincronizar estadísticas
+            self.total_trades = persistence.total_trades
+            self.total_wins = persistence.total_wins
+            
+            try:
+                print(f"[LEARN] AdaptiveLearner sincronizado: {self.total_trades} trades previos ({self.total_wins} wins)")
+            except Exception:
+                pass
+        except Exception as e:
+            try:
+                print(f"[WARN] No se pudo cargar historial de trades: {e}")
+            except Exception:
+                pass
 
 
 # Singleton

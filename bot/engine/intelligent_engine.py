@@ -362,9 +362,16 @@ class IntelligentEngine:
         self.zone_history     = get_zone_history()
         self._last_zone_scan: Dict[str, float] = {}
         self._zone_scan_interval = 300
+        self._start_time = time.time()
+        self._warmup_seconds = 90  # 90s de observación antes de operar
 
     def analyze(self, asset: str, market_data, fe=None) -> Optional[Dict]:
         try:
+            # ── 0. Warm-up — no operar inmediatamente al arrancar ────────────
+            if time.time() - self._start_time < self._warmup_seconds:
+                remaining = int(self._warmup_seconds - (time.time() - self._start_time))
+                return self._wait(f"Warm-up: observando mercado {remaining}s más", asset)
+
             # ── 1. Datos multi-timeframe ─────────────────────────────────────
             df_m1 = market_data.get_candles(asset, 60, 200)
             if df_m1 is None or len(df_m1) < 30:
@@ -393,7 +400,10 @@ class IntelligentEngine:
             # ATR para detectar volatilidad real
             atr_pct = self._calc_atr_pct(df_m1)
             session_name, session_params = self.session.get_adaptive_params(0.50, atr_pct)
-            zone_tolerance = session_params.get("zone_tolerance", 0.0010)
+            # Tolerancia dinámica: max entre ATR*2 y valor base, limitado a 0.35%
+            atr_based_tolerance = min(atr_pct * 2.0, 0.0035)
+            config_tolerance = session_params.get("zone_tolerance", 0.0030)
+            zone_tolerance = max(atr_based_tolerance, min(config_tolerance, 0.0035))
             min_zone_strength = max(
                 self.learner.get_threshold("min_zone_strength", 0.35),
                 session_params.get("min_zone_strength", 0.35)
@@ -449,18 +459,75 @@ class IntelligentEngine:
                     )
             expected_dir = zone_mandated_dir
 
+            # ── 4b. FILTRO DE TENDENCIA UNÁNIME — no operar contra tendencia fuerte ──
+            # Si todos los TFs (M1, M5, M15, H1) muestran la misma tendencia,
+            # es señal de que la tendencia es demasiado fuerte para operar en contra.
+            tf_list = [
+                context.get("structure_m1", {}).get("trend", "neutral"),
+                context.get("structure_m5", {}).get("trend", "neutral"),
+                context.get("structure_m15", {}).get("trend", "neutral"),
+                context.get("structure_h1", {}).get("trend", "neutral"),
+            ]
+            unanimous_trend = None
+            for t_dir in ("uptrend", "downtrend"):
+                aligned = [t for t in tf_list if t == t_dir]
+                against = [t for t in tf_list if t == ("downtrend" if t_dir == "uptrend" else "uptrend")]
+                if len(aligned) >= 3 and len(against) == 0:
+                    unanimous_trend = t_dir
+                    break
+
+            if unanimous_trend:
+                going_against = (unanimous_trend == "uptrend" and expected_dir == "PUT") or \
+                               (unanimous_trend == "downtrend" and expected_dir == "CALL")
+                if going_against:
+                    return self._wait(
+                        f"Tendencia {unanimous_trend} unánime — no operar {expected_dir} en contra",
+                        asset, context=context
+                    )
+
             # ── 5. Detectar patrón en vela CERRADA (df.iloc[-2]) ────────────
             pattern = self.pattern_detector.detect(df_m1, expected_dir)
 
-            # Si no hay patrón clásico, continuar — la IA puede encontrar micro-estructura
-            # Solo bloqueamos si la IA tampoco ve setup válido
-
-            # ── 6. Validar timing (advistory — no bloqueante) ────────────────
-            # El validator informa pero no bloquea; penaliza el score si falla
+            # ── 6. Validar timing — BLOQUEANTE ───────────────────────────────
+            # Sin rechazo visible en la zona = no entrar. Sin excepciones.
             timing = self.timing_validator.validate(
                 df_m1, nearest_zone.level, nearest_zone.zone_type,
-                expected_dir if expected_dir != "NEUTRAL" else "CALL"
+                expected_dir
             )
+            if not timing["valid"]:
+                issue = timing.get("issue", "")
+                reason = timing.get("reason", "Timing inválido")
+                # Registrar por qué se rechazó para el dashboard
+                return self._wait(f"Timing: {reason[:70]}", asset, context=context)
+
+            # ── 6b. Patrón requerido — sin patrón no hay entrada ─────────────
+            # La IA puede encontrar micro-estructura, pero necesitamos al menos eso
+            if not pattern.get("confirmed", False):
+                # Intentar micro-estructura antes de rechazar
+                micro = self._check_micro_structure(df_m1, expected_dir)
+                if not micro:
+                    return self._wait(
+                        f"Sin patrón de reversión en vela cerrada — esperando señal",
+                        asset, context=context
+                    )
+                # Usar micro-estructura como patrón débil
+                pattern = {
+                    "pattern": "micro_structure",
+                    "confirmed": True,
+                    "strength": 0.55,
+                    "conditions": {},
+                    "candle_confirmed": True,
+                }
+
+            # ── 6c. Micro_structure solo con tendencia alineada ──────────────
+            pattern_name = pattern.get("pattern", "")
+            if pattern_name == "micro_structure":
+                zone_ctx_tmp = context.get("zone_context", {})
+                if not zone_ctx_tmp.get("trend_aligned", False):
+                    return self._wait(
+                        "Micro-estructura sin tendencia alineada — alto riesgo de contra-tendencia",
+                        asset, context=context
+                    )
 
             # ── 7. Condiciones para AdaptiveLearner ──────────────────────────
             zone_ctx  = context.get("zone_context", {})
@@ -695,97 +762,119 @@ class IntelligentEngine:
                 }
 
         except Exception as e:
-            return self._wait(f"Error en análisis: {e}", asset)            # Penalizaciones suaves minimas — solo reducen puntaje ligeramente
-            soft_penalties = 0.0
-            if not zone_ctx.get("trend_aligned", True):
-                soft_penalties += 0.03
-            if rsi_dist < self.learner.get_threshold("min_rsi_distance", 8.0):
-                soft_penalties += 0.02
-            if nearest_zone.hold_rate < self.learner.get_threshold("min_zone_hold_rate", 0.45):
-                soft_penalties += 0.02
-            if not timing["valid"]:
-                soft_penalties += 0.03
-
-            adaptive_adjusted = max(0.0, adaptive_score - soft_penalties)
-
-            # Combinación: 30% AdaptiveLearner + 70% MarketAI (mas peso a IA)
-            ai_normalized = ai_score / 100.0
-            final_score = adaptive_adjusted * 0.30 + ai_normalized * 0.70
-
-            # ── 10. Decisión final ────────────────────────────────────────────
-            effective_min = min_score * 0.80
-            if ai_label in ("EXCELENTE", "BUENO"):
-                effective_min = max(0.25, min_score - 0.15)
-            elif ai_label == "MODERADO":
-                effective_min = min_score * 0.85
-            elif ai_label in ("DEBIL",):
-                effective_min = min(min_score - 0.05, 0.55)
-
-            if final_score >= effective_min or (ai_should and final_score >= 0.30):
-                confidence = self._calculate_confidence(
-                    final_score, nearest_zone, context, pattern, timing
-                )
-                confidence = confidence * 0.40 + ai_conf * 0.60
-
-                exp_info = self._adaptive_expiration(
-                    context, pattern, zone=nearest_zone, conditions=conditions
-                )
-
-                return {
-                    "asset": asset,
-                    "action": "TRADE",
-                    "signal": expected_dir,
-                    "score": final_score * 100,
-                    "confidence": min(0.95, confidence),
-                    "expiration": exp_info["seconds"],
-                    "expiration_minutes": exp_info["minutes"],
-                    "expiration_label": exp_info["label"],
-                    "expiration_color": exp_info["color"],
-                    "complexity_score": exp_info["complexity_score"],
-                    "expiration_reasons": exp_info["reasons"],
-                    "reason": ai_narrative or self._build_reason(nearest_zone, context, pattern, conditions, exp_info, timing),
-                    "phase": phase,
-                    "zone": nearest_zone.level,
-                    "zone_strength": nearest_zone.strength,
-                    "zone_touches": nearest_zone.touches,
-                    "zone_hold_rate": nearest_zone.hold_rate,
-                    "pattern": pattern_name,
-                    "pattern_strength": pattern.get("strength", 0),
-                    "dominant_trend": context.get("dominant_trend"),
-                    "rsi": rsi,
-                    "setup_quality": context.get("setup_quality", 0),
-                    "rejection_wick": timing.get("rejection_wick_pct", 0),
-                    "conditions": conditions,
-                    "context": context,
-                    "zone_object": nearest_zone,
-                    "adaptive_breakdown": breakdown,
-                    "timing": timing,
-                    "ai_score": ai_score,
-                    "ai_label": ai_label,
-                    "ai_narrative": ai_narrative,
-                    "ai_evidence_for": ai_verdict.evidence_for if 'ai_verdict' in dir() else [],
-                }
-            else:
-                top_missing = self._top_missing(conditions, self.learner.weights)
-                return {
-                    "asset": asset,
-                    "action": "WAIT",
-                    "signal": expected_dir,
-                    "score": final_score * 100,
-                    "confidence": final_score,
-                    "reason": f"IA:{ai_label} score={final_score*100:.0f} | {top_missing}",
-                    "phase": phase,
-                    "zone": nearest_zone.level,
-                    "zone_strength": nearest_zone.strength,
-                    "pattern": pattern_name,
-                    "context": context,
-                    "ai_score": ai_score,
-                    "ai_label": ai_label,
-                    "ai_narrative": ai_narrative,
-                }
-
-        except Exception as e:
             return self._wait(f"Error en análisis: {e}", asset)
+
+    # ── Micro-estructura: análisis fino de velas para detectar reversión ─────
+
+    def _check_micro_structure(self, df_m1: pd.DataFrame, expected_dir: str) -> bool:
+        """
+        Analiza micro-estructura de las últimas 3-5 velas cerradas para detectar
+        señales sutiles de reversión cuando no hay patrón clásico evidente.
+        
+        Busca:
+        - Cambios en el momentum (velas cada vez más pequeñas)
+        - Mechas de rechazo acumulativas
+        - Divergencias en el volumen relativo
+        - Cambios en la presión compradora/vendedora
+        """
+        if len(df_m1) < 8:
+            return False
+            
+        try:
+            # Últimas 5 velas cerradas (no incluir la actual en formación)
+            recent = df_m1.iloc[-6:-1]  # velas -6 a -2
+            signal_candle = df_m1.iloc[-2]  # vela de señal
+            
+            # Datos básicos
+            opens  = recent["open"].astype(float).values
+            highs  = recent["high"].astype(float).values  
+            lows   = recent["low"].astype(float).values
+            closes = recent["close"].astype(float).values
+            
+            # Análisis de momentum decreciente
+            bodies = np.abs(closes - opens)
+            ranges = highs - lows
+            
+            # 1. ¿Las velas se están haciendo más pequeñas? (momentum perdiendo fuerza)
+            momentum_weakening = False
+            if len(bodies) >= 3:
+                # Comparar últimas 2 velas con las 2 anteriores
+                recent_avg = np.mean(bodies[-2:])
+                earlier_avg = np.mean(bodies[-4:-2])
+                if recent_avg < earlier_avg * 0.75:  # 25% más pequeñas
+                    momentum_weakening = True
+            
+            # 2. Análisis de mechas acumulativas (rechazo creciente)
+            rejection_building = False
+            if expected_dir == "CALL":
+                # Para CALL, buscar mechas inferiores crecientes
+                lower_wicks = np.minimum(opens, closes) - lows
+                wick_ratios = lower_wicks / np.maximum(ranges, 1e-8)
+                # ¿Las últimas 2 velas tienen mechas inferiores significativas?
+                if len(wick_ratios) >= 2 and np.mean(wick_ratios[-2:]) > 0.25:
+                    rejection_building = True
+            else:  # PUT
+                # Para PUT, buscar mechas superiores crecientes  
+                upper_wicks = highs - np.maximum(opens, closes)
+                wick_ratios = upper_wicks / np.maximum(ranges, 1e-8)
+                if len(wick_ratios) >= 2 and np.mean(wick_ratios[-2:]) > 0.25:
+                    rejection_building = True
+            
+            # 3. Patrón de indecisión creciente
+            indecision_pattern = False
+            if len(bodies) >= 3:
+                # Cuerpos cada vez más pequeños relativos al rango
+                body_ratios = bodies / np.maximum(ranges, 1e-8)
+                if np.mean(body_ratios[-2:]) < 0.40:  # Últimas velas con cuerpos <40% del rango
+                    indecision_pattern = True
+            
+            # 4. Cambio en la dirección de cierre
+            direction_shift = False
+            if len(closes) >= 4:
+                # ¿Las últimas 2 velas cerraron en dirección opuesta a las 2 anteriores?
+                recent_direction = "up" if closes[-1] > closes[-3] else "down"
+                earlier_direction = "up" if closes[-3] > closes[-5] else "down"
+                expected_recent = "up" if expected_dir == "CALL" else "down"
+                
+                if recent_direction == expected_recent and recent_direction != earlier_direction:
+                    direction_shift = True
+            
+            # 5. Análisis de la vela de señal específica
+            signal_quality = False
+            s_open = float(signal_candle["open"])
+            s_high = float(signal_candle["high"])
+            s_low = float(signal_candle["low"])
+            s_close = float(signal_candle["close"])
+            s_body = abs(s_close - s_open)
+            s_range = s_high - s_low
+            
+            if s_range > 0:
+                if expected_dir == "CALL":
+                    # Para CALL: vela con mecha inferior prominente y cierre en parte alta
+                    lower_wick = min(s_open, s_close) - s_low
+                    close_position = (s_close - s_low) / s_range  # 0=low, 1=high
+                    if lower_wick / s_range > 0.30 and close_position > 0.60:
+                        signal_quality = True
+                else:  # PUT
+                    # Para PUT: vela con mecha superior prominente y cierre en parte baja
+                    upper_wick = s_high - max(s_open, s_close)
+                    close_position = (s_high - s_close) / s_range  # 0=high, 1=low
+                    if upper_wick / s_range > 0.30 and close_position > 0.60:
+                        signal_quality = True
+            
+            # Decisión: necesitamos al menos 1 de las 5 condiciones (más permisivo para generar señales)
+            conditions_met = sum([
+                momentum_weakening,
+                rejection_building, 
+                indecision_pattern,
+                direction_shift,
+                signal_quality
+            ])
+            
+            return conditions_met >= 1
+            
+        except Exception:
+            return False
 
     # ── Escaneo de zonas ──────────────────────────────────────────────────────
 

@@ -16,62 +16,62 @@ def test_connection():
     email = os.getenv("EXNOVA_EMAIL", "")
     password = os.getenv("EXNOVA_PASSWORD", "")
     
-    print(f"═══════════════════════════════════════════════════")
-    print(f"  TEST DE CONEXIÓN A EXNOVA")
-    print(f"═══════════════════════════════════════════════════")
+    print(f"===================================================")
+    print(f"  TEST DE CONEXION A EXNOVA")
+    print(f"===================================================")
     print(f"Email: {email}")
     print(f"Password: {'*' * len(password)}")
     print(f"Tipo de cuenta: PRACTICE")
-    print(f"═══════════════════════════════════════════════════\n")
+    print(f"===================================================\n")
     
     try:
         print("1. Creando instancia de Exnova API...")
         api = Exnova(email, password, active_account_type="PRACTICE")
-        print("   ✓ Instancia creada\n")
+        print("   [OK] Instancia creada\n")
         
         print("2. Intentando conectar...")
         check, reason = api.connect()
         
         if check:
-            print("   ✓ CONEXIÓN EXITOSA!\n")
+            print("   [OK] CONEXION EXITOSA!\n")
             
-            print("3. Verificando conexión...")
+            print("3. Verificando conexion...")
             if api.check_connect():
-                print("   ✓ Conexión verificada\n")
+                print("   [OK] Conexion verificada\n")
                 
                 print("4. Obteniendo balance...")
                 balance = api.get_balance()
-                print(f"   ✓ Balance: ${balance:,.2f}\n")
+                print(f"   [OK] Balance: ${balance:,.2f}\n")
                 
                 print("5. Obteniendo activos disponibles...")
                 try:
                     api.update_ACTIVES_OPCODE()
-                    print("   ✓ Activos actualizados\n")
+                    print("   [OK] Activos actualizados\n")
                 except Exception as e:
-                    print(f"   ⚠ Error actualizando activos: {e}\n")
+                    print(f"   [WARN] Error actualizando activos: {e}\n")
                 
-                print("═══════════════════════════════════════════════════")
-                print("  ✓ TODAS LAS PRUEBAS PASARON")
-                print("═══════════════════════════════════════════════════")
+                print("===================================================")
+                print("  [OK] TODAS LAS PRUEBAS PASARON")
+                print("===================================================")
                 return True
             else:
-                print("   ✗ Conexión no verificada\n")
+                print("   [FAIL] Conexion no verificada\n")
                 return False
         else:
-            print(f"   ✗ CONEXIÓN FALLIDA\n")
-            print(f"Razón: {reason}\n")
-            print("═══════════════════════════════════════════════════")
-            print("  ✗ PRUEBA FALLIDA")
-            print("═══════════════════════════════════════════════════")
+            print(f"   [FAIL] CONEXION FALLIDA\n")
+            print(f"Razon: {reason}\n")
+            print("===================================================")
+            print("  [FAIL] PRUEBA FALLIDA")
+            print("===================================================")
             return False
             
     except Exception as e:
-        print(f"\n✗ ERROR CRÍTICO: {e}\n")
+        print(f"\n[FAIL] ERROR CRITICO: {e}\n")
         import traceback
         traceback.print_exc()
-        print("\n═══════════════════════════════════════════════════")
-        print("  ✗ PRUEBA FALLIDA CON EXCEPCIÓN")
-        print("═══════════════════════════════════════════════════")
+        print("\n===================================================")
+        print("  [FAIL] PRUEBA FALLIDA CON EXCEPCION")
+        print("===================================================")
         return False
 
 if __name__ == "__main__":

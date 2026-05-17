@@ -5,11 +5,12 @@
 ║  Detecta zonas · Analiza contexto · Aprende de cada operación        ║
 ╚══════════════════════════════════════════════════════════════════════╝
 """
-import sys, os, time, signal, json, threading
+import sys, os, time, signal, json, threading, atexit
 from datetime import datetime
 from collections import deque
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "brain"))
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -65,17 +66,46 @@ state = {
     "trades_this_hour": 0,
 }
 
-ASSETS = ["EURUSD-OTC", "GBPUSD-OTC", "AUDUSD-OTC", "EURJPY-OTC"]
-INITIAL_BALANCE    = 10_000.0
-MIN_CONFIDENCE     = 0.50
-TRADE_AMOUNT_PCT   = 0.02
-COOLDOWN_AFTER_LOSS = 30
-MIN_BETWEEN_TRADES  = 45
-MIN_BETWEEN_SAME_ASSET = 180  # 3 min entre trades del mismo activo
-MAX_CONSEC_LOSSES   = 5
-PAUSE_AFTER_WIN_STREAK = 3
-PAUSE_DURATION = 120
+ASSETS = [
+    # Mejores pares OTC — alta liquidez y zonas más respetadas
+    "EURUSD-OTC", "GBPUSD-OTC", "AUDUSD-OTC", "EURJPY-OTC",
+    "USDJPY-OTC", "EURGBP-OTC",
+]
+INITIAL_BALANCE     = 10_000.0
+MIN_CONFIDENCE      = 0.50
+TRADE_AMOUNT_PCT    = 0.02
+COOLDOWN_AFTER_LOSS = 30   # segundos tras pérdida
+MIN_BETWEEN_TRADES  = 30   # segundos mínimo entre trades (sin límite horario)
+MIN_BETWEEN_SAME_ASSET = 120  # 2 min entre trades del mismo activo
+MAX_CONSEC_LOSSES   = 5    # pausa de riesgo tras 5 pérdidas seguidas
 
+
+# ─── File logging (para monitoreo externo) ───────────────────────────────────
+_log_file = None
+_log_file_lock = threading.Lock()
+
+def _init_log_file():
+    global _log_file
+    try:
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, f"bot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+        _log_file = open(log_path, "w", encoding="utf-8")
+        atexit.register(lambda: _log_file and _log_file.close())
+    except Exception:
+        pass
+
+def _file_log(plain: str):
+    global _log_file
+    if _log_file is None:
+        _init_log_file()
+    if _log_file:
+        with _log_file_lock:
+            try:
+                _log_file.write(plain + "\n")
+                _log_file.flush()
+            except Exception:
+                pass
 
 # ─── Logging (ASCII-safe, sin emojis para Windows) ───────────────────────────
 
@@ -95,6 +125,7 @@ def log(msg: str, level: str = "INFO"):
         print(plain)
     except:
         pass
+    _file_log(plain)
 
 
 # ─── Paneles del dashboard ────────────────────────────────────────────────────
@@ -389,12 +420,33 @@ def update_layout(layout: Layout):
 
 def record_trade(asset, direction, amount, confidence, result, pnl,
                  pattern="", zone_strength=0.0):
+    from brain.trade_persistence import get_trade_persistence
+    
+    # Registrar en memoria local
     state["trades"].append({
         "time": datetime.now().strftime("%H:%M:%S"),
         "asset": asset, "direction": direction, "amount": amount,
         "confidence": confidence, "result": result, "pnl": pnl,
         "pattern": pattern, "zone_strength": zone_strength,
     })
+    
+    # Registrar en persistencia centralizada
+    persistence = get_trade_persistence()
+    session_obj = get_market_session()
+    session_name, session_params = session_obj.get_current_session() if hasattr(session_obj, 'get_current_session') else ("unknown", {})
+    persistence.add_trade({
+        'timestamp': time.time(),
+        'asset': asset,
+        'direction': direction,
+        'amount': amount,
+        'result': result,
+        'pnl': pnl,
+        'confidence': confidence,
+        'pattern': pattern,
+        'zone_strength': zone_strength,
+        'session': str(session_name),
+    })
+    
     if result == "WIN":
         state["wins"] += 1
         state["consecutive_losses"] = 0
@@ -416,6 +468,12 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
     learner  = get_adaptive_learner()
     memory   = get_market_memory()
     evaluator = TradeEvaluator()
+
+    # Inicializar Agente Inteligente con Copilot AI
+    from brain.intelligent_trading_agent import get_intelligent_trading_agent
+    token = os.getenv("GITHUB_TOKEN", "")
+    log("Inicializando Agente Inteligente (GitHub Models)...", "INFO")
+    agent = get_intelligent_trading_agent(token)
 
     log("Conectando a Exnova PRACTICE...", "INFO")
     state["status"] = "CONECTANDO"
@@ -441,23 +499,11 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
 
     asset_idx = 0
     last_reconnect = time.time()
-    last_day_check = time.time()
-    day_trades = 0
-    hour_trades = deque(maxlen=360)  # trades en última hora
 
     while state["running"]:
         try:
             state["cycle"] += 1
             now = time.time()
-
-            # Reset contador diario
-            if now - last_day_check > 86400:
-                day_trades = 0
-                last_day_check = now
-
-            # Limpiar trades de la última hora
-            while hour_trades and now - hour_trades[0] > 3600:
-                hour_trades.popleft()
 
             # Reconexión periódica
             if now - last_reconnect > 240:
@@ -466,27 +512,12 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
                     market_data.reconnect(email, password)
                 last_reconnect = now
 
-            # Cooldown por pérdidas consecutivas
+            # Pausa de riesgo solo por pérdidas consecutivas — no por horario
             if state["consecutive_losses"] >= MAX_CONSEC_LOSSES:
                 state["status"] = "PAUSA_RIESGO"
-                log(f"PAUSA: {state['consecutive_losses']} perdidas seguidas. Esperando 5 min.", "WARN")
-                time.sleep(300)
+                log(f"PAUSA RIESGO: {state['consecutive_losses']} perdidas seguidas. Esperando 3 min.", "WARN")
+                time.sleep(180)
                 state["consecutive_losses"] = 0
-                continue
-
-            # Pausa después de racha ganadora
-            if state["current_streak"] >= PAUSE_AFTER_WIN_STREAK:
-                state["status"] = "PAUSA_WIN_STREAK"
-                log(f"Pausa post-racha: {state['current_streak']} wins seguidos. Esperando {PAUSE_DURATION}s.", "INFO")
-                time.sleep(PAUSE_DURATION)
-                state["current_streak"] = 0
-                continue
-
-            # Límite diario de trades
-            if day_trades >= 40:
-                state["status"] = "PAUSA_DIARIA"
-                log("Limite diario de 40 trades alcanzado. Esperando al siguiente dia.", "WARN")
-                time.sleep(3600)
                 continue
 
             asset = ASSETS[asset_idx % len(ASSETS)]
@@ -504,13 +535,62 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
                 score      = signal.get("score", 0)
 
                 if action == "TRADE" and confidence >= MIN_CONFIDENCE:
+                    # ── VALIDAR CON AGENTE INTELIGENTE (GITHUB COPILOT MODELS) ──
+                    direction = signal.get("signal", "CALL")
+                    price_val = signal.get("zone")
+                    if price_val == "unknown" or price_val is None:
+                        try:
+                            price_val = float(market_data.get_candles(asset, 60, 1)["close"].iloc[-1])
+                        except Exception:
+                            price_val = 1.0
+                    
+                    market_context = {
+                        'asset': asset,
+                        'price': float(price_val),
+                        'rsi': float(signal.get("context", {}).get("momentum", {}).get("rsi_m1", 50)),
+                        'trend': str(signal.get("context", {}).get("trend", {}).get("dominant_trend", "SIDEWAYS")),
+                        'pattern': str(signal.get("pattern") or "none"),
+                        'zone_type': str(signal.get("zone_type") or "unknown"),
+                        'zone': signal.get("zone") or "unknown",
+                        'direction': direction
+                    }
+                    
+                    log(f"Enviando trade a Agente Inteligente para validacion...", "INFO")
+                    try:
+                        ai_result = agent.analyze_trade_opportunity(market_context)
+                        if ai_result:
+                            # Actualizar estado de dashboard con el dictamen de la IA
+                            signal["ai_label"] = ai_result.get("decision", "NORMAL")
+                            signal["ai_score"] = float(ai_result.get("confidence", 50))
+                            narrative = ai_result.get("reasoning", "")
+                            if isinstance(narrative, list):
+                                narrative = "; ".join(str(x) for x in narrative)
+                            signal["ai_narrative"] = narrative[:70]
+                            
+                            log(f"IA Dictamen: {ai_result['decision']} (Conf={ai_result['confidence']}%) | Razon: {narrative[:50]}...", "LEARN")
+                            
+                            if ai_result['decision'] in ['SKIP', 'WAIT']:
+                                log(f"Trade bloqueado por IA: {narrative[:60]}", "WARN")
+                                state["rejection_stats"]["AI Blocked"] = state["rejection_stats"].get("AI Blocked", 0) + 1
+                                continue
+                            
+                            if ai_result.get('direction') and ai_result['direction'] != direction:
+                                log(f"IA corrigio direccion: {direction} -> {ai_result['direction']}", "LEARN")
+                                direction = ai_result['direction']
+                                signal["signal"] = direction
+                            
+                            confidence = float(ai_result.get("confidence", confidence * 100)) / 100.0
+                            signal["confidence"] = confidence
+                            
+                    except Exception as ai_err:
+                        log(f"Error en validacion de IA: {ai_err}", "WARN")
+
                     time_since_last = now - state["last_trade_time"]
                     learning_mode = get_learning_mode()
                     cooldown_mult = learning_mode.get_cooldown_multiplier()
                     base_cooldown = COOLDOWN_AFTER_LOSS if state["consecutive_losses"] > 0 else MIN_BETWEEN_TRADES
                     cooldown_needed = int(base_cooldown * cooldown_mult)
 
-                    # Per-asset cooldown
                     last_asset_trade = state["last_trade_by_asset"].get(asset, 0)
                     time_since_asset = now - last_asset_trade
 
@@ -519,21 +599,16 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
                         rejection = f"Cooldown global: {int(cooldown_needed - time_since_last)}s restantes"
                         log(rejection, "WAIT")
                     elif time_since_asset < MIN_BETWEEN_SAME_ASSET:
-                        rejection = f"Cooldown activo {asset}: {int(MIN_BETWEEN_SAME_ASSET - time_since_asset)}s restantes"
+                        rejection = f"Cooldown {asset}: {int(MIN_BETWEEN_SAME_ASSET - time_since_asset)}s restantes"
                         log(rejection, "WAIT")
                     elif rm.is_stopped:
-                        rejection = f"Risk Manager activo: {rm.stop_reason}"
+                        rejection = f"Risk Manager: {rm.stop_reason}"
                         log(rejection, "WARN")
-                    elif len(hour_trades) >= 6:
-                        rejection = f"Limite horario: 6 trades/hora alcanzado"
-                        log(rejection, "WAIT")
                     else:
                         amount = rm.calculate_position_size(confidence=confidence)
                         if amount > 0:
-                            executed = execute_trade(market_data, rm, signal, amount, learner, memory, evaluator)
+                            executed = execute_trade(market_data, rm, signal, amount, learner, memory, evaluator, agent)
                             if executed:
-                                day_trades += 1
-                                hour_trades.append(time.time())
                                 state["last_trade_by_asset"][asset] = time.time()
                         else:
                             rejection = f"Risk Manager: amount=0 (conf={confidence:.2f}, kelly={rm.calculate_kelly():.3f})"
@@ -567,7 +642,7 @@ def bot_loop(market_data: MarketDataHandler, rm, engine: IntelligentEngine):
     memory.save()
 
 
-def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator) -> bool:
+def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator, agent) -> bool:
     asset      = signal["asset"]
     direction  = signal["signal"]
     confidence = signal["confidence"]
@@ -651,11 +726,20 @@ def execute_trade(market_data, rm, signal, amount, learner, memory, evaluator) -
                 "pattern": pattern, "order_id": str(order_id),
                 "entry_price": signal.get("zone", 0.0) or amount,
                 "expiration_minutes": signal.get("expiration_minutes", duration),
+                "zone_strength": zone_str,
+                "rsi_at_touch": context.get("momentum", {}).get("rsi_m1", 50),
+                "trend_aligned": context.get("zone_context", {}).get("trend_aligned", False),
             }
             diagnosis = evaluator.evaluate(trade_record, context, conditions,
                                            df_m1_after=df_after)
             learner.learn_from_trade(conditions, result, diagnosis)
             state["last_diagnosis"] = evaluator.format_for_display(diagnosis)
+
+            # ── Aprendizaje post-trade con OpenCode AI ──
+            agent.learn_from_trade_result(trade_record)
+            total_trades_count = state["wins"] + state["losses"]
+            if total_trades_count > 0 and total_trades_count % 5 == 0:
+                agent.evaluate_session()
 
             # Log de diagnostico post-trade
             if result == "LOSS":
@@ -752,7 +836,8 @@ def main():
 
     risk_config = RiskConfig(
         max_drawdown_daily=0.10,
-        max_trades_per_hour=6,
+        max_trades_per_hour=999,   # sin límite — la sesión regula la frecuencia
+        max_trades_per_day=999,    # sin límite — el riesgo regula el volumen
         cooldown_after_loss_seconds=COOLDOWN_AFTER_LOSS,
         min_confidence_threshold=MIN_CONFIDENCE,
         stop_after_consecutive_losses=MAX_CONSEC_LOSSES,

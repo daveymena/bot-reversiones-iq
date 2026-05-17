@@ -1,49 +1,77 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.so
 
-# compiled output
-dist
-tmp
-out-tsc
-*.tsbuildinfo
-.expo
-.expo-shared
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
 
-# dependencies
-node_modules
+# Logs y datos locales (no subir al repo)
+bot/logs/
+logs/
+*.log
+current_bot.log
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# Datos de sesión y estado local (no subir)
+bot/data/learning_progress.json
+bot/brain/learning_state.json
+bot/brain/trade_history.json
+bot/brain/zone_reactions.json
+bot/brain/ai_suggestions.json
+bot/brain/orchestrator_executions.json
+bot/brain/recommendations_config.json
+data/
 
-# IDE - VSCode
+# Credenciales y secretos (NUNCA al repo)
+bot/.env
+.env
+*.env
+secrets.json
+auth.json
+
+# IDEs
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.idea/
+*.sublime-workspace
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
-# System Files
+# Sistema
 .DS_Store
 Thumbs.db
+*.tsbuildinfo
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
+# Node
+node_modules/
+dist/
+tmp/
+out-tsc/
 
 # Replit
 .cache/
 .local/
+.agents/
+
+# GitHub / CI
+.cursor/
+.github/instructions/

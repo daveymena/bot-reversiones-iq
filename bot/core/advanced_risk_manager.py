@@ -17,8 +17,8 @@ class RiskConfig:
     max_drawdown_monthly: float = 0.30
     kelly_ceiling: float = 0.15
     kelly_floor: float = 0.01
-    max_trades_per_hour: int = 6
-    max_trades_per_day: int = 30
+    max_trades_per_hour: int = 999   # sin límite horario — la sesión lo regula
+    max_trades_per_day: int = 999    # sin límite diario — el riesgo lo regula
     cooldown_after_loss_seconds: int = 120
     stop_after_consecutive_losses: int = 4
     min_confidence_threshold: float = 0.65
