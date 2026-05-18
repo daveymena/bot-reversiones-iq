@@ -266,7 +266,8 @@ class EntryTimingValidator:
     """
 
     def validate(self, df_m1: pd.DataFrame, zone_level: float,
-                  zone_type: str, direction: str) -> Dict:
+                  zone_type: str, direction: str,
+                  zone_distance_pct: float = 0.0) -> Dict:
         if len(df_m1) < 6:
             return {"valid": True, "reason": "datos insuficientes para validar"}
 
@@ -275,7 +276,9 @@ class EntryTimingValidator:
         s_low  = float(signal_candle["low"])
         s_high = float(signal_candle["high"])
         s_close = float(signal_candle["close"])
-        tol = zone_level * 0.0008  # 0.08% de tolerancia exacta
+        # Tolerancia adaptativa: más amplia si la zona está lejos
+        tol_pct = min(0.0008 + zone_distance_pct * 0.3, 0.005)
+        tol = zone_level * tol_pct
 
         zone_was_touched = (
             (zone_type == "support"    and s_low   <= zone_level + tol) or
@@ -291,11 +294,12 @@ class EntryTimingValidator:
             }
 
         # ── 2. Verificar que no empezó ya el movimiento ───────────────────────
-        # Si el precio ya se alejó >0.15% de la zona, la entrada es tardía
+        # Si la zona está lejos, permitir más distancia
         current_close = float(df_m1.iloc[-1]["close"])
         distance_from_zone = abs(current_close - zone_level) / zone_level
+        max_allowed = 0.0020 + zone_distance_pct * 1.5
 
-        if distance_from_zone > 0.0020:
+        if distance_from_zone > max_allowed:
             return {
                 "valid": False,
                 "reason": f"El movimiento ya comenzó — precio alejado {distance_from_zone*100:.2f}% de la zona (entrada tardía)",
@@ -400,36 +404,43 @@ class IntelligentEngine:
             # ATR para detectar volatilidad real
             atr_pct = self._calc_atr_pct(df_m1)
             session_name, session_params = self.session.get_adaptive_params(0.50, atr_pct)
-            # Tolerancia dinámica: max entre ATR*2 y valor base, limitado a 0.35%
-            atr_based_tolerance = min(atr_pct * 2.0, 0.0035)
-            config_tolerance = session_params.get("zone_tolerance", 0.0030)
-            zone_tolerance = max(atr_based_tolerance, min(config_tolerance, 0.0035))
+            # Tolerancia dinámica según ATR, limitada a 0.25%
+            atr_based_tolerance = min(atr_pct * 2.0, 0.0025)
+            config_tolerance = session_params.get("zone_tolerance", 0.0020)
+            zone_tolerance = max(atr_based_tolerance, min(config_tolerance, 0.0025))
             min_zone_strength = max(
                 self.learner.get_threshold("min_zone_strength", 0.35),
                 session_params.get("min_zone_strength", 0.35)
             )
 
             # ── 4. ¿Está el precio EN una zona fuerte? ───────────────────────
+            soft_penalties = 0.0
             nearest_zone = self.memory.get_nearest_strong_zone(
                 asset, current_price, tolerance_pct=zone_tolerance
             )
             zone_context_summary = self.memory.get_zone_context(asset, current_price)
 
             if nearest_zone is None or nearest_zone.strength < min_zone_strength:
-                any_zone = self.memory.get_nearest_strong_zone(asset, current_price, tolerance_pct=0.01)
-                dist_str = ""
-                if any_zone:
-                    dist_pct = abs(any_zone.level - current_price) / current_price * 100
-                    dist_str = f" | Zona más cercana: {any_zone.level:.5f} a {dist_pct:.2f}%"
-                return {
-                    "asset": asset, "action": "WAIT", "signal": "NEUTRAL",
-                    "score": 0.0, "confidence": 0.0,
-                    "reason": f"[{session_name}] Precio lejos de zona{dist_str}",
-                    "phase": "buscando_zona",
-                    "zone_count": len(self.memory.get_all_zones(asset)),
-                    "zone_context": zone_context_summary,
-                    "session": session_name,
-                }
+                # ¿Hay zona aunque esté lejos (hasta 1.2%)? Si sí, permitir con penalización
+                wide_zone = self.memory.get_nearest_strong_zone(asset, current_price, tolerance_pct=0.012)
+                if wide_zone and wide_zone.strength >= min_zone_strength * 0.85:
+                    nearest_zone = wide_zone
+                    soft_penalties += 0.10  # penalizar por zona lejana
+                else:
+                    any_zone = self.memory.get_nearest_strong_zone(asset, current_price, tolerance_pct=0.01)
+                    dist_str = ""
+                    if any_zone:
+                        dist_pct = abs(any_zone.level - current_price) / current_price * 100
+                        dist_str = f" | Zona más cercana: {any_zone.level:.5f} a {dist_pct:.2f}%"
+                    return {
+                        "asset": asset, "action": "WAIT", "signal": "NEUTRAL",
+                        "score": 0.0, "confidence": 0.0,
+                        "reason": f"[{session_name}] Precio lejos de zona{dist_str}",
+                        "phase": "buscando_zona",
+                        "zone_count": len(self.memory.get_all_zones(asset)),
+                        "zone_context": zone_context_summary,
+                        "session": session_name,
+                    }
 
             # ── 4. Analizar contexto completo ────────────────────────────────
             context = self.context_analyzer.analyze(
@@ -480,19 +491,25 @@ class IntelligentEngine:
                 going_against = (unanimous_trend == "uptrend" and expected_dir == "PUT") or \
                                (unanimous_trend == "downtrend" and expected_dir == "CALL")
                 if going_against:
-                    return self._wait(
-                        f"Tendencia {unanimous_trend} unánime — no operar {expected_dir} en contra",
-                        asset, context=context
-                    )
+                    # No bloquear, solo penalizar fuerte (0.20 al score) + log
+                    soft_penalties += 0.12
+
+            # ── 4c. FILTRO POR SESIÓN: Bloqueo direccional ───────────────────
+            if session_params.get("block_bullish_patterns", False) and expected_dir == "CALL":
+                return self._wait(
+                    f"[{session_name}] Operaciones CALL bloqueadas por bajo rendimiento histórico",
+                    asset, context=context
+                )
 
             # ── 5. Detectar patrón en vela CERRADA (df.iloc[-2]) ────────────
             pattern = self.pattern_detector.detect(df_m1, expected_dir)
 
             # ── 6. Validar timing — BLOQUEANTE ───────────────────────────────
             # Sin rechazo visible en la zona = no entrar. Sin excepciones.
+            zone_dist_pct = abs(current_price - nearest_zone.level) / nearest_zone.level
             timing = self.timing_validator.validate(
                 df_m1, nearest_zone.level, nearest_zone.zone_type,
-                expected_dir
+                expected_dir, zone_distance_pct=zone_dist_pct
             )
             if not timing["valid"]:
                 issue = timing.get("issue", "")
@@ -500,34 +517,42 @@ class IntelligentEngine:
                 # Registrar por qué se rechazó para el dashboard
                 return self._wait(f"Timing: {reason[:70]}", asset, context=context)
 
-            # ── 6b. Patrón requerido — sin patrón no hay entrada ─────────────
-            # La IA puede encontrar micro-estructura, pero necesitamos al menos eso
+            # ── 6b. Patrón requerido — con fallback a micro-estructura o timing ──
             if not pattern.get("confirmed", False):
-                # Intentar micro-estructura antes de rechazar
+                # Si no hay patrón clásico: ¿hay micro-estructura + timing válido?
                 micro = self._check_micro_structure(df_m1, expected_dir)
-                if not micro:
+                zone_str_check = nearest_zone.strength if nearest_zone else 0
+                rsi_check = context.get("momentum", {}).get("rsi_m1", 50)
+                rsi_ok = rsi_check < 30 or rsi_check > 70
+                if micro and zone_str_check >= max(0.55, min_zone_strength * 0.85):
+                    # micro-estructura aceptable con zona decente
+                    pattern = {
+                        "pattern": "micro_structure",
+                        "confirmed": True,
+                        "strength": 0.55,
+                        "conditions": {},
+                        "candle_confirmed": True,
+                    }
+                elif timing.get("rejection_wick_pct", 0) >= 0.20:
+                    # Sin patrón clásico ni micro, pero el timing muestra rechazo real
+                    pattern = {
+                        "pattern": "zone_rejection",
+                        "confirmed": True,
+                        "strength": 0.50,
+                        "conditions": {},
+                        "candle_confirmed": True,
+                    }
+                else:
                     return self._wait(
-                        f"Sin patrón de reversión en vela cerrada — esperando señal",
+                        "Sin patrón de reversión en vela cerrada",
                         asset, context=context
                     )
-                # Usar micro-estructura como patrón débil
-                pattern = {
-                    "pattern": "micro_structure",
-                    "confirmed": True,
-                    "strength": 0.55,
-                    "conditions": {},
-                    "candle_confirmed": True,
-                }
-
-            # ── 6c. Micro_structure solo con tendencia alineada ──────────────
-            pattern_name = pattern.get("pattern", "")
-            if pattern_name == "micro_structure":
-                zone_ctx_tmp = context.get("zone_context", {})
-                if not zone_ctx_tmp.get("trend_aligned", False):
-                    return self._wait(
-                        "Micro-estructura sin tendencia alineada — alto riesgo de contra-tendencia",
-                        asset, context=context
-                    )
+            # Rechazar patrones muy débiles
+            if pattern.get("strength", 0) < 0.50:
+                return self._wait(
+                    f"Patrón débil ({pattern.get('strength',0):.2f})",
+                    asset, context=context
+                )
 
             # ── 7. Condiciones para AdaptiveLearner ──────────────────────────
             zone_ctx  = context.get("zone_context", {})
@@ -616,13 +641,13 @@ class IntelligentEngine:
 
                 # La IA NO puede cambiar la dirección de la zona — solo puede bloquear
                 # Si la IA dice dirección contraria a la zona con score alto → SKIP
-                if ai_dir != "NEUTRAL" and ai_dir != expected_dir and ai_score >= 65:
+                if ai_dir != "NEUTRAL" and ai_dir != expected_dir and ai_score >= 75 and nearest_zone.strength >= 0.80:
                     return self._wait(
                         f"IA contradice zona ({ai_dir} vs {expected_dir}) con score {ai_score:.0f} — skip",
                         asset, context=context
                     )
 
-                if ai_label == "SKIP" or (not ai_should and ai_score < 25):
+                if ai_label == "SKIP" and ai_score < 25:
                     return {
                         "asset": asset, "action": "WAIT", "signal": expected_dir,
                         "score": ai_score, "confidence": ai_conf,
@@ -649,7 +674,6 @@ class IntelligentEngine:
             zone_hist_hr = zone_history_analysis.get("session_hold_rate", 0.5)
             zone_hist_bonus = max(0.0, (zone_hist_hr - 0.5) * 0.10)
 
-            soft_penalties = 0.0
             if not zone_ctx.get("trend_aligned", True):
                 soft_penalties += 0.03
             if rsi_dist < self.learner.get_threshold("min_rsi_distance", 8.0):
@@ -661,21 +685,21 @@ class IntelligentEngine:
 
             adaptive_adjusted = max(0.0, adaptive_score - soft_penalties + first_visit_bonus + zone_hist_bonus)
 
-            # 30% AdaptiveLearner + 70% MarketAI
+            # 50% AdaptiveLearner + 50% MarketAI
             ai_normalized = ai_score / 100.0
-            final_score = adaptive_adjusted * 0.30 + ai_normalized * 0.70
+            final_score = adaptive_adjusted * 0.50 + ai_normalized * 0.50
 
             # ── 10. Umbral mínimo adaptado a la sesión ────────────────────────
-            session_min_conf = session_params.get("min_confidence", 0.50)
-            effective_min = max(self.learner.get_min_score() * 0.80, session_min_conf - 0.10)
+            session_min_conf = session_params.get("min_confidence", 0.40)
+            effective_min = max(self.learner.get_min_score() * 0.75, session_min_conf - 0.12)
             if ai_label in ("EXCELENTE", "BUENO"):
-                effective_min = max(0.25, effective_min - 0.10)
+                effective_min = max(0.25, effective_min - 0.15)
             elif ai_label == "MODERADO":
-                effective_min = effective_min * 0.90
+                effective_min = effective_min * 0.85
             elif ai_label in ("DEBIL",):
-                effective_min = min(effective_min + 0.05, 0.60)
+                effective_min = min(effective_min, 0.50)
 
-            if final_score >= effective_min or (ai_should and final_score >= 0.30):
+            if final_score >= effective_min:
                 confidence = self._calculate_confidence(
                     final_score, nearest_zone, context, pattern, timing
                 )
@@ -937,7 +961,7 @@ class IntelligentEngine:
         dir_boost     = context.get("direction_confidence", 0.5) * 0.08
         timing_boost  = 0.05 if timing and timing.get("rejection_wick_pct", 0) >= 0.40 else 0.0
         raw = base * 0.57 + zone_boost + pattern_boost + quality_boost + dir_boost + timing_boost
-        return min(0.95, max(0.50, raw))
+        return min(0.95, max(0.65, raw))
 
     def _adaptive_expiration(self, context: Dict, pattern: Dict,
                               zone=None, conditions: Dict = None) -> Dict:
@@ -1025,7 +1049,7 @@ class IntelligentEngine:
         simplicity = max(0.0, min(100.0, simplicity))
 
         # Star patterns necesitan mínimo 2 min
-        min_floor = 2 if pattern_name.endswith("star") else 1
+        min_floor = 3  # mínimo 3 minutos para dar tiempo al precio a reaccionar
 
         if simplicity >= 82:
             minutes, label, color = 1, "SIMPLE",       "green"

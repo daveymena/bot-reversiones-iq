@@ -72,12 +72,12 @@ ASSETS = [
     "USDJPY-OTC", "EURGBP-OTC",
 ]
 INITIAL_BALANCE     = 10_000.0
-MIN_CONFIDENCE      = 0.50
-TRADE_AMOUNT_PCT    = 0.02
-COOLDOWN_AFTER_LOSS = 30   # segundos tras pérdida
-MIN_BETWEEN_TRADES  = 30   # segundos mínimo entre trades (sin límite horario)
-MIN_BETWEEN_SAME_ASSET = 120  # 2 min entre trades del mismo activo
-MAX_CONSEC_LOSSES   = 5    # pausa de riesgo tras 5 pérdidas seguidas
+MIN_CONFIDENCE      = 0.70   # solo señales de alta calidad
+TRADE_AMOUNT_PCT    = 0.01   # arriesgar solo 1% por trade
+COOLDOWN_AFTER_LOSS = 120   # 2 minutos tras pérdida
+MIN_BETWEEN_TRADES  = 90    # 90 segundos mínimo entre trades
+MIN_BETWEEN_SAME_ASSET = 300  # 5 min entre trades del mismo activo
+MAX_CONSEC_LOSSES   = 3     # pausa tras 3 pérdidas seguidas
 
 
 # ─── File logging (para monitoreo externo) ───────────────────────────────────

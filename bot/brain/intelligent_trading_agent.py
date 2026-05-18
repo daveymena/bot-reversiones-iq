@@ -161,14 +161,14 @@ class IntelligentTradingAgent:
                 'EURJPY-OTC': {'bias': 'CALL', 'confidence': 0.60, 'volume_mult': 1.5},
                 'GBPUSD-OTC': {'bias': 'NEUTRAL', 'confidence': 0.80, 'volume_mult': 1.3},
                 'EURUSD-OTC': {'bias': 'NEUTRAL', 'confidence': 0.75, 'volume_mult': 1.2},
-                'AUDUSD-OTC': {'status': 'PAUSED', 'reason': 'WR 10%'}
+                'AUDUSD-OTC': {'status': 'ACTIVE', 'bias': 'NEUTRAL', 'confidence': 0.60, 'volume_mult': 0.8}
             },
             'validation_rules': {
                 'require_pattern': True,
-                'pattern_confidence_min': 0.65,
+                'pattern_confidence_min': 0.75,
                 'rsi_extremes_only': True,
-                'zone_hold_rate_min': 0.70,
-                'min_confidence': 0.50
+                'zone_hold_rate_min': 0.75,
+                'min_confidence': 0.70
             }
         }
 
@@ -311,12 +311,10 @@ class IntelligentTradingAgent:
         
         analysis['confidence'] = min(100, max(0, analysis['confidence']))
         
-        if analysis['confidence'] > 70:
+        if analysis['confidence'] >= 80:
             analysis['decision'] = 'STRONG_ENTER'
-        elif analysis['confidence'] > 60:
+        elif analysis['confidence'] >= 70:
             analysis['decision'] = 'ENTER'
-        elif analysis['confidence'] > 50:
-            analysis['decision'] = 'WEAK_ENTER'
         else:
             analysis['decision'] = 'WAIT'
         

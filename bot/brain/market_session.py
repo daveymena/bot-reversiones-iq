@@ -57,31 +57,30 @@ class MarketSession:
         },
         "ASIA": {
             # 00:00-07:00 UTC — baja volatilidad, rangos estrechos
-            # El bot opera pero es más selectivo y usa zonas más fuertes
-            "min_confidence":    0.58,
-            "zone_tolerance":    0.0012,   # más tolerante porque el precio se mueve menos
-            "min_zone_strength": 0.60,     # exige zonas más fuertes
-            "expiration_mult":   1.5,      # expiraciones más largas (precio lento)
+            "min_confidence":    0.38,
+            "zone_tolerance":    0.0018,
+            "min_zone_strength": 0.40,
+            "expiration_mult":   1.5,
             "trade_freq":        "LOW",
-            "description":       "Sesión Asiática: baja volatilidad, zonas más fuertes requeridas",
+            "description":       "Sesión Asiática: baja volatilidad",
         },
         "PACIFIC": {
-            # 21:00-24:00 UTC — transición, volatilidad media-baja
-            "min_confidence":    0.55,
-            "zone_tolerance":    0.0011,
-            "min_zone_strength": 0.55,
+            # 21:00-24:00 UTC — transicion baja liquidez
+            "min_confidence":    0.45,
+            "zone_tolerance":    0.0015,
+            "min_zone_strength": 0.45,
             "expiration_mult":   1.2,
             "trade_freq":        "LOW",
-            "description":       "Sesión Pacífico: transición, operar con cautela",
+            "description":       "Sesion Pacifico: baja liquidez",
         },
         "DEAD": {
             # Mercado completamente muerto (raro en OTC pero posible)
-            "min_confidence":    0.62,
-            "zone_tolerance":    0.0015,
-            "min_zone_strength": 0.65,
+            "min_confidence":    0.48,
+            "zone_tolerance":    0.0020,
+            "min_zone_strength": 0.45,
             "expiration_mult":   2.0,
             "trade_freq":        "VERY_LOW",
-            "description":       "Mercado sin volatilidad: solo zonas muy fuertes",
+            "description":       "Mercado sin volatilidad: selectividad normal",
         },
     }
 
